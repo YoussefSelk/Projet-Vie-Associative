@@ -1,5 +1,12 @@
 # API Reference - Controllers & Models
 
+## Language / Langue
+
+- English: see the **English** section
+- Français : voir la section **Français**
+
+## English
+
 ## Table of Contents
 
 1. [User Model & Controller](#user)
@@ -8,6 +15,12 @@
 4. [Authentication Controller](#auth)
 5. [Validation Model & Controller](#validation)
 6. [Event Subscription](#subscription)
+
+### Global Notes
+
+- Routing is query-string based: `index.php?page=...`.
+- Authentication is session-based.
+- **CSRF**: every **POST** route requires a valid `csrf_token`, except `login` and `register`.
 
 ---
 
@@ -174,11 +187,17 @@ $success = $clubs->deleteClub(1);
 
 ### ClubController
 
+#### Route: `?page=club-view&id=X`
+
+**Method:** GET
+**Description:** View club details
+**Permissions:** Public
+
 #### Route: `?page=club-list`
 
 **Method:** GET/POST
 **Description:** List clubs and edit
-**Permissions:** Admin (level 4+)
+**Permissions:** Admin (level 3+)
 **POST Parameters:**
 
 ```php
@@ -195,7 +214,13 @@ $success = $clubs->deleteClub(1);
 
 **Method:** GET/POST
 **Description:** Create new club
-**Permissions:** Tutor+ (level 3+)
+**Permissions:** Requires login
+
+#### Route: `?page=export-members`
+
+**Method:** GET
+**Description:** Export members
+**Permissions:** Admin (level 3+)
 
 ---
 
@@ -289,11 +314,28 @@ $success = $events->deleteEvent(1);
 **Description:** Create event
 **Permissions:** Manager+ (level 2+)
 
+#### Route: `?page=event-report`
+
+**Method:** GET/POST
+**Description:** Event report
+**Permissions:** Requires login
+
+#### Route: `?page=my-events`
+
+**Method:** GET
+**Description:** List events created by current user
+**Permissions:** Requires login
+
 ---
 
 ## Authentication Controller {#auth}
 
 ### Routes
+
+#### Route: `?page=register`
+
+**Method:** GET/POST
+**Description:** User registration
 
 #### Route: `?page=login`
 
@@ -370,6 +412,12 @@ $validation->validateEvent(1, 1, 1, 1);
 **Method:** GET/POST
 **Description:** Manage pending events
 **Permissions:** Admin (level 3+)
+
+#### Route: `?page=tutoring`
+
+**Method:** GET
+**Description:** Tutoring/validation view
+**Permissions:** Requires login
 
 ---
 
@@ -549,3 +597,29 @@ These are passed to views and can be displayed:
     'validation_finale' => bool
 ]
 ```
+
+---
+
+**Last Updated:** December 31, 2025
+
+---
+
+## Français
+
+### Notes globales
+
+- Routage : `index.php?page=...`
+- Authentification : sessions
+- **CSRF** : toutes les routes **POST** exigent un `csrf_token` valide, sauf `login` et `register`.
+
+### Résumé des routes (FR)
+
+**Auth :** `register`, `login`, `logout`.
+
+**Utilisateur :** `profile`, `profile-edit`, `users-list` (admin 3+).
+
+**Clubs :** `club-view` (public), `club-list` (admin 3+), `club-create` (connexion requise), `export-members` (admin 3+).
+
+**Événements :** `event-list`, `event-view`, `event-create` (permission 2+), `event-report`, `my-events`.
+
+**Validation :** `pending-clubs`, `pending-events` (admin 3+), `tutoring` (connexion requise).

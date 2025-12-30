@@ -1,5 +1,12 @@
 # Vie Étudiante - MVC Project Structure
 
+## Language / Langue
+
+- English: see the **English** section
+- Français : voir la section **Français**
+
+## English
+
 ## Project Overview
 
 This is a restructured PHP project using the MVC (Model-View-Controller) architecture pattern. The project maintains backward compatibility with the existing database while providing a cleaner, more maintainable code structure.
@@ -8,10 +15,14 @@ This is a restructured PHP project using the MVC (Model-View-Controller) archite
 
 ```
 project-root/
+├── .env.example               # Environment variables template
 ├── config/
 │   ├── bootstrap.php          # Main configuration file
 │   ├── Database.php           # Database connection class
-│   └── Email.php              # Email utility functions
+│   ├── Email.php              # Email utility functions
+│   ├── Environment.php        # Loads .env and environment flags
+│   ├── ErrorHandler.php       # Environment-based error handling
+│   └── Security.php           # Security headers + CSRF helpers
 ├── models/
 │   ├── User.php               # User data model
 │   ├── Club.php               # Club data model
@@ -40,12 +51,12 @@ project-root/
 │   └── event_create.php       # Create event view
 ├── images/                    # Images and media
 ├── uploads/                   # User uploaded files
+├── logs/                      # App/PHP logs (if enabled)
+├── css/                       # Stylesheets
 ├── PHPMailer-master/          # Email library
 ├── .htaccess                  # URL rewriting rules
 ├── index.php                  # Main router/entry point
-├── database.php               # Legacy DB connection (deprecated)
-├── style.css                  # Main stylesheet
-└── README.md                  # This file
+└── README.md                  # Project overview
 ```
 
 ## MVC Pattern Explanation
@@ -93,6 +104,10 @@ index.php?page=profile        → UserController::viewProfile()
 index.php?page=club-list      → ClubController::listClubs()
 index.php?page=event-create   → EventController::createEvent()
 ```
+
+### CSRF protection
+
+The router validates CSRF tokens for **all POST requests**, except `login` and `register` which handle their own flow.
 
 ## Authentication & Authorization
 
@@ -155,12 +170,12 @@ private $pass = '';
 
 ## Email Configuration
 
-Email settings are configured in `config/Email.php`:
+Email settings are configured in `config/Email.php` (and/or via `.env`, depending on your configuration):
 
 ```php
 $smtp_host = "ssl0.ovh.net";
-$smtp_username = "projetvieasso@eilco-ulco.fr";
-$smtp_password = "0Eilco563";
+$smtp_username = "your-email@example.com";
+$smtp_password = "your-password";
 $smtp_port = 465;
 ```
 
@@ -248,3 +263,35 @@ case 'announcements':
 - Implement ORM (Doctrine, Eloquent)
 - Add comprehensive logging
 - Implement caching layer
+
+---
+
+## Français
+
+### Vue d’ensemble
+
+Ce projet utilise une architecture **MVC** :
+
+- **Models** : requêtes SQL et accès aux données
+- **Controllers** : logique métier / orchestration
+- **Views** : affichage (HTML) et rendu
+
+### Routage
+
+Le fichier `index.php` sert de routeur via `?page=...`.
+
+### CSRF
+
+Les requêtes **POST** exigent un `csrf_token` valide (sauf `login` et `register`).
+
+### Sécurité
+
+Les en-têtes de sécurité et la configuration des sessions sont centralisés dans `config/Security.php` et `config/bootstrap.php`.
+
+### E-mail
+
+Ne stockez jamais de vrais identifiants SMTP dans Git. Utilisez des placeholders dans la documentation et placez les secrets dans `.env`.
+
+---
+
+**Last Updated:** December 31, 2025

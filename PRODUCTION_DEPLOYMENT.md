@@ -1,5 +1,12 @@
 # Production Deployment Guide
 
+## Language / Langue
+
+- English: see the **English** section
+- Français : voir la section **Français**
+
+## English
+
 ## Pre-Deployment Checklist
 
 ### 1. Environment Configuration
@@ -8,6 +15,12 @@
 
    ```bash
    cp .env.example .env
+   ```
+
+   **Windows (PowerShell):**
+
+   ```powershell
+   Copy-Item .env.example .env
    ```
 
 2. **Edit `.env` with your production values:**
@@ -54,6 +67,16 @@ chmod 775 logs/
 chmod 600 .env
 ```
 
+**Windows note:** file permissions are managed via NTFS ACLs (not `chmod`). At minimum, ensure the web server identity (e.g. IIS App Pool identity or Apache service user) can write to `uploads/` and `logs/`, and that `.env` is not readable by other users.
+
+Example (PowerShell, adjust identity name):
+
+```powershell
+icacls .\uploads /grant "IIS_IUSRS:(OI)(CI)M" /T
+icacls .\logs /grant "IIS_IUSRS:(OI)(CI)M" /T
+icacls .\.env /inheritance:r
+```
+
 ### 4. SSL Certificate
 
 1. Install an SSL certificate (Let's Encrypt is free)
@@ -80,6 +103,8 @@ Ensure these modules are enabled:
 - `mod_headers`
 - `mod_deflate`
 - `mod_expires`
+
+**Windows (Apache):** ensure `mod_rewrite` is enabled in `httpd.conf` and that your VirtualHost allows overrides (e.g. `AllowOverride All`) so `.htaccess` rules are applied.
 
 #### Nginx Configuration Example
 
@@ -235,3 +260,48 @@ Consider setting up:
 - Uptime monitoring
 - Error rate alerts
 - Performance monitoring
+
+---
+
+**Last Updated:** December 31, 2025
+
+---
+
+## Français
+
+### Objectif
+
+Ce document décrit les étapes recommandées pour déployer l’application en production (configuration d’environnement, droits, HTTPS, et vérifications).
+
+### 1) Configuration d’environnement
+
+- Copier `.env.example` vers `.env`
+
+Linux/macOS :
+
+```bash
+cp .env.example .env
+```
+
+Windows (PowerShell) :
+
+```powershell
+Copy-Item .env.example .env
+```
+
+- Renseigner les variables (`APP_ENV`, `DB_*`, `SMTP_*`) avec des valeurs de production.
+
+### 2) Droits fichiers
+
+- Sous Linux, utiliser `chmod`/`chown`.
+- Sous Windows, utiliser les ACL NTFS : le serveur web doit pouvoir écrire dans `uploads/` et `logs/`.
+- Protéger `.env` (pas de lecture inutile, ne jamais le versionner).
+
+### 3) HTTPS
+
+- Installer un certificat SSL (Let’s Encrypt, ou certificat fourni)
+- Activer la redirection HTTPS + HSTS si applicable
+
+### 4) Vérifications après déploiement
+
+- Tester les routes, l’envoi d’e-mails, les uploads, et la protection CSRF

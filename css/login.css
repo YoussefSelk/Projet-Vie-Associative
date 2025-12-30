@@ -1,0 +1,286 @@
+/* ================================================
+   Login Page Styles
+   ================================================ */
+
+/* Auth Buttons (Connexion & Inscription) */
+.button-container a .login-button,
+.button-container .login-button {
+  padding: 14px 40px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.button-container a .login-button:hover,
+.button-container .login-button:hover {
+  background-color: #0052a3;
+  box-shadow: 0 6px 16px rgba(0, 102, 204, 0.5);
+  transform: translateY(-3px);
+}
+
+.button-container a .signup-button,
+.button-container .signup-button {
+  padding: 14px 40px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  background-color: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+  letter-spacing: 0.5px;
+}
+
+.button-container a .signup-button:hover,
+.button-container .signup-button:hover {
+  background-color: #0052a3;
+  box-shadow: 0 6px 16px rgba(0, 102, 204, 0.5);
+  transform: translateY(-3px);
+}
+
+.login-container {
+  max-width: 400px;
+  margin: 40px auto;
+}
+
+.login-box {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.login-box h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #0066cc;
+}
+
+.login-links {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.login-links a {
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.login-links a:hover {
+  text-decoration: underline;
+}
+
+.cases-form {
+  border-bottom: 1px solid rgb(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    margin: 20px auto;
+  }
+
+  .login-box {
+    padding: 15px;
+  }
+
+  .button-container a .login-button,
+  .button-container .login-button,
+  .button-container a .signup-button,
+  .button-container .signup-button {
+    padding: 12px 30px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    max-width: 90%;
+    margin: 10px auto;
+  }
+
+  .login-box {
+    padding: 10px;
+  }
+
+  .login-box h2 {
+    font-size: 1.2rem;
+  }
+
+  .button-container a .login-button,
+  .button-container .login-button,
+  .button-container a .signup-button,
+  .button-container .signup-button {
+    padding: 12px 25px;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+}
+
+/* ================================================
+   Modern Auth Card
+   ================================================ */
+
+.auth-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  max-width: 450px;
+  margin: 40px auto;
+}
+
+.auth-card.auth-card-wide {
+  max-width: 600px;
+}
+
+.auth-header {
+  background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+  padding: 40px 30px;
+  text-align: center;
+  color: white;
+}
+
+.auth-header i {
+  font-size: 4rem;
+  margin-bottom: 15px;
+  opacity: 0.9;
+}
+
+.auth-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  color: white;
+}
+
+.auth-header p {
+  opacity: 0.85;
+  font-size: 1rem;
+}
+
+.auth-body {
+  padding: 30px;
+}
+
+.auth-form .form-group {
+  margin-bottom: 20px;
+}
+
+.auth-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.auth-form label i {
+  margin-right: 8px;
+  color: #0066cc;
+}
+
+.btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+.auth-links {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: #0066cc;
+  cursor: pointer;
+  font-size: 0.95rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+  color: #666;
+}
+
+.auth-footer a {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Form Hints */
+.form-hint {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 5px;
+  display: block;
+}
+
+/* Check Icons */
+.check-icon {
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.check-icon.valid {
+  color: #28a745;
+}
+
+.check-icon.invalid {
+  color: #dc3545;
+}
+
+/* Text Center */
+.text-center {
+  text-align: center;
+}
+
+@media (max-width: 576px) {
+  .auth-card {
+    margin: 20px;
+    border-radius: 12px;
+  }
+
+  .auth-header {
+    padding: 30px 20px;
+  }
+
+  .auth-header i {
+    font-size: 3rem;
+  }
+
+  .auth-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .auth-body {
+    padding: 20px;
+  }
+}

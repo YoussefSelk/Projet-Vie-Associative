@@ -1,0 +1,326 @@
+/* ================================================
+   Clubs & Events List Page Styles
+   ================================================ */
+
+.item-list {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .item-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .item-list {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .item-list {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+.item-card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.item-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.item-card-header {
+  background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+  color: white;
+  padding: 15px;
+}
+
+.item-card-header h3 {
+  margin: 0;
+  color: white;
+  font-size: 1.3rem;
+}
+
+.item-card-body {
+  padding: 15px;
+}
+
+.item-card-body p {
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.item-card-footer {
+  padding: 10px 15px;
+  background-color: #f9f9f9;
+  text-align: right;
+  border-top: 1px solid #ddd;
+}
+
+.item-card-footer a {
+  color: #0066cc;
+  text-decoration: none;
+  margin-left: 10px;
+}
+
+.item-card-footer a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .item-list {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .item-list {
+    grid-template-columns: 1fr;
+  }
+
+  .item-card-header h3 {
+    font-size: 1.1rem;
+  }
+}
+
+/* ================================================
+   Club Detail View - Members List
+   ================================================ */
+
+.club-detail-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.club-header {
+  padding: 40px 30px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.club-icon-large {
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #ffffff;
+}
+
+.club-icon-large img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.club-header h1 {
+  color: #ffffff;
+  margin-bottom: 15px;
+  font-size: 2rem;
+}
+
+.club-badges {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.club-badges .badge-light {
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+
+.club-body {
+  padding: 30px;
+}
+
+.club-section {
+  margin-bottom: 25px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #eee;
+}
+
+.club-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.club-section h3 {
+  color: #0066cc;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.club-description {
+  color: #555;
+  line-height: 1.7;
+}
+
+/* Members List */
+.members-list {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.member-item:hover {
+  background: #f0f4f8;
+  transform: translateX(3px);
+}
+
+.member-avatar {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, #0066cc, #4cc9f0);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.member-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.member-role {
+  font-size: 0.8rem;
+  color: #0066cc;
+  background: #e8f4fc;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+/* Events List in Club View */
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-link {
+  text-decoration: none;
+}
+
+.event-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border-left: 3px solid #0066cc;
+}
+
+.event-item:hover {
+  background: #e8f4fc;
+}
+
+.event-date {
+  font-size: 0.85rem;
+  color: #666;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+.event-title {
+  color: #333;
+  font-weight: 500;
+}
+
+.club-remarks {
+  background: #fff8e5;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+  color: #665500;
+}
+
+.club-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .club-header {
+    padding: 30px 20px;
+  }
+
+  .club-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .club-body {
+    padding: 20px;
+  }
+
+  .members-list {
+    grid-template-columns: 1fr;
+  }
+
+  .club-actions {
+    flex-direction: column;
+  }
+
+  .club-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+}

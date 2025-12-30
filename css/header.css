@@ -1,0 +1,475 @@
+/* ================================================
+   Modern Header Styles - Professional Design
+   ================================================ */
+
+/* Top Bar */
+.top-bar {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 8px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.top-bar-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.top-bar-left,
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.top-link {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.top-link:hover {
+  color: #4cc9f0;
+}
+
+.user-welcome {
+  color: #4cc9f0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Main Header */
+.main-header {
+  background: linear-gradient(135deg, #0066cc 0%, #004080 50%, #002855 100%);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+}
+
+/* Logo */
+.header-logo {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
+}
+
+.header-logo .logo-img {
+  height: 55px;
+  width: auto;
+  filter: brightness(0) invert(1);
+}
+
+/* Title */
+.header-title {
+  flex: 1;
+  text-align: center;
+}
+
+.header-title h1 {
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.header-title p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  margin: 4px 0 0;
+  font-weight: 400;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.header-btn-outline {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.6);
+  color: white;
+}
+
+.header-btn-outline:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: white;
+  transform: translateY(-2px);
+}
+
+.header-btn-primary {
+  background: linear-gradient(135deg, #4cc9f0 0%, #00b4d8 100%);
+  color: #002855;
+  border: none;
+  box-shadow: 0 4px 15px rgba(76, 201, 240, 0.4);
+}
+
+.header-btn-primary:hover {
+  background: linear-gradient(135deg, #7dd8f5 0%, #4cc9f0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 201, 240, 0.5);
+}
+
+/* User Menu Dropdown */
+.user-menu-dropdown {
+  position: relative;
+}
+
+.user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #4cc9f0 0%, #00b4d8 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #002855;
+}
+
+.user-name {
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  min-width: 220px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.user-dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  color: #333;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background: #f0f7ff;
+  color: #0066cc;
+}
+
+.dropdown-item i {
+  width: 18px;
+  text-align: center;
+  color: #666;
+}
+
+.dropdown-item:hover i {
+  color: #0066cc;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: #eee;
+  margin: 5px 0;
+}
+
+.logout-item {
+  color: #dc3545;
+}
+
+.logout-item:hover {
+  background: #fff5f5;
+  color: #dc3545;
+}
+
+.logout-item i {
+  color: #dc3545;
+}
+
+.dropdown-form {
+  margin: 0;
+}
+
+/* Quick Actions Bar */
+.quick-actions-bar {
+  background: linear-gradient(135deg, #002855 0%, #001a3a 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.quick-actions-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.quick-actions-scroll {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 10px 0;
+}
+
+.quick-actions-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-action-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.quick-action-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.quick-action-item.highlight {
+  background: rgba(76, 201, 240, 0.15);
+  color: #4cc9f0;
+}
+
+.quick-action-item.highlight:hover {
+  background: rgba(76, 201, 240, 0.25);
+}
+
+.quick-action-item i {
+  font-size: 1rem;
+}
+
+.action-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #ff4757;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* Mobile Toggle */
+.header-mobile-toggle {
+  display: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.header-mobile-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ================================================
+   Responsive Design
+   ================================================ */
+
+@media (max-width: 1024px) {
+  .header-title h1 {
+    font-size: 1.5rem;
+  }
+
+  .header-title p {
+    font-size: 0.85rem;
+  }
+
+  .header-logo .logo-img {
+    height: 45px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-bar {
+    display: none;
+  }
+
+  .header-container {
+    padding: 12px 15px;
+    gap: 15px;
+  }
+
+  .header-logo .logo-img {
+    height: 40px;
+  }
+
+  .header-title {
+    display: none;
+  }
+
+  .header-actions {
+    display: none;
+  }
+
+  .header-mobile-toggle {
+    display: flex;
+  }
+
+  .main-header.mobile-open .header-actions {
+    display: flex;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #002855;
+    padding: 15px;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .main-header.mobile-open .header-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .quick-actions-bar {
+    padding: 0;
+  }
+
+  .quick-actions-container {
+    padding: 0 10px;
+  }
+
+  .quick-action-item {
+    padding: 12px 15px;
+    font-size: 0.85rem;
+  }
+
+  .quick-action-item span {
+    display: none;
+  }
+
+  .quick-action-item i {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    padding: 10px;
+  }
+
+  .header-logo .logo-img {
+    height: 35px;
+  }
+
+  .user-name {
+    display: none;
+  }
+
+  .user-menu-btn {
+    padding: 6px 10px;
+  }
+}
+
+/* ================================================
+   Legacy Support (keeping old classes working)
+   ================================================ */
+
+.banner {
+  display: none;
+}
+
+.button-container {
+  display: none;
+}

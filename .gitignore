@@ -1,0 +1,28 @@
+# Uploads directory (user content)
+uploads/*
+!uploads/.gitkeep
+
+# Environment file (contains secrets)
+.env
+
+# Logs directory
+logs/*
+!logs/.gitkeep
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Composer dependencies (if using)
+vendor/
+
+# Debug/test files - should not be deployed
+health-check.php
+route-tester.php

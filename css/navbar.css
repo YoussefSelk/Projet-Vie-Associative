@@ -158,15 +158,20 @@
 .nav-mobile-toggle {
   display: none;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: 5px;
   padding: 12px;
   background: transparent;
   border: none;
   cursor: pointer;
   margin-left: auto;
+  width: 48px;
+  height: 48px;
 }
 
 .toggle-bar {
+  display: block;
   width: 24px;
   height: 3px;
   background: #475569;

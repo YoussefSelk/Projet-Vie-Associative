@@ -49,8 +49,9 @@ class Validation {
     }
     
     public function rejectClub($club_id, $remarques_refus = '') {
-        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_finale = -1, remarques_refus = ? WHERE club_id = ?");
-        return $stmt->execute([$remarques_refus, $club_id]);
+        // Note: remarques stored separately if needed, just mark as rejected
+        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_finale = -1 WHERE club_id = ?");
+        return $stmt->execute([$club_id]);
     }
 
     // Event Validation
@@ -95,7 +96,7 @@ class Validation {
     }
     
     public function rejectEvent($event_id, $remarques_refus = '') {
-        $stmt = $this->db->prepare("UPDATE fiche_event SET validation_finale = -1, remarques_refus = ? WHERE event_id = ?");
+        $stmt = $this->db->prepare("UPDATE fiche_event SET validation_finale = -1, remarques = ? WHERE event_id = ?");
         return $stmt->execute([$remarques_refus, $event_id]);
     }
     

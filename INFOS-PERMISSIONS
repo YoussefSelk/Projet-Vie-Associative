@@ -1,5 +1,6 @@
-1: Utilisateurs
-2: Tuteurs
-3: BDE
+0: Invité (Guest) - Non connecté
+1: Utilisateurs - Étudiants connectés
+2: Tuteurs - Enseignants tuteurs de clubs
+3: BDE - Bureau des Étudiants
 4: Personnels administratifs
-5: Administrateurs
+5: Administrateurs - Accès complet

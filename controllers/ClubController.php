@@ -10,6 +10,7 @@ class ClubController {
     }
 
     public function listClubs() {
+        // Admin only - for club management
         checkPermission(3);
         
         $clubs = $this->clubModel->getAllValidatedClubs();
@@ -315,8 +316,6 @@ class ClubController {
                 u.prenom,
                 u.mail,
                 u.promo,
-                u.specialite,
-                mc.role,
                 mc.date_adhesion,
                 t.nom as tuteur_nom,
                 t.prenom as tuteur_prenom
@@ -325,7 +324,7 @@ class ClubController {
             LEFT JOIN fiche_club fc ON mc.club_id = fc.club_id
             LEFT JOIN users t ON fc.tuteur_id = t.id
             WHERE mc.club_id = ? AND mc.valide = 1
-            ORDER BY mc.role DESC, u.nom ASC
+            ORDER BY u.nom ASC
         ");
         $stmt->execute([$club_id]);
         $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -360,8 +359,6 @@ class ClubController {
             'Prénom',
             'Email',
             'Promotion',
-            'Spécialité',
-            'Rôle',
             'Date d\'adhésion',
             'Tuteur du club'
         ], ';'); // Use semicolon for French Excel
@@ -373,8 +370,6 @@ class ClubController {
                 $member['prenom'] ?? '',
                 $member['mail'] ?? '',
                 $member['promo'] ?? '',
-                $member['specialite'] ?? '',
-                $member['role'] ?? 'membre',
                 $member['date_adhesion'] ? date('d/m/Y', strtotime($member['date_adhesion'])) : '',
                 $tutor_name
             ], ';');

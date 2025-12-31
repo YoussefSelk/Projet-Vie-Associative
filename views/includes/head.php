@@ -17,9 +17,12 @@
     <link rel="stylesheet" href="/css/calendar.css">
     <link rel="stylesheet" href="/css/footer.css">
     <link rel="stylesheet" href="/css/admin.css">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/search.css">
+    <!-- FontAwesome Icons (Local) -->
+    <link rel="stylesheet" href="/assets/lib/fontawesome/css/all.min.css">
     <!-- Chart.js for Admin Dashboard -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Search Component -->
+    <script src="/assets/js/search.js" defer></script>
     <title>Vie Étudiante à l'EILCO</title>
 </head>

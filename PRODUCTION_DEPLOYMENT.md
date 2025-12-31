@@ -9,7 +9,17 @@
 
 ## Pre-Deployment Checklist
 
-### 1. Environment Configuration
+### 1. Install Dependencies
+
+1. **Install Composer dependencies:**
+
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   ```
+
+   This installs `vlucas/phpdotenv` for environment variable management.
+
+### 2. Environment Configuration
 
 1. **Copy the environment file:**
 
@@ -35,20 +45,25 @@
    DB_USER=your_database_user
    DB_PASS=your_secure_password
 
-   SMTP_HOST=your_smtp_host
-   SMTP_PORT=465
-   SMTP_USER=your_email@domain.com
-   SMTP_PASS=your_email_password
-   SMTP_FROM_NAME=Your App Name
+   MAIL_HOST=your_smtp_host
+   MAIL_PORT=587
+   MAIL_USERNAME=your_email@domain.com
+   MAIL_PASSWORD=your_email_password
+   MAIL_FROM=noreply@yourdomain.com
+   MAIL_FROM_NAME="Your App Name"
+   MAIL_ENCRYPTION=tls
+
+   SESSION_LIFETIME=3600
+   CSRF_LIFETIME=1800
    ```
 
-### 2. Database Setup
+### 3. Database Setup
 
 1. Create your production database
 2. Import the database schema
 3. Ensure the database user has only necessary permissions (SELECT, INSERT, UPDATE, DELETE)
 
-### 3. File Permissions
+### 4. File Permissions
 
 Set secure file permissions:
 
@@ -77,14 +92,14 @@ icacls .\logs /grant "IIS_IUSRS:(OI)(CI)M" /T
 icacls .\.env /inheritance:r
 ```
 
-### 4. SSL Certificate
+### 5. SSL Certificate
 
 1. Install an SSL certificate (Let's Encrypt is free)
 2. Update `.htaccess` to enable HTTPS redirect:
    - Uncomment the HTTPS redirect rules
    - Uncomment the HSTS header
 
-### 5. Remove Debug Files
+### 6. Remove Debug Files
 
 Delete or restrict access to these files in production:
 
@@ -93,7 +108,7 @@ Delete or restrict access to these files in production:
 
 These are already blocked by `.htaccess`, but consider removing them entirely.
 
-### 6. Apache/Nginx Configuration
+### 7. Apache/Nginx Configuration
 
 #### Apache (mod_rewrite required)
 
@@ -173,9 +188,9 @@ server {
 }
 ```
 
-### 7. PHP Configuration (php.ini)
+### 8. PHP Configuration (php.ini)
 
-Recommended production settings:
+Recommended production settings (PHP 8.0+ required):
 
 ```ini
 # Disable error display

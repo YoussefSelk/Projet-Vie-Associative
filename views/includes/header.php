@@ -37,14 +37,25 @@ if(isset($_SESSION['id'])){
     $nb_badge_admin = $nb_events_admin + $nb_clubs_admin;
 
     // Récupérer le nombre de demandes de tutorat en attente de validation
-    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE (validation_tuteur IS NULL) AND tuteur = ?");
-    $req->execute([$_SESSION['id']]);
+    // Admins (permission 5) see all pending items, tutors only see their clubs
+    if (($_SESSION['permission'] ?? 0) == 5) {
+        $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE validation_tuteur IS NULL");
+        $req->execute();
+    } else {
+        $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE (validation_tuteur IS NULL) AND tuteur = ?");
+        $req->execute([$_SESSION['id']]);
+    }
     $row = $req->fetchAll();
     $nb_clubs_tuteur = $row[0]['total'];
 
     // Récupérer le nombre de fiches event en attente de validation
-    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event f LEFT JOIN fiche_club fc ON fc.club_id = f.club_orga WHERE (f.validation_tuteur IS NULL) AND fc.tuteur = ?");
-    $req->execute([$_SESSION['id']]);
+    if (($_SESSION['permission'] ?? 0) == 5) {
+        $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event f WHERE f.validation_tuteur IS NULL");
+        $req->execute();
+    } else {
+        $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event f LEFT JOIN fiche_club fc ON fc.club_id = f.club_orga WHERE (f.validation_tuteur IS NULL) AND fc.tuteur = ?");
+        $req->execute([$_SESSION['id']]);
+    }
     $row = $req->fetchAll();
     $nb_events_tuteur = $row[0]['total'];
 
@@ -60,14 +71,6 @@ else {
     $nb_badge_admin = 0;
     $nb_badge_tuteur = 0;
     $current_user = null;
-}
-
-// Handle logout
-if (isset($_POST['logout'])) {
-    session_unset();
-    session_destroy();
-    header("Location: /");
-    exit();
 }
 ?>
 
@@ -124,6 +127,9 @@ if (isset($_POST['logout'])) {
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="user-dropdown-menu" id="userDropdown">
+                        <a href="?page=dashboard" class="dropdown-item">
+                            <i class="fas fa-tachometer-alt"></i> Mon Tableau de bord
+                        </a>
                         <a href="?page=profile" class="dropdown-item">
                             <i class="fas fa-user"></i> Mon Profil
                         </a>
@@ -136,12 +142,9 @@ if (isset($_POST['logout'])) {
                             <i class="fas fa-bookmark"></i> Mes Inscriptions
                         </a>
                         <div class="dropdown-divider"></div>
-                        <form method="post" class="dropdown-form">
-                            <?= Security::csrfField() ?>
-                            <button type="submit" name="logout" class="dropdown-item logout-item">
-                                <i class="fas fa-sign-out-alt"></i> Déconnexion
-                            </button>
-                        </form>
+                        <a href="?page=logout" class="dropdown-item logout-item">
+                            <i class="fas fa-sign-out-alt"></i> Déconnexion
+                        </a>
                     </div>
                 </div>
             <?php else: ?>
@@ -193,29 +196,102 @@ if (isset($_POST['logout'])) {
                 <span>Événements</span>
             </a>
             
-            <a href="?page=club-list" class="quick-action-item">
-                <i class="fas fa-users"></i>
-                <span>Clubs</span>
-            </a>
-            
             <?php if ($current_user && $current_user['permission'] >= 3): ?>
-                <a href="?page=admin" class="quick-action-item highlight">
-                    <i class="fas fa-cog"></i>
-                    <span>Gestion</span>
-                    <?php if ($nb_badge_admin > 0): ?>
-                        <span class="action-badge"><?= $nb_badge_admin ?></span>
-                    <?php endif; ?>
-                </a>
+                <!-- Administration Dropdown -->
+                <div class="quick-action-dropdown">
+                    <button class="quick-action-item highlight" onclick="toggleQuickDropdown(this)">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Administration</span>
+                        <?php if ($nb_badge_admin > 0): ?>
+                            <span class="action-badge"><?= $nb_badge_admin ?></span>
+                        <?php endif; ?>
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    </button>
+                    <div class="quick-dropdown-menu">
+                        <a href="?page=admin" class="quick-dropdown-item">
+                            <i class="fas fa-tachometer-alt"></i>
+                            Dashboard
+                        </a>
+                        <a href="?page=pending-clubs" class="quick-dropdown-item">
+                            <i class="fas fa-building"></i>
+                            Clubs en attente
+                            <?php if ($nb_clubs_admin > 0): ?>
+                                <span class="dropdown-badge"><?= $nb_clubs_admin ?></span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="?page=pending-events" class="quick-dropdown-item">
+                            <i class="fas fa-calendar-check"></i>
+                            Événements en attente
+                            <?php if ($nb_events_admin > 0): ?>
+                                <span class="dropdown-badge"><?= $nb_events_admin ?></span>
+                            <?php endif; ?>
+                        </a>
+                        <a href="?page=event-analytics" class="quick-dropdown-item">
+                            <i class="fas fa-chart-bar"></i>
+                            Analytics
+                        </a>
+                        <a href="?page=admin-reports" class="quick-dropdown-item">
+                            <i class="fas fa-chart-line"></i>
+                            Rapports
+                        </a>
+                        <a href="?page=club-list" class="quick-dropdown-item">
+                            <i class="fas fa-users"></i>
+                            Gérer les clubs
+                        </a>
+                        <?php if ($current_user['permission'] >= 5): ?>
+                            <div class="dropdown-divider"></div>
+                            <a href="?page=admin-users" class="quick-dropdown-item">
+                                <i class="fas fa-users-cog"></i>
+                                Utilisateurs
+                            </a>
+                            <a href="?page=admin-audit" class="quick-dropdown-item">
+                                <i class="fas fa-history"></i>
+                                Audit & Sécurité
+                            </a>
+                            <a href="?page=admin-database" class="quick-dropdown-item">
+                                <i class="fas fa-database"></i>
+                                Base de données
+                            </a>
+                            <a href="?page=admin-settings" class="quick-dropdown-item">
+                                <i class="fas fa-cog"></i>
+                                Paramètres
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
             <?php endif; ?>
             
-            <?php if(!empty($req_clubs) || $_SESSION['permission'] == 5): ?>
-                <a href="?page=tutoring" class="quick-action-item highlight">
-                    <i class="fas fa-user-graduate"></i>
-                    <span>Tutorat</span>
-                    <?php if ($nb_badge_tuteur > 0): ?>
-                        <span class="action-badge"><?= $nb_badge_tuteur ?></span>
-                    <?php endif; ?>
-                </a>
+            <?php if(!empty($req_clubs) || (isset($_SESSION['permission']) && $_SESSION['permission'] >= 2)): ?>
+                <!-- Tutorat Dropdown -->
+                <div class="quick-action-dropdown">
+                    <button class="quick-action-item" onclick="toggleQuickDropdown(this)">
+                        <i class="fas fa-user-graduate"></i>
+                        <span>Tutorat</span>
+                        <?php if ($nb_badge_tuteur > 0): ?>
+                            <span class="action-badge"><?= $nb_badge_tuteur ?></span>
+                        <?php endif; ?>
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    </button>
+                    <div class="quick-dropdown-menu">
+                        <a href="?page=tutoring" class="quick-dropdown-item">
+                            <i class="fas fa-tasks"></i>
+                            Validations
+                            <?php if ($nb_badge_tuteur > 0): ?>
+                                <span class="dropdown-badge"><?= $nb_badge_tuteur ?></span>
+                            <?php endif; ?>
+                        </a>
+                        <?php if(!empty($req_clubs)): ?>
+                            <div class="dropdown-divider"></div>
+                            <span class="dropdown-header">Mes clubs tutorés</span>
+                            <?php foreach($req_clubs as $c): ?>
+                                <a href="?page=club-view&id=<?= $c['club_id'] ?>" class="quick-dropdown-item">
+                                    <i class="fas fa-building"></i>
+                                    <?= htmlspecialchars($c['nom_club']) ?>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
             <?php endif; ?>
         </div>
     </div>
@@ -233,12 +309,31 @@ function toggleMobileHeader() {
     header.classList.toggle('mobile-open');
 }
 
+function toggleQuickDropdown(button) {
+    const dropdown = button.closest('.quick-action-dropdown');
+    const isOpen = dropdown.classList.contains('open');
+    
+    // Close all other dropdowns
+    document.querySelectorAll('.quick-action-dropdown.open').forEach(d => {
+        if (d !== dropdown) d.classList.remove('open');
+    });
+    
+    dropdown.classList.toggle('open');
+}
+
 // Close dropdown when clicking outside
 document.addEventListener('click', function(e) {
     const userMenu = document.querySelector('.user-menu-dropdown');
     const dropdown = document.getElementById('userDropdown');
     if (userMenu && dropdown && !userMenu.contains(e.target)) {
         dropdown.classList.remove('show');
+    }
+    
+    // Close quick action dropdowns
+    if (!e.target.closest('.quick-action-dropdown')) {
+        document.querySelectorAll('.quick-action-dropdown.open').forEach(d => {
+            d.classList.remove('open');
+        });
     }
 });
 </script>

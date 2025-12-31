@@ -14,7 +14,8 @@ class SubscriptionController {
     public function subscribe() {
         validateSession();
         
-        $event_id = $_POST['event_id'] ?? null;
+        // Support both GET and POST requests
+        $event_id = $_GET['event_id'] ?? $_POST['event_id'] ?? null;
         if (!$event_id) {
             redirect('index.php');
         }
@@ -28,18 +29,30 @@ class SubscriptionController {
             $this->subscriptionModel->subscribeToEvent($event_id, $_SESSION['id']);
         }
 
+        // Redirect back to referrer or event page
+        $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        if ($referer && strpos($referer, 'localhost') !== false) {
+            redirect($referer);
+        }
         redirect('index.php?page=event-view&id=' . $event_id);
     }
 
     public function unsubscribe() {
         validateSession();
         
-        $event_id = $_POST['event_id'] ?? null;
+        // Support both GET and POST requests
+        $event_id = $_GET['event_id'] ?? $_POST['event_id'] ?? null;
         if (!$event_id) {
             redirect('index.php');
         }
 
         $this->subscriptionModel->unsubscribeFromEvent($event_id, $_SESSION['id']);
+        
+        // Redirect back to referrer or event page
+        $referer = $_SERVER['HTTP_REFERER'] ?? null;
+        if ($referer && strpos($referer, 'localhost') !== false) {
+            redirect($referer);
+        }
         redirect('index.php?page=event-view&id=' . $event_id);
     }
 

@@ -1,5 +1,7 @@
 <?php
 // Requêtes pour récupérer les clubs de chaque site, triés par date de création
+$isAuth_NAVBAR = AuthController::isAuthenticated();
+$auth_permission_NAVBAR = AuthController::getPermission();
 
 $req0 = $db->prepare("SELECT club_id, nom_club FROM fiche_club WHERE campus = 'Calais' AND validation_finale = 1");
 $req0->execute();
@@ -76,22 +78,23 @@ $campuses = [
                 <?php endif; ?>
             </li>
             <?php endforeach; ?>
-            
-            <!-- Events Link -->
-            <li class="nav-item">
-                <a href="?page=event-list" class="nav-link">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Événements</span>
-                </a>
-            </li>
-            
-            <!-- All Clubs Link -->
-            <li class="nav-item">
-                <a href="?page=club-list" class="nav-link">
-                    <i class="fas fa-th-large"></i>
-                    <span>Tous les clubs</span>
-                </a>
-            </li>
+            <?php if ($isAuth_NAVBAR): ?>
+                <!-- Events Link -->
+                <li class="nav-item">
+                    <a href="?page=event-list" class="nav-link">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Événements</span>
+                    </a>
+                </li>
+                
+                <!-- All Clubs Link -->
+                <li class="nav-item">
+                    <a href="?page=club-list" class="nav-link">
+                        <i class="fas fa-th-large"></i>
+                        <span>Tous les clubs</span>
+                    </a>
+                </li>
+            <?php endif; ?>
         </ul>
     </div>
 </nav>

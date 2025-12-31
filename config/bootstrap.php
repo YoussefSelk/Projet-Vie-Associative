@@ -6,6 +6,8 @@ define('MODELS_PATH', ROOT_PATH . '/models');
 define('CONTROLLERS_PATH', ROOT_PATH . '/controllers');
 define('VIEWS_PATH', ROOT_PATH . '/views');
 define('CONFIG_PATH', __DIR__);
+define('LOGS_PATH', ROOT_PATH . '/logs');
+define('UPLOADS_PATH', ROOT_PATH . '/uploads');
 
 // Load environment configuration
 require_once CONFIG_PATH . '/Environment.php';

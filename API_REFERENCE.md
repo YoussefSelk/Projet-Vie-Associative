@@ -9,18 +9,141 @@
 
 ## Table of Contents
 
-1. [User Model & Controller](#user)
-2. [Club Model & Controller](#club)
-3. [Event Model & Controller](#event)
-4. [Authentication Controller](#auth)
-5. [Validation Model & Controller](#validation)
-6. [Event Subscription](#subscription)
+1. [Router Class](#router)
+2. [Environment Class](#environment)
+3. [ErrorHandler Class](#errorhandler)
+4. [User Model & Controller](#user)
+5. [Club Model & Controller](#club)
+6. [Event Model & Controller](#event)
+7. [Admin Controller](#admin)
+8. [Authentication Controller](#auth)
+9. [Validation Model & Controller](#validation)
+10. [Event Subscription](#subscription)
 
 ### Global Notes
 
-- Routing is query-string based: `index.php?page=...`.
+- Routing is handled by the `Router` class loading routes from `routes/web.php`
 - Authentication is session-based.
 - **CSRF**: every **POST** route requires a valid `csrf_token`, except `login` and `register`.
+- Environment configuration via `.env` file using `vlucas/phpdotenv`
+
+---
+
+## Router Class {#router}
+
+The Router class handles all URL routing and dispatching to controllers.
+
+### Methods
+
+#### `dispatch()`
+
+Dispatches the current request to the appropriate controller/action.
+
+```php
+$router = new Router($db);
+$router->dispatch();
+```
+
+#### `getPage()`
+
+Returns the sanitized page parameter from URL.
+
+```php
+$page = $router->getPage();  // e.g., 'home', 'profile'
+```
+
+#### `hasRoute($page)`
+
+Checks if a route exists.
+
+```php
+if ($router->hasRoute('admin-dashboard')) { ... }
+```
+
+---
+
+## Environment Class {#environment}
+
+Manages environment variables using `vlucas/phpdotenv`.
+
+### Methods
+
+#### `Environment::get($key, $default)`
+
+Get an environment variable.
+
+```php
+$dbHost = Environment::get('DB_HOST', 'localhost');
+$debug = Environment::get('APP_DEBUG', 'false');
+```
+
+#### `Environment::isProduction()`
+
+Check if running in production.
+
+```php
+if (Environment::isProduction()) {
+    // Production-only code
+}
+```
+
+#### `Environment::isDebug()`
+
+Check if debug mode is enabled.
+
+```php
+if (Environment::isDebug()) {
+    // Show debug info
+}
+```
+
+#### `Environment::getDbConfig()`
+
+Get database configuration array.
+
+```php
+$config = Environment::getDbConfig();
+// ['host' => '...', 'name' => '...', 'user' => '...', 'pass' => '...']
+```
+
+#### `Environment::getMailConfig()`
+
+Get mail configuration array.
+
+```php
+$mail = Environment::getMailConfig();
+// ['host' => '...', 'port' => 587, 'username' => '...', ...]
+```
+
+---
+
+## ErrorHandler Class {#errorhandler}
+
+Centralized error and exception handling with custom error pages.
+
+### Methods
+
+#### `ErrorHandler::renderHttpError($code, $message)`
+
+Render a custom HTTP error page.
+
+```php
+ErrorHandler::renderHttpError(404);
+ErrorHandler::renderHttpError(403, 'Access denied to this resource');
+ErrorHandler::renderHttpError(500);
+ErrorHandler::renderHttpError(503);
+```
+
+### Custom Error Pages
+
+| Code | File                          | Description                 |
+| ---- | ----------------------------- | --------------------------- |
+| 403  | `views/errors/403.php`        | Access Denied               |
+| 404  | `views/errors/404.php`        | Not Found                   |
+| 500  | `views/errors/500.php`        | Server Error                |
+| 503  | `views/errors/503.php`        | Service Unavailable         |
+| Dev  | `views/errors/error_dev.php`  | Debug page with stack trace |
+| Prod | `views/errors/error_prod.php` | User-friendly error         |
 
 ---
 
@@ -328,6 +451,48 @@ $success = $events->deleteEvent(1);
 
 ---
 
+## Admin Controller {#admin}
+
+### Routes
+
+#### Route: `?page=admin-dashboard`
+
+**Method:** GET
+**Description:** Admin dashboard with statistics
+**Permissions:** Admin (level 3+)
+
+#### Route: `?page=admin-users`
+
+**Method:** GET
+**Description:** User management panel
+**Permissions:** Admin (level 3+)
+
+#### Route: `?page=admin-user-view&id=X`
+
+**Method:** GET
+**Description:** View user details
+**Permissions:** Admin (level 3+)
+
+#### Route: `?page=admin-reports`
+
+**Method:** GET
+**Description:** View system reports
+**Permissions:** Admin (level 3+)
+
+#### Route: `?page=admin-database`
+
+**Method:** GET
+**Description:** Database management interface
+**Permissions:** Super Admin (level 4)
+
+#### Route: `?page=admin-audit`
+
+**Method:** GET
+**Description:** Audit log viewer
+**Permissions:** Super Admin (level 4)
+
+---
+
 ## Authentication Controller {#auth}
 
 ### Routes
@@ -537,6 +702,33 @@ sendEmail('user@example.com', 'Welcome!', 'Hello there!');
 ---
 
 ## Error Handling
+
+### ErrorHandler Class
+
+The `ErrorHandler` class in `config/ErrorHandler.php` provides centralized error management:
+
+```php
+// Render HTTP error pages
+ErrorHandler::renderHttpError(404);  // Not Found
+ErrorHandler::renderHttpError(403, 'Custom message');  // Forbidden
+ErrorHandler::renderHttpError(500);  // Server Error
+ErrorHandler::renderHttpError(503);  // Service Unavailable
+```
+
+### Custom Error Pages
+
+Professional error pages are located in `views/errors/`:
+
+| File             | Description       | Theme                     |
+| ---------------- | ----------------- | ------------------------- |
+| `error_prod.php` | Production errors | Animated grid, particles  |
+| `error_dev.php`  | Development debug | Stack trace, code preview |
+| `403.php`        | Access Denied     | Shield icon               |
+| `404.php`        | Not Found         | Search animation          |
+| `500.php`        | Server Error      | Rotating gears            |
+| `503.php`        | Maintenance       | Server LEDs, countdown    |
+
+### Controller Messages
 
 Controllers set error and success messages:
 

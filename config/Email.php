@@ -2,9 +2,9 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once CONFIG_PATH . '/../PHPMailer-master/src/PHPMailer.php';
-require_once CONFIG_PATH . '/../PHPMailer-master/src/SMTP.php';
-require_once CONFIG_PATH . '/../PHPMailer-master/src/Exception.php';
+require_once CONFIG_PATH . '/../assets/lib/PHPMailer-master/src/PHPMailer.php';
+require_once CONFIG_PATH . '/../assets/lib/PHPMailer-master/src/SMTP.php';
+require_once CONFIG_PATH . '/../assets/lib/PHPMailer-master/src/Exception.php';
 
 function sendEmail($to, $subject, $message) {
     // Load from environment variables

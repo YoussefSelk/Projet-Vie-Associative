@@ -1,12 +1,32 @@
 <?php
 
 class AuthController {
+
     private $userModel;
     private $db;
 
     public function __construct($database) {
         $this->db = $database;
         $this->userModel = new User($database);
+        
+    }
+
+    /**
+    * Static helper to get the current user's permission level
+    * @return int
+    */
+
+    public static function getPermission() {
+        return isset($_SESSION['permission']) ? (int)$_SESSION['permission'] : 0;
+    }
+
+    /**
+     * Static helper to check if user is authenticated
+     * @return bool
+     */
+    
+    public static function isAuthenticated() {
+        return isset($_SESSION['id']) && !empty($_SESSION['id']);
     }
 
     public function login() {
@@ -124,9 +144,24 @@ class AuthController {
     }
 
     public function logout() {
-        session_unset();
+        // Clear all session variables
+        $_SESSION = [];
+        
+        // Delete the session cookie
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params["path"], $params["domain"],
+                $params["secure"], $params["httponly"]
+            );
+        }
+        
+        // Destroy the session
         session_destroy();
-        redirect('index.php?page=login');
+        
+        // Redirect to login page
+        header('Location: index.php?page=login');
+        exit;
     }
 
     public function register() {

@@ -163,7 +163,7 @@
 .auth-header h2 {
   font-size: 1.8rem;
   margin-bottom: 10px;
-  color: white;
+  color: white !important;
 }
 
 .auth-header p {

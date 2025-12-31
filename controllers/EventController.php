@@ -10,8 +10,7 @@ class EventController {
     }
 
     public function listEvents() {
-        validateSession();
-        
+        // Public route - anyone can view events
         $events = $this->eventModel->getAllValidatedEvents();
         
         return [
@@ -20,8 +19,7 @@ class EventController {
     }
 
     public function viewEvent() {
-        validateSession();
-        
+        // Public route - anyone can view event details
         $event_id = $_GET['id'] ?? null;
         if (!$event_id) {
             redirect('index.php');
@@ -187,4 +185,6 @@ class EventController {
             'success_msg' => $success_msg
         ];
     }
+    
+    // Note: analytics() function has been moved to AdminController
 }

@@ -344,8 +344,11 @@ $mois_fr = $mois_francais[$month];
             
             const subscriptionStatus = isSubscribed(eventId);
             const bellIcon = subscriptionStatus
-            ? '<i class="fas fa-bell-slash" style="color:rgb(149, 0, 0);"></i>'
-            : '<i class="fas fa-bell" style="color: #005795;"></i>';
+                ? '<i class="fas fa-bell-slash"></i>'
+                : '<i class="fas fa-bell"></i>';
+            const bellTitle = subscriptionStatus
+                ? 'Se désabonner des notifications'
+                : 'S\'abonner aux notifications';
                     
             let subscriptionBtn;
             <?php if (isset($_SESSION['id'])): ?>
@@ -353,87 +356,124 @@ $mois_fr = $mois_francais[$month];
                     <button id="subscriptionBtn" 
                         data-event-id="${eventId}" 
                         data-is-subscribed="${subscriptionStatus}" 
-                        data-event-name="${encodeURIComponent(titre)}"
-                        style="background: none; border: none; cursor: pointer; font-size: 1.5em; position: absolute; top: 20px; right: 20px;"
+                        title="${bellTitle}"
+                        style="position: absolute; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1em; transition: all 0.2s ease; ${subscriptionStatus ? 'background: #fef2f2; color: #dc2626;' : 'background: #eff6ff; color: #2563eb;'}"
+                        onmouseover="this.style.transform='scale(1.1)'"
+                        onmouseout="this.style.transform='scale(1)'"
                         onclick="toggleSubscription(event)">
                         ${bellIcon}
                     </button>
                 `;
             <?php else: ?>
                 subscriptionBtn = `
-                    <div style="position: absolute; top: 20px; right: 20px; font-size: 0.8em; color: #777;">
-                        <i class="far fa-bell"></i> Connectez-vous pour vous abonner
-                    </div>
+                    <a href="index.php?page=login" style="position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f1f5f9; border-radius: 6px; font-size: 0.75em; color: #64748b; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                        <i class="far fa-bell"></i> Connexion
+                    </a>
                 `;
             <?php endif; ?>
         <?php else: ?>
             subscriptionBtn = `
-                <div style="position: absolute; top: 20px; right: 20px; font-size: 0.8em; color: #777;">
-                    <i class="far fa-bell"></i> Connectez-vous pour vous abonner
-                </div>
+                <a href="index.php?page=login" style="position: absolute; top: 16px; right: 16px; display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #f1f5f9; border-radius: 6px; font-size: 0.75em; color: #64748b; text-decoration: none; transition: all 0.2s ease;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+                    <i class="far fa-bell"></i> Connexion
+                </a>
             `;
         <?php endif; ?>
 
         const detailsHTML = `
-            <div style="text-align: left; direction: ltr; position: relative;">
-                <h3 style="text-align: left; padding-right: 40px;">${titre}</h3>
+            <div style="position: relative;">
                 ${subscriptionBtn}
-                <p style="text-align: left;"><strong style="display: inline-block; width: 140px;">Horaire de début:</strong> ${horaireDebut}</p>
-                <p style="text-align: left;"><strong style="display: inline-block; width: 140px;">Horaire de fin:</strong> ${horaireFin}</p>
-                <p style="text-align: left;"><strong style="display: inline-block; width: 140px;">Lieu:</strong> ${lieu}</p>
+                <h3 style="margin: 0 0 20px 0; color: #111827; font-size: 1.25em; font-weight: 600; line-height: 1.4; padding-right: 50px;">${titre}</h3>
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="width: 36px; height: 36px; background: #f0f9ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-clock" style="color: #0284c7; font-size: 0.9em;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.7em; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Horaires</div>
+                            <div style="font-weight: 500; color: #111827; font-size: 0.95em;">${horaireDebut} - ${horaireFin}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 14px;">
+                        <div style="width: 36px; height: 36px; background: #f0f9ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fas fa-map-marker-alt" style="color: #0284c7; font-size: 0.9em;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <div style="font-size: 0.7em; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">Lieu</div>
+                            <div style="font-weight: 500; color: #111827; font-size: 0.95em;">${lieu}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
 
+        // Create overlay backdrop
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.right = '0';
+        overlay.style.bottom = '0';
+        overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+        overlay.style.zIndex = '999';
+        overlay.style.backdropFilter = 'blur(2px)';
+        
         const detailsContainer = document.createElement('div');
         detailsContainer.innerHTML = detailsHTML;
         detailsContainer.style.position = 'fixed';
         detailsContainer.style.top = '50%';
         detailsContainer.style.left = '50%';
         detailsContainer.style.transform = 'translate(-50%, -50%)';
-        detailsContainer.style.padding = '20px';
-        detailsContainer.style.backgroundColor = '#fff';
-        detailsContainer.style.border = '2px solid #005795';
-        detailsContainer.style.boxShadow = '0px 4px 6px rgba(0, 0, 0, 0.1)';
+        detailsContainer.style.padding = '28px';
+        detailsContainer.style.backgroundColor = '#ffffff';
+        detailsContainer.style.border = 'none';
+        detailsContainer.style.boxShadow = '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)';
         detailsContainer.style.zIndex = '1000';
         detailsContainer.style.textAlign = 'left';
         detailsContainer.style.direction = 'ltr';
-        detailsContainer.style.borderRadius = '8px';
-        detailsContainer.style.minWidth = '300px';
+        detailsContainer.style.borderRadius = '12px';
+        detailsContainer.style.width = '380px';
+        detailsContainer.style.maxWidth = 'calc(100vw - 32px)';
 
         const closeButton = document.createElement('button');
         closeButton.innerText = 'Fermer';
-        closeButton.style.marginTop = '10px';
-        closeButton.style.backgroundColor = '#005795';
-        closeButton.style.color = 'white';
+        closeButton.style.marginTop = '24px';
+        closeButton.style.width = '100%';
+        closeButton.style.backgroundColor = '#f3f4f6';
+        closeButton.style.color = '#374151';
         closeButton.style.border = 'none';
-        closeButton.style.padding = '10px 20px';
+        closeButton.style.padding = '12px 20px';
         closeButton.style.borderRadius = '8px';
-        closeButton.style.fontSize = '1em';
+        closeButton.style.fontSize = '0.9em';
+        closeButton.style.fontWeight = '500';
         closeButton.style.cursor = 'pointer';
-        closeButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
-        closeButton.addEventListener('click', () => {
-        detailsContainer.remove();
-        // Nettoyage pour éviter réapparition après refresh
-        history.replaceState(null, '', location.pathname);
-        });
+        closeButton.style.transition = 'background-color 0.15s ease';
+        closeButton.onmouseover = () => { closeButton.style.backgroundColor = '#e5e7eb'; };
+        closeButton.onmouseout = () => { closeButton.style.backgroundColor = '#f3f4f6'; };
+        
+        const closeModal = () => {
+            detailsContainer.remove();
+            overlay.remove();
+            history.replaceState(null, '', location.pathname);
+        };
+        
+        closeButton.addEventListener('click', closeModal);
+        overlay.addEventListener('click', closeModal);
+        
         detailsContainer.appendChild(closeButton);
-
+        document.body.appendChild(overlay);
         document.body.appendChild(detailsContainer);
     }
     
     function toggleSubscription(event) {
-        event.stopPropagation(); // Empêcher la propagation de l'événement
+        event.stopPropagation();
         
         const button = event.currentTarget;
         const eventId = button.getAttribute('data-event-id');
         const isSubscribed = button.getAttribute('data-is-subscribed') === 'true';
-        const eventName = button.getAttribute('data-event-name');
         
-        // Inverser l'état d'abonnement
-        const action = isSubscribed ? 'unsubscribe' : 'subscribe';
-        
-        // Rediriger vers un script PHP qui gère l'abonnement
-        window.location.href = `subscribe_event.php?event_id=${eventId}&action=${action}&event_name=${eventName}`;
+        // Use proper routing through index.php
+        const page = isSubscribed ? 'unsubscribe' : 'subscribe';
+        window.location.href = `index.php?page=${page}&event_id=${eventId}`;
     }
 </script>
 

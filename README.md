@@ -28,10 +28,12 @@ This is a complete restructuring of the "Vie Étudiante" project into a clean MV
 
 ### Prerequisites
 
-- PHP 7.4+
+- PHP 8.0+
+- Composer
 - MySQL 5.7+ or MariaDB
 - Apache with mod_rewrite
 - PHPMailer (included)
+- vlucas/phpdotenv (installed via Composer)
 
 ### Setup
 
@@ -50,11 +52,21 @@ This is a complete restructuring of the "Vie Étudiante" project into a clean MV
 ```
 project/
 ├── .env.example        # Environment variables template
+├── composer.json        # PHP dependencies (phpdotenv)
+├── vendor/              # Composer dependencies
+│
 ├── config/              # Configuration & bootstrap
 │   ├── bootstrap.php    # Main initialization
 │   ├── Database.php     # DB connection class
 │   ├── DatabaseUtil.php # DB utilities
-│   └── Email.php        # Email functions
+│   ├── Email.php        # Email functions
+│   ├── Environment.php  # Dotenv loader + helpers
+│   ├── ErrorHandler.php # Custom error/exception handling
+│   ├── Router.php       # Centralized routing class
+│   └── Security.php     # Security headers + CSRF
+│
+├── routes/              # Route definitions
+│   └── web.php          # All application routes
 │
 ├── models/              # Data models
 │   ├── User.php
@@ -66,6 +78,7 @@ project/
 │   └── Validation.php
 │
 ├── controllers/         # Business logic
+│   ├── AdminController.php
 │   ├── AuthController.php
 │   ├── UserController.php
 │   ├── ClubController.php
@@ -75,19 +88,17 @@ project/
 │   └── HomeController.php
 │
 ├── views/              # HTML templates
-│   ├── includes/       # Shared templates
-│   ├── home_index.php
-│   ├── auth_login.php
-│   ├── user_profile.php
-│   ├── club_list.php
-│   ├── event_list.php
+│   ├── includes/       # Shared templates (head, header, footer)
+│   ├── auth/           # Login, register views
+│   ├── admin/          # Admin dashboard views
+│   ├── errors/         # Custom error pages (403, 404, 500, 503)
 │   └── [other views]
 │
 ├── uploads/            # User uploads
 ├── images/             # Static images
-├── logs/               # App/PHP logs (if enabled)
-├── index.php           # Main router
-├── css/                # Stylesheets
+├── logs/               # App/PHP logs
+├── index.php           # Entry point (uses Router)
+├── css/                # Stylesheets (professional tables, dropdowns)
 └── .htaccess          # URL rewriting
 ```
 
@@ -465,9 +476,9 @@ Project restructured to MVC architecture - 2024
 
 ---
 
-**Version:** 2.0 (MVC Restructured)
+**Version:** 3.0 (Router + Error Handling + Dotenv)
 **Last Updated:** December 31, 2025
-**PHP Version:** 7.4+
+**PHP Version:** 8.0+
 **Database:** MySQL 5.7+
 
 ---

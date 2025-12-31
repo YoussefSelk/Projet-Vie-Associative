@@ -138,34 +138,57 @@ class ValidationController {
     public function tutoring() {
         validateSession();
         
-        // Check if user is a tutor (permission level 5) or has clubs to tutor
+        $is_admin = ($_SESSION['permission'] == 5);
+        
+        // Check if user is a tutor or admin
         $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE tuteur = ?");
         $stmt->execute([$_SESSION['id']]);
         $tutored_clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        if (empty($tutored_clubs) && $_SESSION['permission'] != 5) {
+        if (empty($tutored_clubs) && !$is_admin) {
             redirect('index.php');
         }
         
         $error_msg = '';
         $success_msg = '';
         
-        // Get pending clubs for this tutor
-        $pending_clubs = $this->db->prepare("
-            SELECT * FROM fiche_club 
-            WHERE tuteur = ? AND validation_tuteur IS NULL
-        ");
-        $pending_clubs->execute([$_SESSION['id']]);
+        // Get pending clubs - admins see all, tutors see only their clubs
+        if ($is_admin) {
+            $pending_clubs = $this->db->prepare("
+                SELECT fc.*, u.nom as tuteur_nom, u.prenom as tuteur_prenom
+                FROM fiche_club fc
+                LEFT JOIN users u ON fc.tuteur = u.id
+                WHERE fc.validation_tuteur IS NULL
+            ");
+            $pending_clubs->execute();
+        } else {
+            $pending_clubs = $this->db->prepare("
+                SELECT * FROM fiche_club 
+                WHERE tuteur = ? AND validation_tuteur IS NULL
+            ");
+            $pending_clubs->execute([$_SESSION['id']]);
+        }
         $pending_clubs = $pending_clubs->fetchAll(PDO::FETCH_ASSOC);
         
-        // Get pending events for clubs tutored by this user
-        $pending_events = $this->db->prepare("
-            SELECT fe.*, fc.nom_club 
-            FROM fiche_event fe
-            INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
-            WHERE fc.tuteur = ? AND fe.validation_tuteur IS NULL
-        ");
-        $pending_events->execute([$_SESSION['id']]);
+        // Get pending events - admins see all, tutors see only their clubs' events
+        if ($is_admin) {
+            $pending_events = $this->db->prepare("
+                SELECT fe.*, fc.nom_club, u.nom as tuteur_nom, u.prenom as tuteur_prenom
+                FROM fiche_event fe
+                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                LEFT JOIN users u ON fc.tuteur = u.id
+                WHERE fe.validation_tuteur IS NULL
+            ");
+            $pending_events->execute();
+        } else {
+            $pending_events = $this->db->prepare("
+                SELECT fe.*, fc.nom_club 
+                FROM fiche_event fe
+                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                WHERE fc.tuteur = ? AND fe.validation_tuteur IS NULL
+            ");
+            $pending_events->execute([$_SESSION['id']]);
+        }
         $pending_events = $pending_events->fetchAll(PDO::FETCH_ASSOC);
         
         // Handle validation actions
@@ -176,12 +199,30 @@ class ValidationController {
                 
                 if ($club_id && $action) {
                     $validation = ($action === 'approve') ? 1 : 0;
-                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ? WHERE club_id = ? AND tuteur = ?");
-                    if ($stmt->execute([$validation, $club_id, $_SESSION['id']])) {
+                    // Admins can validate any club, tutors only their own
+                    if ($is_admin) {
+                        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ? WHERE club_id = ?");
+                        $result = $stmt->execute([$validation, $club_id]);
+                    } else {
+                        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ? WHERE club_id = ? AND tuteur = ?");
+                        $result = $stmt->execute([$validation, $club_id, $_SESSION['id']]);
+                    }
+                    
+                    if ($result && $stmt->rowCount() > 0) {
                         $success_msg = "Club " . ($validation ? "approuvé" : "rejeté");
                         // Refresh the pending list
-                        $pending_clubs = $this->db->prepare("SELECT * FROM fiche_club WHERE tuteur = ? AND validation_tuteur IS NULL");
-                        $pending_clubs->execute([$_SESSION['id']]);
+                        if ($is_admin) {
+                            $pending_clubs = $this->db->prepare("
+                                SELECT fc.*, u.nom as tuteur_nom, u.prenom as tuteur_prenom
+                                FROM fiche_club fc
+                                LEFT JOIN users u ON fc.tuteur = u.id
+                                WHERE fc.validation_tuteur IS NULL
+                            ");
+                            $pending_clubs->execute();
+                        } else {
+                            $pending_clubs = $this->db->prepare("SELECT * FROM fiche_club WHERE tuteur = ? AND validation_tuteur IS NULL");
+                            $pending_clubs->execute([$_SESSION['id']]);
+                        }
                         $pending_clubs = $pending_clubs->fetchAll(PDO::FETCH_ASSOC);
                     }
                 }
@@ -193,22 +234,41 @@ class ValidationController {
                 
                 if ($event_id && $action) {
                     $validation = ($action === 'approve') ? 1 : 0;
-                    $stmt = $this->db->prepare("
-                        UPDATE fiche_event fe
-                        INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                        SET fe.validation_tuteur = ?
-                        WHERE fe.event_id = ? AND fc.tuteur = ?
-                    ");
-                    if ($stmt->execute([$validation, $event_id, $_SESSION['id']])) {
+                    // Admins can validate any event, tutors only their clubs' events
+                    if ($is_admin) {
+                        $stmt = $this->db->prepare("UPDATE fiche_event SET validation_tuteur = ? WHERE event_id = ?");
+                        $result = $stmt->execute([$validation, $event_id]);
+                    } else {
+                        $stmt = $this->db->prepare("
+                            UPDATE fiche_event fe
+                            INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                            SET fe.validation_tuteur = ?
+                            WHERE fe.event_id = ? AND fc.tuteur = ?
+                        ");
+                        $result = $stmt->execute([$validation, $event_id, $_SESSION['id']]);
+                    }
+                    
+                    if ($result && $stmt->rowCount() > 0) {
                         $success_msg = "Événement " . ($validation ? "approuvé" : "rejeté");
                         // Refresh the pending list
-                        $pending_events = $this->db->prepare("
-                            SELECT fe.*, fc.nom_club 
-                            FROM fiche_event fe
-                            INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                            WHERE fc.tuteur = ? AND fe.validation_tuteur IS NULL
-                        ");
-                        $pending_events->execute([$_SESSION['id']]);
+                        if ($is_admin) {
+                            $pending_events = $this->db->prepare("
+                                SELECT fe.*, fc.nom_club, u.nom as tuteur_nom, u.prenom as tuteur_prenom
+                                FROM fiche_event fe
+                                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                                LEFT JOIN users u ON fc.tuteur = u.id
+                                WHERE fe.validation_tuteur IS NULL
+                            ");
+                            $pending_events->execute();
+                        } else {
+                            $pending_events = $this->db->prepare("
+                                SELECT fe.*, fc.nom_club 
+                                FROM fiche_event fe
+                                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                                WHERE fc.tuteur = ? AND fe.validation_tuteur IS NULL
+                            ");
+                            $pending_events->execute([$_SESSION['id']]);
+                        }
                         $pending_events = $pending_events->fetchAll(PDO::FETCH_ASSOC);
                     }
                 }
@@ -216,6 +276,7 @@ class ValidationController {
         }
         
         return [
+            'is_admin' => $is_admin,
             'tutored_clubs' => $tutored_clubs,
             'pending_clubs' => $pending_clubs,
             'pending_events' => $pending_events,

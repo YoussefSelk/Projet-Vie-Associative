@@ -97,17 +97,47 @@ include VIEWS_PATH . '/user_profile.php';
 
 ## Routing
 
-The main `index.php` file acts as the router. URL parameters determine which controller and view are used:
+Routing is handled by the `Router` class in `config/Router.php`. Routes are defined in `routes/web.php` as a configuration array:
 
+```php
+// routes/web.php
+return [
+    'home' => [
+        'controller' => 'HomeController',
+        'method' => 'index',
+        'view' => '/home_index.php',
+        'auth' => false,
+        'permission' => null
+    ],
+    'profile' => [
+        'controller' => 'UserController',
+        'method' => 'viewProfile',
+        'view' => '/user_profile.php',
+        'auth' => true,
+        'permission' => null
+    ],
+    // ... more routes
+];
 ```
-index.php?page=profile        → UserController::viewProfile()
-index.php?page=club-list      → ClubController::listClubs()
-index.php?page=event-create   → EventController::createEvent()
+
+### Entry Point (index.php)
+
+The `index.php` file is now minimal (~17 lines):
+
+```php
+<?php
+require_once 'config/bootstrap.php';
+$router = new Router($db);
+$router->dispatch();
 ```
 
 ### CSRF protection
 
-The router validates CSRF tokens for **all POST requests**, except `login` and `register` which handle their own flow.
+The Router validates CSRF tokens for **all POST requests**, except `login` and `register` which handle their own flow.
+
+### Error Handling
+
+Invalid routes trigger `ErrorHandler::renderHttpError(404)` which displays a professional custom error page.
 
 ## Authentication & Authorization
 

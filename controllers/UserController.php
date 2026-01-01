@@ -1,17 +1,42 @@
 <?php
+/**
+ * =============================================================================
+ * CONTRÔLEUR UTILISATEUR
+ * =============================================================================
+ * 
+ * Gère les fonctionnalités liées au profil utilisateur :
+ * - Tableau de bord personnel
+ * - Affichage et modification du profil
+ * - Liste des utilisateurs (pour les admins)
+ * 
+ * Note : Les fonctions updatePermission() et deleteUser() ont été
+ * déplacées vers AdminController pour une meilleure séparation des responsabilités
+ * 
+ * @author Équipe de développement EILCO
+ * @version 2.0
+ */
 
 class UserController {
+    /** @var User Modèle utilisateur */
     private $userModel;
+    
+    /** @var PDO Instance de connexion à la base de données */
     private $db;
 
+    /**
+     * Constructeur
+     * @param PDO $database Instance de connexion PDO
+     */
     public function __construct($database) {
         $this->db = $database;
         $this->userModel = new User($database);
     }
 
     /**
-     * Personal dashboard for authenticated users
-     * Shows personalized stats, upcoming events, club memberships
+     * Tableau de bord personnel de l'utilisateur
+     * Affiche les statistiques personnalisées, événements à venir et adhésions
+     * 
+     * @return array Données pour la vue
      */
     public function dashboard() {
         validateSession();
@@ -20,7 +45,7 @@ class UserController {
         $user = $this->userModel->getUserById($user_id);
         $stats = [];
         
-        // Get user's club memberships
+        // Récupérer les adhésions aux clubs de l'utilisateur
         $stmt = $this->db->prepare("
             SELECT fc.*
             FROM membres_club mc
@@ -32,7 +57,7 @@ class UserController {
         $my_clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $stats['clubs_count'] = count($my_clubs);
         
-        // Get user's event subscriptions
+        // Récupérer les inscriptions aux événements
         try {
             $stmt = $this->db->prepare("
                 SELECT fe.*, fc.nom_club,
@@ -53,13 +78,13 @@ class UserController {
             $my_subscriptions = [];
         }
         
-        // Separate upcoming and past events
+        // Séparer les événements à venir et passés
         $upcoming_events = array_filter($my_subscriptions, fn($e) => $e['status'] !== 'past');
         $past_events = array_filter($my_subscriptions, fn($e) => $e['status'] === 'past');
         $stats['subscriptions_count'] = count($my_subscriptions);
         $stats['upcoming_count'] = count($upcoming_events);
         
-        // Get recommended events (events from clubs user is member of, not yet subscribed)
+        // Événements recommandés (événements des clubs de l'utilisateur, non encore inscrit)
         $recommended_events = [];
         if (!empty($my_clubs)) {
             $club_ids = array_column($my_clubs, 'club_id');
@@ -86,7 +111,7 @@ class UserController {
             }
         }
         
-        // Profile completion score
+        // Score de complétion du profil
         $profile_fields = ['nom', 'prenom', 'mail', 'promo'];
         $filled_fields = 0;
         foreach ($profile_fields as $field) {
@@ -94,7 +119,7 @@ class UserController {
         }
         $stats['profile_completion'] = round(($filled_fields / count($profile_fields)) * 100);
         
-        // Activity summary
+        // Résumé d'activité
         $stats['events_attended'] = count($past_events);
         
         return [
@@ -106,9 +131,12 @@ class UserController {
             'recommended_events' => $recommended_events
         ];
     }
-    
-    // Note: updatePermission() and deleteUser() have been moved to AdminController
 
+    /**
+     * Affiche le profil de l'utilisateur connecté
+     * 
+     * @return array Données utilisateur pour la vue
+     */
     public function viewProfile() {
         validateSession();
         
@@ -119,6 +147,12 @@ class UserController {
         ];
     }
 
+    /**
+     * Modification du profil utilisateur
+     * Permet de modifier nom, prénom et email
+     * 
+     * @return array Données pour la vue [user, error_msg, success_msg]
+     */
     public function editProfile() {
         validateSession();
         
@@ -142,6 +176,7 @@ class UserController {
 
                 if ($this->userModel->updateUser($_SESSION['id'], $data)) {
                     $success_msg = "Profil mis à jour avec succès.";
+                    // Mettre à jour les données en session
                     $_SESSION['nom'] = $nom;
                     $_SESSION['prenom'] = $prenom;
                     $user = $this->userModel->getUserById($_SESSION['id']);
@@ -158,6 +193,12 @@ class UserController {
         ];
     }
 
+    /**
+     * Liste tous les utilisateurs
+     * Accessible uniquement aux utilisateurs avec permission >= 3
+     * 
+     * @return array Liste des utilisateurs
+     */
     public function listAllUsers() {
         checkPermission(3);
         

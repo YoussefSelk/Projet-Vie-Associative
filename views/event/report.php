@@ -1,3 +1,21 @@
+<?php
+/**
+ * Depot de rapport d'evenement
+ * 
+ * Permet aux organisateurs de deposer un bilan apres l'evenement :
+ * - Selection de l'evenement concerne
+ * - Upload de fichier (PDF, Word, images)
+ * - Commentaires et retours
+ * 
+ * Les rapports sont consultables par les tuteurs et l'administration.
+ * 
+ * Variables attendues :
+ * - $events : Liste des evenements passes sans rapport
+ * - $error_msg / $success_msg : Messages de feedback
+ * 
+ * @package Views/Event
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

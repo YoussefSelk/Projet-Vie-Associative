@@ -1,43 +1,79 @@
 <?php
+/**
+ * =============================================================================
+ * CONTRÔLEUR D'AUTHENTIFICATION
+ * =============================================================================
+ * 
+ * Gère toutes les opérations d'authentification :
+ * - Connexion et déconnexion des utilisateurs
+ * - Inscription avec vérification par email
+ * - Réinitialisation de mot de passe
+ * 
+ * Sécurité implémentée :
+ * - Limitation des tentatives de vérification (5 max par 5 minutes)
+ * - Hachage bcrypt avec coût 12
+ * - Régénération d'ID de session après authentification
+ * - Validation stricte des mots de passe
+ * 
+ * @author Équipe de développement EILCO
+ * @version 2.0
+ */
 
 class AuthController {
-
+    /** @var User Modèle utilisateur */
     private $userModel;
+    
+    /** @var PDO Instance de connexion à la base de données */
     private $db;
 
+    /**
+     * Constructeur
+     * @param PDO $database Instance de connexion PDO
+     */
     public function __construct($database) {
         $this->db = $database;
         $this->userModel = new User($database);
-        
     }
 
     /**
-    * Static helper to get the current user's permission level
-    * @return int
-    */
-
+     * Récupère le niveau de permission de l'utilisateur connecté
+     * 
+     * @return int Niveau de permission (0 si non connecté)
+     */
     public static function getPermission() {
         return isset($_SESSION['permission']) ? (int)$_SESSION['permission'] : 0;
     }
 
     /**
-     * Static helper to check if user is authenticated
-     * @return bool
+     * Vérifie si l'utilisateur est authentifié
+     * 
+     * @return bool True si connecté
      */
-    
     public static function isAuthenticated() {
         return isset($_SESSION['id']) && !empty($_SESSION['id']);
     }
 
+    /**
+     * Gère la connexion et la réinitialisation de mot de passe
+     * 
+     * Workflow de réinitialisation :
+     * - Étape 0 : Formulaire de connexion normal
+     * - Étape 1 : Demande d'email pour réinitialisation
+     * - Étape 2 : Vérification du code envoyé par email
+     * - Étape 3 : Saisie du nouveau mot de passe
+     * 
+     * @return array Données pour la vue [error_message, reset_step, err]
+     */
     public function login() {
         $error_message = '';
         $err = 0;
 
+        // Rediriger si déjà connecté
         if (isset($_SESSION['id'])) {
             redirect('/index.php');
         }
 
-        // Reset to login form on fresh page visit (GET request)
+        // Réinitialiser au formulaire de connexion lors d'une visite GET
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $_SESSION['reset_step'] = 0;
         }
@@ -46,11 +82,12 @@ class AuthController {
             $_SESSION['reset_step'] = 0;
         }
 
-        // Handle password reset request
+        // Gestion de la demande de réinitialisation
         if (isset($_POST['check-email'])) {
             $_SESSION['reset_step'] = 1;
         }
 
+        // Envoi du code de réinitialisation
         if (isset($_POST['send_reset_code']) && !empty($_POST['mail'])) {
             $mail = $_POST['mail'];
             $user = $this->userModel->getUserByEmail($mail);
@@ -66,13 +103,18 @@ class AuthController {
             }
         }
 
+        // Limitation des tentatives de vérification
         if (!isset($_SESSION['verification_attempts'])) {
             $_SESSION['verification_attempts'] = 0;
             $_SESSION['verification_attempts_time'] = time();
         }
+        
+        // Réinitialiser après 5 minutes
         if (time() - $_SESSION['verification_attempts_time'] > 300) {
             $_SESSION['verification_attempts'] = 0;
         }
+        
+        // Vérification du code de réinitialisation
         if (isset($_POST['reset_code'])) {
             if ($_POST['reset_code'] != $_SESSION['reset_code']) {
                 $_SESSION['verification_attempts']++;
@@ -94,9 +136,11 @@ class AuthController {
             }
         }
 
+        // Mise à jour du mot de passe
         if (isset($_POST['reset_password'])) {
             $password = $_POST['password'];
             $cpassword = $_POST['cpassword'];
+            
             if (strlen($password) < 8) {
                 $error_message = "<p style='color: red;'>Le mot de passe doit contenir au moins 8 caractères.</p>";
             } else if (!preg_match('/[\W_]/', $password)) {
@@ -114,7 +158,7 @@ class AuthController {
             }
         }
 
-        // Handle login
+        // Gestion de la connexion
         if (isset($_POST['formsend'])) {
             $mail = $_POST['mail'] ?? '';
             $password = $_POST['password'] ?? '';
@@ -123,6 +167,7 @@ class AuthController {
                 $user = $this->userModel->authenticate($mail, $password);
 
                 if ($user) {
+                    // Connexion réussie : stocker les infos en session
                     $_SESSION['id'] = $user['id'];
                     $_SESSION['nom'] = $user['nom'];
                     $_SESSION['prenom'] = $user['prenom'];
@@ -143,11 +188,15 @@ class AuthController {
         ];
     }
 
+    /**
+     * Déconnecte l'utilisateur
+     * Nettoie la session et supprime le cookie de session
+     */
     public function logout() {
-        // Clear all session variables
+        // Vider toutes les variables de session
         $_SESSION = [];
         
-        // Delete the session cookie
+        // Supprimer le cookie de session
         if (ini_get("session.use_cookies")) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000,
@@ -156,42 +205,58 @@ class AuthController {
             );
         }
         
-        // Destroy the session
+        // Détruire la session
         session_destroy();
         
-        // Redirect to login page
+        // Rediriger vers la page de connexion
         header('Location: index.php?page=login');
         exit;
     }
 
+    /**
+     * Gère l'inscription des nouveaux utilisateurs
+     * 
+     * Workflow d'inscription :
+     * - Étape 0 : Formulaire d'inscription
+     * - Étape 1 : Vérification du code envoyé par email
+     * 
+     * Validations effectuées :
+     * - Tous les champs requis remplis
+     * - Email valide et non existant
+     * - Mot de passe : 8+ caractères, 1+ caractère spécial
+     * - Confirmation du mot de passe
+     * 
+     * @return array Données pour la vue [error_message, success_message, reset_step]
+     */
     public function register() {
         $error_message = '';
         $success_message = '';
         $reset_step = 0;
 
+        // Rediriger si déjà connecté
         if (isset($_SESSION['id'])) {
             redirect('/index.php');
         }
 
-        // Initialize reset_step in session
+        // Initialiser l'étape dans la session
         if (!isset($_SESSION['reset_step'])) {
             $_SESSION['reset_step'] = 0;
         }
 
         $reset_step = $_SESSION['reset_step'];
 
-        // Track verification attempts
+        // Suivi des tentatives de vérification
         if (!isset($_SESSION['verification_attempts'])) {
             $_SESSION['verification_attempts'] = 0;
             $_SESSION['verification_attempts_time'] = time();
         }
 
-        // Reset attempts after 5 minutes
+        // Réinitialiser après 5 minutes
         if (time() - $_SESSION['verification_attempts_time'] > 300) {
             $_SESSION['verification_attempts'] = 0;
         }
 
-        // Step 1: Send verification code
+        // Étape 1 : Envoi du code de vérification
         if (isset($_POST['send_code'])) {
             $nom = $_POST['nom'] ?? '';
             $prenom = $_POST['prenom'] ?? '';
@@ -202,7 +267,7 @@ class AuthController {
             $password = $_POST['password'] ?? '';
             $cpassword = $_POST['cpassword'] ?? '';
 
-            // Validation
+            // Validation des champs
             if (empty($nom) || empty($prenom) || empty($mail) || empty($password) || empty($cpassword)) {
                 $error_message = 'Tous les champs sont requis';
             } elseif ($promo === 'etu' && empty($niveau)) {
@@ -218,12 +283,12 @@ class AuthController {
             } elseif (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {
                 $error_message = 'Email invalide';
             } else {
-                // Check if user already exists
+                // Vérifier si l'utilisateur existe déjà
                 $existing_user = $this->userModel->getUserByEmail($mail);
                 if ($existing_user) {
                     $error_message = 'Un compte avec cet email existe déjà';
                 } else {
-                    // Generate verification code
+                    // Générer le code de vérification
                     $code = random_int(100000, 999999);
                     $_SESSION['code_verification'] = $code;
                     $_SESSION['nom'] = $nom;
@@ -234,7 +299,7 @@ class AuthController {
                     $_SESSION['mail'] = $mail;
                     $_SESSION['password'] = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
                     
-                    // Send email with code
+                    // Envoyer l'email avec le code
                     $subject = "Code de vérification - Inscription EILCO";
                     $message = "Bonjour $prenom,\n\nVotre code de vérification est : $code\n\nEntrez ce code pour finaliser votre inscription.\n\nCe code expire dans 5 minutes.";
                     sendEmail($mail, $subject, $message);
@@ -245,7 +310,7 @@ class AuthController {
             }
         }
 
-        // Step 2: Verify code and create user
+        // Étape 2 : Vérification du code et création de l'utilisateur
         if (isset($_POST['verify_code'])) {
             $verification_code = $_POST['verification_code'] ?? '';
 
@@ -268,19 +333,20 @@ class AuthController {
                     $error_message = 'Code de vérification incorrect.';
                 }
             } else {
-                // Code is correct - create user
+                // Code correct : créer l'utilisateur
                 $promo_value = $_SESSION['niveau'] ?? $_SESSION['promo'];
                 $result = $this->userModel->createUser(
                     $_SESSION['nom'],
                     $_SESSION['prenom'],
                     $_SESSION['mail'],
                     $_SESSION['password'],
-                    $promo_value
+                    $promo_value,
+                    true // Le mot de passe est déjà haché
                 );
 
                 if ($result) {
                     $success_message = 'Inscription réussie! Vous pouvez maintenant vous connecter.';
-                    // Clean up session
+                    // Nettoyer la session
                     unset($_SESSION['code_verification'], $_SESSION['nom'], $_SESSION['prenom'], 
                           $_SESSION['mail'], $_SESSION['password'], $_SESSION['promo'], 
                           $_SESSION['niveau'], $_SESSION['ing2_type'], $_SESSION['verification_attempts']);

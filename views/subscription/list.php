@@ -1,3 +1,19 @@
+<?php
+/**
+ * Liste des inscriptions aux evenements
+ * 
+ * Permet a l'utilisateur de gerer ses inscriptions :
+ * - Affichage des evenements auxquels il est inscrit
+ * - Recherche dans ses inscriptions
+ * - Annulation d'inscription
+ * - Tri par date
+ * 
+ * Variables attendues :
+ * - $subscriptions : Liste des inscriptions de l'utilisateur
+ * 
+ * @package Views/Subscription
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

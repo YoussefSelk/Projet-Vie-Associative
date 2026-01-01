@@ -1,3 +1,25 @@
+<!--
+    Page d'erreur detaillee - Mode Developpement
+    
+    Affichee uniquement quand APP_DEBUG=true.
+    ATTENTION : Ne jamais utiliser en production !
+    
+    Affiche des informations de debug completes :
+    - Message d'erreur complet
+    - Fichier et ligne de l'erreur
+    - Stack trace interactive
+    - Variables d'environnement
+    - Informations de requete
+    
+    Variables attendues :
+    - $errorCode : Code HTTP de l'erreur
+    - $errorMessage : Message d'erreur complet
+    - $errorFile : Fichier source de l'erreur
+    - $errorLine : Ligne de l'erreur
+    - $errorTrace : Stack trace de l'exception
+    
+    @package Views/Errors
+-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>

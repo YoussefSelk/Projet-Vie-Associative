@@ -1,16 +1,47 @@
 <?php
+/**
+ * =============================================================================
+ * CONTRÔLEUR DES CLUBS
+ * =============================================================================
+ * 
+ * Gère toutes les opérations liées aux clubs associatifs :
+ * - Liste et affichage des clubs
+ * - Création et modification de clubs
+ * - Gestion des membres
+ * - Export CSV des membres
+ * - Notification des tuteurs
+ * 
+ * Niveaux de permission requis :
+ * - Visualisation : tous les utilisateurs connectés
+ * - Création/Modification : permission >= 3 (admin)
+ * 
+ * @author Équipe de développement EILCO
+ * @version 2.0
+ */
 
 class ClubController {
+    /** @var Club Modèle des clubs */
     private $clubModel;
+    
+    /** @var PDO Instance de connexion à la base de données */
     private $db;
 
+    /**
+     * Constructeur
+     * @param PDO $database Instance de connexion PDO
+     */
     public function __construct($database) {
         $this->db = $database;
         $this->clubModel = new Club($database);
     }
 
+    /**
+     * Liste tous les clubs validés pour l'administration
+     * Permet la recherche et modification des clubs
+     * 
+     * @return array Données pour la vue
+     */
     public function listClubs() {
-        // Admin only - for club management
         checkPermission(3);
         
         $clubs = $this->clubModel->getAllValidatedClubs();
@@ -19,6 +50,7 @@ class ClubController {
         $error_msg = '';
         $success_msg = '';
 
+        // Recherche d'un club par nom
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['club'])) {
             $club = $this->clubModel->getClubByName($_POST['club']);
             if ($club) {
@@ -26,6 +58,7 @@ class ClubController {
             }
         }
 
+        // Mise à jour d'un club
         if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_club'])) {
             $club_id = $_POST['club_id'] ?? null;
             $new_nom = trim($_POST['nom_club'] ?? '');
@@ -69,6 +102,12 @@ class ClubController {
         ];
     }
 
+    /**
+     * Création d'un nouveau club
+     * Gère les projets associatifs avec validation tuteur
+     * 
+     * @return array Données pour la vue [error_msg, success_msg]
+     */
     public function createClub() {
         checkPermission(3);
         
@@ -164,6 +203,12 @@ class ClubController {
         ];
     }
 
+    /**
+     * Affiche les détails d'un club
+     * Accessible à tous les utilisateurs
+     * 
+     * @return array Données du club, membres, événements et tuteur
+     */
     public function viewClub() {
         $club_id = $_GET['id'] ?? null;
         
@@ -181,7 +226,7 @@ class ClubController {
                 $error_msg = "Club non trouvé.";
             } else {
                 
-                // Fetch club members
+                // Récupérer les membres du club
                 try {
                     $memberModel = new ClubMember($this->db);
                     $members = $memberModel->getClubMembers($club_id);
@@ -189,7 +234,7 @@ class ClubController {
                     $members = [];
                 }
                 
-                // Fetch club events
+                // Récupérer les événements du club
                 try {
                     $stmt = $this->db->prepare("SELECT * FROM fiche_event WHERE club_orga = ? AND validation_finale = 1 ORDER BY date_ev DESC LIMIT 5");
                     $stmt->execute([$club_id]);
@@ -198,7 +243,7 @@ class ClubController {
                     $events = [];
                 }
                 
-                // Fetch tutor info if tuteur_id exists
+                // Récupérer les infos du tuteur si présent
                 if (!empty($club['tuteur_id'])) {
                     try {
                         $stmt = $this->db->prepare("SELECT nom, prenom, mail FROM users WHERE id = ?");
@@ -210,8 +255,7 @@ class ClubController {
                 }
             }
         }
-        echo "<!-- DEBUG From Controller: Received club ID = " . ($club['club_id'] ?? 'NULL') . " -->\n";
-        echo "<!-- DEBUG From Controller: Received club Name = " . ($club['nom_club'] ?? 'NULL') . " -->\n";
+        
         return [
             'id' => $club_id,
             'club' => $club,
@@ -223,7 +267,13 @@ class ClubController {
     }
     
     /**
-     * Send email notification to tutor about new club/event
+     * Envoie une notification par email au tuteur
+     * Informé lors de la création d'un nouveau club ou événement
+     * 
+     * @param int $tuteur_id Identifiant du tuteur
+     * @param string $item_name Nom du club ou événement
+     * @param string $type Type d'élément ('club' ou 'event')
+     * @return bool Succès de l'envoi
      */
     private function notifyTutor($tuteur_id, $item_name, $type = 'club') {
         try {
@@ -293,7 +343,10 @@ class ClubController {
     }
     
     /**
-     * Export club members to CSV with proper encoding and all fields
+     * Exporte la liste des membres d'un club en CSV
+     * Format compatible Excel avec encodage UTF-8 et séparateur point-virgule
+     * 
+     * @return void (sortie directe du fichier CSV)
      */
     public function exportMembers() {
         checkPermission(3);
@@ -309,7 +362,7 @@ class ClubController {
             redirect('index.php?page=club-list');
         }
         
-        // Get members with full details
+        // Récupérer les membres avec tous les détails
         $stmt = $this->db->prepare("
             SELECT 
                 u.nom,
@@ -329,7 +382,7 @@ class ClubController {
         $stmt->execute([$club_id]);
         $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Get tutor info
+        // Récupérer le nom du tuteur
         $tutor_name = '';
         if (!empty($club['tuteur_id'])) {
             $tutorStmt = $this->db->prepare("SELECT nom, prenom FROM users WHERE id = ?");
@@ -340,7 +393,7 @@ class ClubController {
             }
         }
         
-        // Generate CSV with BOM for Excel UTF-8 compatibility
+        // Générer le CSV avec BOM pour compatibilité Excel UTF-8
         $filename = 'membres_' . preg_replace('/[^a-zA-Z0-9]/', '_', $club['nom_club']) . '_' . date('Y-m-d') . '.csv';
         
         header('Content-Type: text/csv; charset=UTF-8');
@@ -348,12 +401,12 @@ class ClubController {
         header('Pragma: no-cache');
         header('Expires: 0');
         
-        // Output BOM for UTF-8 Excel compatibility
+        // BOM UTF-8 pour Excel
         echo "\xEF\xBB\xBF";
         
         $output = fopen('php://output', 'w');
         
-        // Header row
+        // En-tête des colonnes
         fputcsv($output, [
             'Nom',
             'Prénom',
@@ -361,9 +414,9 @@ class ClubController {
             'Promotion',
             'Date d\'adhésion',
             'Tuteur du club'
-        ], ';'); // Use semicolon for French Excel
+        ], ';'); // Point-virgule pour Excel français
         
-        // Data rows
+        // Lignes de données
         foreach ($members as $member) {
             fputcsv($output, [
                 $member['nom'] ?? '',

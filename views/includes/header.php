@@ -1,43 +1,62 @@
 <?php
-// Inclusion des fichiers nécessaires (bootstrap already included via index.php)
+/**
+ * En-tete du site avec barre superieure
+ * 
+ * Affiche :
+ * - Logo et lien vers l'accueil
+ * - Menu utilisateur avec liens profil, dashboard, administration
+ * - Badges de notification pour validation (admin/tuteur)
+ * - Bouton connexion/deconnexion
+ * 
+ * Variables calculees :
+ * - $is_membre_club : Indicateur si l'utilisateur est membre d'un club valide
+ * - $nb_badge_admin : Nombre d'elements en attente de validation admin
+ * - $nb_badge_tuteur : Nombre d'elements en attente de validation tuteur
+ * - $current_user : Informations de l'utilisateur connecte
+ * 
+ * @package Views/Includes
+ */
+
+// Inclusion des dependances
 require_once("include.php");
 global $db;
 
 if(isset($_SESSION['id'])){
-    // Récupérer les informations de l'utilisateur
+    // Recuperer les clubs dont l'utilisateur est membre valide
     $req_membre_club = $db->prepare("SELECT mc.* FROM membres_club mc LEFT JOIN fiche_club fc ON fc.club_id = mc.club_id WHERE mc.membre_id = ? AND mc.valide = 1 AND fc.validation_admin = 1 AND fc.validation_tuteur = 1");
     $req_membre_club->execute([$_SESSION['id']]);
     $infos_membre_club = $req_membre_club->fetchAll();    
 
-
+    // Indicateur d'appartenance a un club
     if(empty($infos_membre_club)){
         $is_membre_club = 0;
     } else {
         $is_membre_club = 1;
     }
 
-    // Récupérer les informations des clubs gérés par le tuteur
+    // Recuperer les clubs dont l'utilisateur est tuteur
     $req_0 = $db->prepare("SELECT club_id, nom_club FROM fiche_club
     WHERE validation_finale = 1 AND tuteur = ?");
     $req_0->execute([$_SESSION['id']]);
     $req_clubs=$req_0->fetchAll();
 
-    // Récupérer le nombre d'événements en attente de validation
+    // Compteur d'evenements en attente de validation finale
     $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event WHERE validation_finale IS NULL AND validation_bde = 1 AND validation_tuteur = 1");
     $req->execute();
     $row = $req->fetchAll();
     $nb_events_admin = $row[0]['total'];
 
-    // Récupérer le nombre de fiches club en attente de validation
+    // Compteur de clubs en attente de validation finale
     $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE validation_finale IS NULL AND validation_tuteur = 1");
     $req->execute();
     $row = $req->fetchAll();
     $nb_clubs_admin = $row[0]['total'];
 
+    // Total des elements en attente pour le badge admin
     $nb_badge_admin = $nb_events_admin + $nb_clubs_admin;
 
-    // Récupérer le nombre de demandes de tutorat en attente de validation
-    // Admins (permission 5) see all pending items, tutors only see their clubs
+    // Compteur de clubs en attente de validation tuteur
+    // Les admins voient tout, les tuteurs voient seulement leurs clubs
     if (($_SESSION['permission'] ?? 0) == 5) {
         $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE validation_tuteur IS NULL");
         $req->execute();
@@ -48,7 +67,7 @@ if(isset($_SESSION['id'])){
     $row = $req->fetchAll();
     $nb_clubs_tuteur = $row[0]['total'];
 
-    // Récupérer le nombre de fiches event en attente de validation
+    // Compteur d'evenements en attente de validation tuteur
     if (($_SESSION['permission'] ?? 0) == 5) {
         $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event f WHERE f.validation_tuteur IS NULL");
         $req->execute();
@@ -59,14 +78,16 @@ if(isset($_SESSION['id'])){
     $row = $req->fetchAll();
     $nb_events_tuteur = $row[0]['total'];
 
+    // Total des elements en attente pour le badge tuteur
     $nb_badge_tuteur = $nb_clubs_tuteur + $nb_events_tuteur;
 
-    // Get user info
+    // Recuperer les informations de l'utilisateur connecte
     $q = $db->prepare("SELECT * FROM users WHERE id = ?");
     $q->execute([$_SESSION['id']]);
     $current_user = $q->fetch();
 }
 else {
+    // Valeurs par defaut pour utilisateur non connecte
     $is_membre_club = 0;
     $nb_badge_admin = 0;
     $nb_badge_tuteur = 0;

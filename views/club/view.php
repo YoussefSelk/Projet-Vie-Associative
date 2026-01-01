@@ -1,7 +1,22 @@
-
-<?php               
-        echo "<!-- DEBUG From View: Received club ID = " . ($club['club_id'] ?? 'NULL') . " -->\n";
-        echo "<!-- DEBUG From View: Received club Name = " . ($club['nom_club'] ?? 'NULL') . " -->\n";
+<?php
+/**
+ * Vue de detail d'un club
+ * 
+ * Affiche les informations completes d'un club :
+ * - En-tete avec logo, nom, type et campus
+ * - Description du club
+ * - Liste des membres
+ * - Actions (rejoindre, quitter, gerer)
+ * 
+ * Variables attendues du controleur :
+ * - $club : Donnees du club
+ * - $error_msg : Message d'erreur eventuel
+ * - $success_msg : Message de succes eventuel
+ * - $is_member : Indicateur si l'utilisateur est membre
+ * - $members : Liste des membres du club
+ * 
+ * @package Views/Club
+ */
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -9,17 +24,12 @@
     <?php include VIEWS_PATH . '/includes/head.php'; ?>
 </head>
 <body>
-    
-                
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
     </header>
 
     <?php include VIEWS_PATH . '/includes/barre_nav.php'; ?>
-<?php               
-                        echo "<!-- DEBUG From View: Received club ID = " . ($club['club_id'] ?? 'NULL') . " -->\n";
-                        echo "<!-- DEBUG From View: Received club Name = " . ($club['nom_club'] ?? 'NULL') . " -->\n";
-                ?>
+
     <main>
         
         <div class="page-container">
@@ -33,7 +43,7 @@
                 </div>
             <?php elseif ($club): ?>
                 <?php 
-                // Define club type icons
+                // Definition des icones par type de club
                 $clubIcons = [
                     'sport' => 'fa-running',
                     'musique' => 'fa-music',
@@ -54,7 +64,7 @@
                     'default' => 'fa-users'
                 ];
                 
-                // Find matching icon
+                // Selection de l'icone correspondant au type
                 $clubType = strtolower($club['type_club'] ?? '');
                 $clubIcon = $clubIcons['default'];
                 foreach ($clubIcons as $key => $icon) {
@@ -63,7 +73,8 @@
                         break;
                     }
                 }
-                // Campus colors
+                
+                // Couleurs par campus
                 $campusColors = [
                     'calais' => '#0066cc',
                     'longuenesse' => '#28a745',
@@ -72,10 +83,8 @@
                 ];
                 $campusColor = $campusColors[strtolower($club['campus'] ?? 'calais')] ?? '#0066cc';
                 ?>
-                <?php               
-                        echo "<!-- DEBUG From View: Received club ID = " . ($club['club_id'] ?? 'NULL') . " -->\n";
-                        echo "<!-- DEBUG From View: Received club Name = " . ($club['nom_club'] ?? 'NULL') . " -->\n";
-                ?>
+                
+                <!-- Carte de detail du club -->
                 <div class="club-detail-card">
                     <div class="club-header" style="background: linear-gradient(135deg, <?= $campusColor ?> 0%, <?= $campusColor ?>aa 100%);">
                         <div class="club-icon-large">
@@ -97,20 +106,15 @@
                     </div>
                     
                     <div class="club-body">
+                        <!-- Section description -->
                         <div class="club-section">
                             <h3><i class="fas fa-info-circle"></i> À propos</h3>
                             <?php 
-                            // DEBUG: Show raw description - REMOVE AFTER TESTING
-                            echo "<!-- DEBUG: Club ID = " . ($club['club_id'] ?? 'NULL') . " -->\n";
-                            echo "<!-- DEBUG: Club ID = " . ($_GET['id'] ?? 'NULL') . " -->\n";
-                            echo "<!-- DEBUG: Raw description = '" . htmlspecialchars(substr($club['description'] ?? 'NULL', 0, 100)) . "' -->\n";
-                            
+                            // Traitement de la description
                             $description = $club['description'] ?? '';
                             $description = trim($description);
-                            // Decode HTML entities that might be stored in DB
+                            // Decodage des entites HTML si presentes en BDD
                             $description = html_entity_decode($description, ENT_QUOTES, 'UTF-8');
-                            
-                            echo "<!-- DEBUG: Processed length = " . strlen($description) . " -->\n";
                             ?>
                             <?php if (!empty($description)): ?>
                                 <p class="club-description"><?= nl2br(htmlspecialchars($description)) ?></p>

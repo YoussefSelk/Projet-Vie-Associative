@@ -1,5 +1,25 @@
 <?php
-// Check if user is already logged in
+/**
+ * Page d'inscription utilisateur
+ * 
+ * Processus d'inscription en plusieurs etapes :
+ * 1. Saisie des informations personnelles (nom, prenom, email)
+ * 2. Verification de l'email avec code de confirmation
+ * 3. Creation du mot de passe
+ * 
+ * Validations :
+ * - Email doit etre du domaine @eilco-ulco.fr ou @univ-littoral.fr
+ * - Mot de passe minimum 8 caracteres
+ * - Protection CSRF sur tous les formulaires
+ * 
+ * Variables attendues :
+ * - $error_message / $success_message : Messages de feedback
+ * - $reset_step : Etape actuelle du processus (0, 1, 2)
+ * 
+ * @package Views/Auth
+ */
+
+// Redirection si deja connecte
 if (isset($_SESSION['id'])) {
     header('Location: index.php');
     exit();
@@ -8,12 +28,12 @@ if (isset($_SESSION['id'])) {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <?php include 'includes/head.php'; ?>
+    <?php include VIEWS_PATH . '/includes/head.php'; ?>
     <title>Inscription - EILCO</title>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
-    <?php include 'includes/barre_nav.php'; ?>
+    <?php include VIEWS_PATH . '/includes/header.php'; ?>
+    <?php include VIEWS_PATH . '/includes/barre_nav.php'; ?>
 
     <main>
         <div class="auth-page">
@@ -136,7 +156,7 @@ if (isset($_SESSION['id'])) {
         </div>
     </main>
 
-    <?php include 'includes/footer.php'; ?>
+    <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {

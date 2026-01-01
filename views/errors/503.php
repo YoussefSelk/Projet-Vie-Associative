@@ -1,3 +1,16 @@
+<!--
+    Page d'erreur 503 - Service Indisponible
+    
+    Affichee lors d'une maintenance ou surcharge du serveur.
+    Peut inclure une estimation du temps de retablissement.
+    
+    Design moderne avec animations CSS :
+    - Barres de chargement animees
+    - Indicateur de progression
+    - Message d'attente avec animation
+    
+    @package Views/Errors
+-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>

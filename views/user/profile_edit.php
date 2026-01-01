@@ -1,3 +1,22 @@
+<?php
+/**
+ * Formulaire d'edition du profil
+ * 
+ * Permet a l'utilisateur de modifier ses informations :
+ * - Nom et prenom
+ * - Changement de mot de passe
+ * - Preferences (campus, notifications)
+ * 
+ * Toutes les modifications sont protegees par CSRF.
+ * Le changement de mot de passe requiert l'ancien mot de passe.
+ * 
+ * Variables attendues :
+ * - $user : Donnees actuelles de l'utilisateur
+ * - $error_msg / $success_msg : Messages de feedback
+ * 
+ * @package Views/User
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

@@ -1,21 +1,23 @@
 <?php
 /**
- * Routes Configuration File
+ * Fichier de configuration des routes
  * 
- * This file contains all application routes organized by category.
- * Each route maps a page parameter to a controller action and view.
+ * Ce fichier contient toutes les routes de l'application organisees par categorie.
+ * Chaque route associe un parametre 'page' a une action de controleur et une vue.
  * 
- * Route Structure:
- * - 'permission' : minimum permission level required (null = public, 0-5 = specific level)
- * - 'auth'       : requires authentication (true/false)
- * - 'controller' : controller class name
- * - 'method'     : controller method to call
- * - 'view'       : path to view file (relative to VIEWS_PATH)
+ * Structure d'une route :
+ * - 'permission' : niveau de permission minimum requis (null = public, 0-5 = niveau specifique)
+ * - 'auth'       : necessite une authentification (true/false)
+ * - 'controller' : nom de la classe controleur
+ * - 'method'     : methode du controleur a appeler
+ * - 'view'       : chemin vers le fichier vue (relatif a VIEWS_PATH)
+ * 
+ * @package Routes
  */
 
 return [
     // ==========================================
-    // PUBLIC ROUTES (No authentication required)
+    // ROUTES PUBLIQUES (Pas d'authentification requise)
     // ==========================================
     
     'home' => [
@@ -27,7 +29,7 @@ return [
     ],
     
     // ==========================================
-    // AUTHENTICATION ROUTES
+    // ROUTES D'AUTHENTIFICATION
     // ==========================================
     
     'login' => [
@@ -57,7 +59,7 @@ return [
     ],
     
     // ==========================================
-    // USER ROUTES (Protected)
+    // ROUTES UTILISATEUR (Protegees)
     // ==========================================
     
     'profile' => [
@@ -93,7 +95,7 @@ return [
     ],
     
     // ==========================================
-    // EVENT ROUTES
+    // ROUTES EVENEMENTS
     // ==========================================
     
     'event-list' => [
@@ -137,7 +139,7 @@ return [
     ],
     
     // ==========================================
-    // SUBSCRIPTION ROUTES (Protected)
+    // ROUTES INSCRIPTIONS (Protegees)
     // ==========================================
     
     'subscribe' => [
@@ -165,7 +167,7 @@ return [
     ],
     
     // ==========================================
-    // CLUB ROUTES
+    // ROUTES CLUBS
     // ==========================================
     
     'club-list' => [
@@ -181,8 +183,7 @@ return [
         'auth' => false,
         'controller' => 'ClubController',
         'method' => 'viewClub',
-        'view' => '/club/view.php',
-        'debug' => true
+        'view' => '/club/view.php'
     ],
     
     'club-create' => [
@@ -202,7 +203,7 @@ return [
     ],
     
     // ==========================================
-    // VALIDATION ROUTES (Admin/Tutor)
+    // ROUTES VALIDATION (Admin/Tuteur)
     // ==========================================
     
     'pending-clubs' => [
@@ -230,7 +231,7 @@ return [
     ],
     
     // ==========================================
-    // ADMIN ROUTES (BDE and higher)
+    // ROUTES ADMINISTRATION (BDE et plus)
     // ==========================================
     
     'admin' => [
@@ -258,7 +259,7 @@ return [
     ],
     
     // ==========================================
-    // SUPER ADMIN ROUTES (Permission 5 only)
+    // ROUTES SUPER ADMIN (Permission 5 uniquement)
     // ==========================================
     
     'admin-settings' => [

@@ -1,3 +1,24 @@
+<?php
+/**
+ * Tableau de bord administrateur
+ * 
+ * Vue principale d'administration affichant :
+ * - Statistiques globales (utilisateurs, clubs, evenements)
+ * - Graphiques d'activite (Chart.js)
+ * - Actions en attente de validation
+ * - Raccourcis vers les fonctionnalites admin
+ * 
+ * Variables attendues :
+ * - $stats : Tableau des statistiques globales
+ * - $pending_clubs : Clubs en attente de validation
+ * - $pending_events : Evenements en attente
+ * - $recent_users : Derniers utilisateurs inscrits
+ * 
+ * Permissions : Admin (niveau 5) requis
+ * 
+ * @package Views/Admin
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

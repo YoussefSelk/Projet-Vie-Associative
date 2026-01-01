@@ -1,3 +1,19 @@
+<?php
+/**
+ * Liste publique des evenements valides
+ * 
+ * Affiche tous les evenements approuves :
+ * - Barre de recherche avec filtrage dynamique
+ * - Affichage en grille de cartes
+ * - Tri par date (plus recents d'abord)
+ * - Couleurs par campus
+ * 
+ * Variables attendues :
+ * - $events : Liste des evenements valides
+ * 
+ * @package Views/Event
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

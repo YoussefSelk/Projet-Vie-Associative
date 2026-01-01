@@ -1,3 +1,21 @@
+<?php
+/**
+ * Page des parametres administrateur
+ * 
+ * Interface de configuration globale de l'application :
+ * - Parametres de securite (CSRF, sessions)
+ * - Configuration email (SMTP)
+ * - Parametres de l'application
+ * - Outils de maintenance
+ * 
+ * Chaque section est une carte avec formulaire independant.
+ * Les modifications sont appliquees immediatement.
+ * 
+ * Permissions : Admin (niveau 5) requis
+ * 
+ * @package Views/Admin
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

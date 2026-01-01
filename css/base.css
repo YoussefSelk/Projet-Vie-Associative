@@ -1,10 +1,16 @@
 /* ================================================
    CSS Reset & Modern Foundation
+   Compatible: Chrome, Firefox, Safari, Edge, IE11
    ================================================ */
 
-* {
+/* Box-sizing reset avec prefixes pour compatibilite */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 
@@ -36,6 +42,8 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
 }
 
 body {
@@ -44,7 +52,12 @@ body {
   color: #1e293b;
   line-height: 1.6;
   min-height: 100vh;
+  display: -webkit-box;
+  display: -ms-flexbox;
   display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
   flex-direction: column;
 }
 

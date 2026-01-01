@@ -1,3 +1,16 @@
+<!--
+    Page d'erreur 403 - Acces Refuse
+    
+    Affichee lorsqu'un utilisateur tente d'acceder a une ressource
+    sans les permissions necessaires.
+    
+    Design moderne avec animations CSS :
+    - Icone bouclier animee
+    - Effet de fond gradient
+    - Boutons de navigation (retour/accueil)
+    
+    @package Views/Errors
+-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>

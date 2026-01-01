@@ -1,6 +1,20 @@
+<!--
+    Pied de page du site
+    
+    Contient :
+    - Logo et description de l'EILCO
+    - Liens vers reseaux sociaux
+    - Liens rapides vers les campus
+    - Navigation secondaire
+    - Informations de contact
+    - Copyright et credits
+    
+    @package Views/Includes
+-->
 <footer class="modern-footer">
     <div class="footer-top">
         <div class="footer-container">
+            <!-- Section marque avec logo et reseaux sociaux -->
             <div class="footer-brand">
                 <img src="images/EILCO-LOGO-2022.png" alt="EILCO" class="footer-logo">
                 <p>Vie Étudiante EILCO - La plateforme des clubs et événements de l'École d'Ingénieurs du Littoral Côte d'Opale</p>
@@ -12,7 +26,9 @@
                 </div>
             </div>
             
+            <!-- Colonnes de liens -->
             <div class="footer-links">
+                <!-- Colonne campus -->
                 <div class="footer-column">
                     <h4>Campus</h4>
                     <ul>
@@ -23,6 +39,7 @@
                     </ul>
                 </div>
                 
+                <!-- Colonne navigation -->
                 <div class="footer-column">
                     <h4>Navigation</h4>
                     <ul>
@@ -33,6 +50,7 @@
                     </ul>
                 </div>
                 
+                <!-- Colonne contact -->
                 <div class="footer-column">
                     <h4>Contact</h4>
                     <ul>
@@ -46,6 +64,7 @@
         </div>
     </div>
     
+    <!-- Barre inferieure avec copyright -->
     <div class="footer-bottom">
         <div class="footer-container">
             <p>&copy; <?= date('Y') ?> EILCO - Vie Étudiante. Tous droits réservés.</p>

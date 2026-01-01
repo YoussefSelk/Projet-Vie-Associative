@@ -1,3 +1,26 @@
+<?php
+/**
+ * Espace tuteur - Tableau de bord
+ * 
+ * Interface dediee aux tuteurs pour superviser leurs clubs :
+ * - Clubs en attente de validation finale
+ * - Evenements a approuver
+ * - Liste des clubs dont ils sont tuteurs
+ * - Rapports d'evenements a consulter
+ * 
+ * Un tuteur ne voit que les elements des clubs
+ * qui lui sont assignes.
+ * 
+ * Variables attendues :
+ * - $pending_clubs : Clubs a valider
+ * - $pending_events : Evenements a valider
+ * - $my_clubs : Clubs tutores
+ * 
+ * Permissions : Tuteur (niveau 3) ou superieur
+ * 
+ * @package Views/Validation
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

@@ -1,3 +1,22 @@
+<?php
+/**
+ * Generation de rapports - Administration
+ * 
+ * Interface de creation de rapports personnalises :
+ * - Rapports d'activite (utilisateurs, clubs, evenements)
+ * - Rapports financiers (si applicable)
+ * - Export en differents formats (CSV, PDF)
+ * - Planification de rapports automatiques
+ * 
+ * Variables attendues :
+ * - $report_types : Types de rapports disponibles
+ * - $recent_reports : Derniers rapports generes
+ * 
+ * Permissions : Admin (niveau 5) requis
+ * 
+ * @package Views/Admin
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

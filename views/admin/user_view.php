@@ -1,3 +1,24 @@
+<?php
+/**
+ * Vue detaillee d'un utilisateur - Administration
+ * 
+ * Affiche le profil complet d'un utilisateur :
+ * - Informations personnelles
+ * - Historique des activites
+ * - Clubs et evenements associes
+ * - Actions administratives (modifier, supprimer)
+ * 
+ * Variables attendues :
+ * - $user : Donnees de l'utilisateur
+ * - $clubs : Clubs dont l'utilisateur est membre
+ * - $events : Evenements auxquels il a participe
+ * - $activity : Historique d'activite
+ * 
+ * Permissions : Admin (niveau 5) requis
+ * 
+ * @package Views/Admin
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

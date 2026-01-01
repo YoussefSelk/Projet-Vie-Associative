@@ -1,8 +1,23 @@
 <?php
-// Requêtes pour récupérer les clubs de chaque site, triés par date de création
+/**
+ * Barre de navigation principale
+ * 
+ * Affiche la navigation horizontale avec :
+ * - Lien vers l'accueil
+ * - Menus deroulants par campus (Calais, Longuenesse, Dunkerque, Boulogne)
+ * - Liens evenements et clubs (authentifies uniquement)
+ * 
+ * Variables globales utilisees :
+ * - $db : Connexion PDO a la base de donnees
+ * 
+ * @package Views/Includes
+ */
+
+// Verification de l'authentification et recuperation du niveau de permission
 $isAuth_NAVBAR = AuthController::isAuthenticated();
 $auth_permission_NAVBAR = AuthController::getPermission();
 
+// Recuperation des clubs valides par campus
 $req0 = $db->prepare("SELECT club_id, nom_club FROM fiche_club WHERE campus = 'Calais' AND validation_finale = 1");
 $req0->execute();
 $req_clubs_calais = $req0->fetchAll();
@@ -19,7 +34,7 @@ $req3 = $db->prepare("SELECT club_id, nom_club FROM fiche_club WHERE campus = 'B
 $req3->execute();
 $req_clubs_boulogne = $req3->fetchAll();
 
-// Campus data with colors
+// Configuration des campus avec icones et couleurs associees
 $campuses = [
     'Calais' => ['clubs' => $req_clubs_calais, 'icon' => 'fa-anchor', 'color' => '#dc3545'],
     'Longuenesse' => ['clubs' => $req_clubs_sto, 'icon' => 'fa-university', 'color' => '#28a745'],

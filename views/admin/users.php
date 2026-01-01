@@ -1,3 +1,24 @@
+<?php
+/**
+ * Gestion des utilisateurs - Administration
+ * 
+ * Liste complete des utilisateurs avec :
+ * - Filtres par role et campus
+ * - Recherche par nom/email
+ * - Modification des permissions
+ * - Suppression d'utilisateurs
+ * - Statistiques par role
+ * 
+ * Variables attendues :
+ * - $users : Liste des utilisateurs
+ * - $stats : Statistiques par role
+ * - $campuses : Liste des campus disponibles
+ * 
+ * Permissions : Admin (niveau 5) requis
+ * 
+ * @package Views/Admin
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

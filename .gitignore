@@ -1,28 +1,70 @@
-# Uploads directory (user content)
+# ===========================================
+# Vie Étudiante EILCO - .gitignore
+# ===========================================
+
+# ----- Environment & Secrets -----
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ----- Uploads (user content) -----
 uploads/*
 !uploads/.gitkeep
+!uploads/logos/.gitkeep
+!uploads/rapports/.gitkeep
 
-# Environment file (contains secrets)
-.env
-
-# Logs directory
+# ----- Logs -----
 logs/*
 !logs/.gitkeep
+*.log
 
-# IDE and editor files
+# ----- Composer dependencies -----
+vendor/
+
+# ----- IDE and editor files -----
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+nbproject/
 
-# OS files
+# ----- OS files -----
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Composer dependencies (if using)
-vendor/
+# ----- PHP specific -----
+*.cache
+*.php.bak
+.phpunit.result.cache
+phpunit.xml
+.php-cs-fixer.cache
 
-# Debug/test files - should not be deployed
+# ----- Node (if using build tools) -----
+node_modules/
+package-lock.json
+yarn.lock
+
+# ----- Debug/test files -----
 health-check.php
 route-tester.php
+test.php
+debug.php
+phpinfo.php
+
+# ----- Temporary files -----
+*.tmp
+*.temp
+*.bak
+*.backup
+~$*

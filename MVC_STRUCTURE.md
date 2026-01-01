@@ -14,6 +14,7 @@
 This is a PHP project using the **MVC (Model-View-Controller)** architecture pattern with centralized routing. The project provides a clean, maintainable code structure for managing student clubs, events, and administrative workflows.
 
 **Related Documentation:**
+
 - [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) - Detailed architecture diagrams
 - [Docs/ROUTING.md](Docs/ROUTING.md) - Complete routing documentation
 - [Docs/DATABASE.md](Docs/DATABASE.md) - Database schema
@@ -151,13 +152,13 @@ Invalid routes trigger `ErrorHandler::renderHttpError(404)` which displays a pro
 - **Session Management**: Handled in `config/bootstrap.php`
 - **Permission Levels**:
 
-| Level | Role | Description |
-|-------|------|-------------|
-| 0 | Visiteur | Unverified account |
-| 1 | Membre | Standard student |
-| 2 | Tuteur | Teacher (can validate) |
-| 3 | BDE | Student union |
-| 5 | Admin | Full administration |
+| Level | Role     | Description            |
+| ----- | -------- | ---------------------- |
+| 0     | Visiteur | Unverified account     |
+| 1     | Membre   | Standard student       |
+| 2     | Tuteur   | Teacher (can validate) |
+| 3     | BDE      | Student union          |
+| 5     | Admin    | Full administration    |
 
 See [Docs/SECURITY.md](Docs/SECURITY.md) for detailed security documentation.
 

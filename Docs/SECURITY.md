@@ -60,14 +60,14 @@ Security::setSecurityHeaders();
 
 **Headers Appliqués :**
 
-| Header | Valeur | Description |
-|--------|--------|-------------|
-| `X-Frame-Options` | `DENY` | Empêche l'inclusion en iframe (clickjacking) |
-| `X-Content-Type-Options` | `nosniff` | Empêche le MIME sniffing |
-| `X-XSS-Protection` | `1; mode=block` | Active la protection XSS du navigateur |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | Limite les infos du referrer |
-| `Content-Security-Policy` | Configurable | Politique de contenu |
-| `Strict-Transport-Security` | `max-age=31536000` | Force HTTPS (production) |
+| Header                      | Valeur                            | Description                                  |
+| --------------------------- | --------------------------------- | -------------------------------------------- |
+| `X-Frame-Options`           | `DENY`                            | Empêche l'inclusion en iframe (clickjacking) |
+| `X-Content-Type-Options`    | `nosniff`                         | Empêche le MIME sniffing                     |
+| `X-XSS-Protection`          | `1; mode=block`                   | Active la protection XSS du navigateur       |
+| `Referrer-Policy`           | `strict-origin-when-cross-origin` | Limite les infos du referrer                 |
+| `Content-Security-Policy`   | Configurable                      | Politique de contenu                         |
+| `Strict-Transport-Security` | `max-age=31536000`                | Force HTTPS (production)                     |
 
 ### Gestion des Sessions
 
@@ -90,9 +90,11 @@ Security::initSession();
 ```
 
 **Régénération d'ID :**
+
 ```php
 Security::regenerateSession();
 ```
+
 Régénère l'ID de session après authentification pour prévenir le session fixation.
 
 ### Protection CSRF
@@ -104,6 +106,7 @@ $token = Security::generateCSRFToken();
 ```
 
 Génère un token cryptographique unique stocké en session :
+
 - Utilise `random_bytes(32)` pour l'aléatoire
 - Encode en Base64
 - Stocké dans `$_SESSION['csrf_token']`
@@ -119,8 +122,9 @@ Génère un token cryptographique unique stocké en session :
 ```
 
 Génère :
+
 ```html
-<input type="hidden" name="csrf_token" value="abc123...">
+<input type="hidden" name="csrf_token" value="abc123..." />
 ```
 
 #### Vérification du Token
@@ -176,14 +180,14 @@ $int = Security::sanitizeInput($_POST['age'], 'int');
 
 **Types de Sanitisation :**
 
-| Type | Description | Fonction PHP |
-|------|-------------|--------------|
-| `email` | Valide et nettoie email | `FILTER_SANITIZE_EMAIL` |
-| `text` | Échappe HTML | `htmlspecialchars()` |
-| `html` | Nettoie HTML (garde certaines balises) | `strip_tags()` avec whitelist |
-| `int` | Force entier | `intval()` |
-| `float` | Force décimal | `floatval()` |
-| `url` | Valide URL | `FILTER_SANITIZE_URL` |
+| Type    | Description                            | Fonction PHP                  |
+| ------- | -------------------------------------- | ----------------------------- |
+| `email` | Valide et nettoie email                | `FILTER_SANITIZE_EMAIL`       |
+| `text`  | Échappe HTML                           | `htmlspecialchars()`          |
+| `html`  | Nettoie HTML (garde certaines balises) | `strip_tags()` avec whitelist |
+| `int`   | Force entier                           | `intval()`                    |
+| `float` | Force décimal                          | `floatval()`                  |
+| `url`   | Valide URL                             | `FILTER_SANITIZE_URL`         |
 
 #### Validation
 
@@ -433,17 +437,17 @@ ErrorHandler::log("Login attempt", [
 
 ## Vulnérabilités Connues et Mitigations
 
-| Vulnérabilité | Mitigation Implémentée |
-|---------------|------------------------|
-| SQL Injection | Requêtes préparées PDO |
-| XSS | Échappement HTML, CSP |
-| CSRF | Tokens par session |
-| Session Fixation | Régénération ID après login |
-| Clickjacking | X-Frame-Options: DENY |
-| MIME Sniffing | X-Content-Type-Options: nosniff |
-| Man-in-the-Middle | HTTPS + HSTS |
-| Brute Force | (À implémenter: rate limiting) |
-| Path Traversal | Validation chemins fichiers |
+| Vulnérabilité     | Mitigation Implémentée          |
+| ----------------- | ------------------------------- |
+| SQL Injection     | Requêtes préparées PDO          |
+| XSS               | Échappement HTML, CSP           |
+| CSRF              | Tokens par session              |
+| Session Fixation  | Régénération ID après login     |
+| Clickjacking      | X-Frame-Options: DENY           |
+| MIME Sniffing     | X-Content-Type-Options: nosniff |
+| Man-in-the-Middle | HTTPS + HSTS                    |
+| Brute Force       | (À implémenter: rate limiting)  |
+| Path Traversal    | Validation chemins fichiers     |
 
 ## Améliorations Futures
 

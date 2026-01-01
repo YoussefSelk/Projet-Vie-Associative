@@ -1,0 +1,162 @@
+# Nginx Configuration Example
+# Place this in your nginx configuration (e.g., /etc/nginx/sites-available/your-site)
+# This file is an example - adjust paths and settings for your environment
+
+server {
+    listen 80;
+    listen [::]:80;
+    
+    # Server name - replace with your domain
+    server_name example.com www.example.com;
+    
+    # Root directory - adjust to your installation path
+    root /var/www/your-project;
+    
+    # Default index file
+    index index.php;
+    
+    # Character encoding
+    charset utf-8;
+    
+    # Logging
+    access_log /var/log/nginx/your-project-access.log;
+    error_log /var/log/nginx/your-project-error.log;
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    
+    # Hide nginx version
+    server_tokens off;
+    
+    # Deny access to sensitive directories
+    location ~ ^/(config|models|controllers|views|routes|logs|vendor)/ {
+        deny all;
+        return 403;
+    }
+    
+    # Deny access to hidden files (starting with .)
+    location ~ /\. {
+        deny all;
+        return 403;
+    }
+    
+    # Deny access to sensitive files
+    location ~ ^/(\.env|\.env\.example|composer\.json|composer\.lock|README\.md|\.git|\.gitignore) {
+        deny all;
+        return 403;
+    }
+    
+    # Deny access to PHP files in uploads directory
+    location ~ ^/uploads/.*\.php$ {
+        deny all;
+        return 403;
+    }
+    
+    # Deny access to log files
+    location ~* \.(log|sql|bak|ini)$ {
+        deny all;
+        return 403;
+    }
+    
+    # Uploads directory - only serve allowed file types
+    location /uploads/ {
+        # Disable PHP execution
+        location ~ \.php$ {
+            deny all;
+        }
+        
+        # Only allow specific file types
+        location ~* \.(jpg|jpeg|png|gif|webp|svg|pdf|doc|docx|xls|xlsx|ppt|pptx)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+    
+    # Static files caching
+    location ~* \.(css|js|ico|gif|jpeg|jpg|png|webp|woff|woff2|ttf|eot|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+    
+    # Main location block - route all requests to index.php
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    
+    # PHP-FPM configuration
+    location ~ \.php$ {
+        # Prevent direct access to PHP files other than index.php
+        # Comment this block if you need direct PHP file access
+        location ~ ^(?!/index\.php).+\.php$ {
+            deny all;
+            return 403;
+        }
+        
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;  # Adjust PHP version
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        
+        # Security settings
+        fastcgi_hide_header X-Powered-By;
+        
+        # Timeout settings
+        fastcgi_read_timeout 300;
+        fastcgi_connect_timeout 60;
+        fastcgi_send_timeout 300;
+        
+        # Buffer settings
+        fastcgi_buffer_size 128k;
+        fastcgi_buffers 4 256k;
+        fastcgi_busy_buffers_size 256k;
+    }
+    
+    # Disable access to .ht* files (for compatibility)
+    location ~ /\.ht {
+        deny all;
+    }
+    
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml application/javascript application/json;
+    gzip_disable "MSIE [1-6]\.";
+}
+
+# HTTPS Configuration (uncomment and configure when SSL is ready)
+# server {
+#     listen 443 ssl http2;
+#     listen [::]:443 ssl http2;
+#     
+#     server_name example.com www.example.com;
+#     
+#     # SSL certificate paths
+#     ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
+#     ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+#     
+#     # SSL settings
+#     ssl_protocols TLSv1.2 TLSv1.3;
+#     ssl_prefer_server_ciphers on;
+#     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+#     ssl_session_cache shared:SSL:10m;
+#     ssl_session_timeout 10m;
+#     
+#     # HSTS
+#     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+#     
+#     # Include the same location blocks as above
+#     # ...
+# }
+
+# HTTP to HTTPS redirect (uncomment when SSL is ready)
+# server {
+#     listen 80;
+#     listen [::]:80;
+#     server_name example.com www.example.com;
+#     return 301 https://$server_name$request_uri;
+# }

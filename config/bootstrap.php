@@ -25,22 +25,27 @@ Security::setHeaders();
 // Enforce HTTPS in production
 Security::enforceHttps();
 
-// Session Configuration (must be before session_start)
-$isSecure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || Environment::isProduction();
-$sessionLifetime = (int) Environment::get('SESSION_LIFETIME', 3600);
+// Get security configuration from Environment
+$securityConfig = Environment::getSecurityConfig();
 
-ini_set('session.cookie_httponly', 1);
+// Session Configuration (must be before session_start)
+$isSecure = $securityConfig['cookie_secure'] || 
+            (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+            Environment::isProduction();
+$sessionLifetime = $securityConfig['session_lifetime'];
+
+ini_set('session.cookie_httponly', $securityConfig['cookie_httponly'] ? 1 : 0);
 ini_set('session.cookie_secure', $isSecure ? 1 : 0);
-ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.cookie_samesite', $securityConfig['cookie_samesite']);
 ini_set('session.use_strict_mode', 1);
 ini_set('session.gc_maxlifetime', $sessionLifetime);
 
 session_set_cookie_params([
     'lifetime' => $sessionLifetime,
     'path' => '/',
-    'httponly' => true,
+    'httponly' => $securityConfig['cookie_httponly'],
     'secure' => $isSecure,
-    'samesite' => 'Strict'
+    'samesite' => $securityConfig['cookie_samesite']
 ]);
 
 session_start();
@@ -79,15 +84,24 @@ function redirect($path) {
 // Helper function for session validation
 function validateSession() {
     if (!isset($_SESSION['id'])) {
+        // Store the requested URL for redirect after login
+        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
         redirect('/index.php?page=login');
     }
 }
 
-// Helper function for permission check
+// Helper function for permission check - raises 403 Forbidden if insufficient permissions
 function checkPermission($required_level) {
     validateSession();
-    if ($_SESSION['permission'] < $required_level) {
-        redirect('/index.php');
+    $userPermission = $_SESSION['permission'] ?? 0;
+    if ($userPermission < $required_level) {
+        // Log the unauthorized access attempt
+        $userId = $_SESSION['id'] ?? 'unknown';
+        $requestedPage = $_GET['page'] ?? 'unknown';
+        error_log("[SECURITY] Unauthorized access attempt: User ID $userId (permission: $userPermission) tried to access '$requestedPage' (required: $required_level)");
+        
+        // Raise 403 Forbidden error
+        ErrorHandler::renderHttpError(403, "Vous n'avez pas les permissions nécessaires pour accéder à cette page. Niveau requis: $required_level, votre niveau: $userPermission");
     }
 }
 

@@ -168,4 +168,118 @@ class Environment {
             'from_name' => self::get('MAIL_FROM_NAME', 'EILCO Events'),
         ];
     }
+
+    /**
+     * Detect the current server type
+     * @return string 'apache', 'nginx', 'iis', 'litespeed', 'cli', or 'unknown'
+     */
+    public static function getServerType(): string
+    {
+        // Check if server type is explicitly set
+        $configuredType = self::get('SERVER_TYPE', 'auto');
+        if ($configuredType !== 'auto') {
+            return strtolower($configuredType);
+        }
+
+        // CLI mode
+        if (php_sapi_name() === 'cli') {
+            return 'cli';
+        }
+
+        $serverSoftware = $_SERVER['SERVER_SOFTWARE'] ?? '';
+        
+        if (stripos($serverSoftware, 'Apache') !== false) {
+            return 'apache';
+        }
+        
+        if (stripos($serverSoftware, 'nginx') !== false) {
+            return 'nginx';
+        }
+        
+        if (stripos($serverSoftware, 'Microsoft-IIS') !== false) {
+            return 'iis';
+        }
+        
+        if (stripos($serverSoftware, 'LiteSpeed') !== false) {
+            return 'litespeed';
+        }
+        
+        // Check for nginx via fastcgi
+        if (isset($_SERVER['FCGI_ROLE']) || isset($_SERVER['PHP_SELF'])) {
+            if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+                return 'nginx'; // Common for nginx + PHP-FPM setups
+            }
+        }
+
+        return 'unknown';
+    }
+
+    /**
+     * Check if running on Apache
+     */
+    public static function isApache(): bool
+    {
+        $type = self::getServerType();
+        return $type === 'apache' || $type === 'litespeed';
+    }
+
+    /**
+     * Check if running on Nginx
+     */
+    public static function isNginx(): bool
+    {
+        return self::getServerType() === 'nginx';
+    }
+
+    /**
+     * Check if running on IIS
+     */
+    public static function isIIS(): bool
+    {
+        return self::getServerType() === 'iis';
+    }
+
+    /**
+     * Check if running in CLI mode
+     */
+    public static function isCLI(): bool
+    {
+        return self::getServerType() === 'cli' || php_sapi_name() === 'cli';
+    }
+
+    /**
+     * Get the base URL for the application
+     */
+    public static function getBaseUrl(): string
+    {
+        $baseUrl = self::get('APP_URL', '');
+        
+        if (!empty($baseUrl)) {
+            return rtrim($baseUrl, '/');
+        }
+        
+        // Auto-detect base URL
+        if (self::isCLI()) {
+            return 'http://localhost';
+        }
+        
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        
+        return $protocol . '://' . $host;
+    }
+
+    /**
+     * Get security configuration
+     */
+    public static function getSecurityConfig(): array
+    {
+        return [
+            'session_lifetime' => (int) self::get('SESSION_LIFETIME', 3600),
+            'csrf_lifetime' => (int) self::get('CSRF_TOKEN_LIFETIME', 7200),
+            'cookie_secure' => filter_var(self::get('COOKIE_SECURE', self::isProduction()), FILTER_VALIDATE_BOOLEAN),
+            'cookie_httponly' => filter_var(self::get('COOKIE_HTTPONLY', true), FILTER_VALIDATE_BOOLEAN),
+            'cookie_samesite' => self::get('COOKIE_SAMESITE', 'Strict'),
+        ];
+    }
 }

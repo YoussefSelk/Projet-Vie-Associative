@@ -222,7 +222,7 @@ return [
     ],
     
     'tutoring' => [
-        'permission' => null,
+        'permission' => 2,
         'auth' => true,
         'controller' => 'ValidationController',
         'method' => 'tutoring',

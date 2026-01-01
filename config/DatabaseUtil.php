@@ -6,22 +6,46 @@
 
 class DatabaseUtil {
     private $db;
+    
+    // Liste blanche des tables autorisées pour prévenir l'injection SQL
+    private static $allowedTables = [
+        'users', 'fiche_club', 'fiche_event', 
+        'subscribe_event', 'membres_club', 'rapport_event',
+        'config', 'abonnements'
+    ];
 
     public function __construct($database) {
         $this->db = $database;
     }
+    
+    /**
+     * Valide qu'un nom de table est autorisé (prévention injection SQL)
+     * @param string $table Nom de la table à valider
+     * @return bool True si la table est autorisée
+     */
+    private function isTableAllowed($table) {
+        return in_array($table, self::$allowedTables, true);
+    }
 
     /**
-     * Get table structure
+     * Récupère la structure d'une table
+     * @param string $table_name Nom de la table
+     * @return array Structure de la table ou tableau vide si table non autorisée
      */
     public function getTableStructure($table_name) {
-        $stmt = $this->db->prepare("DESCRIBE $table_name");
+        // Validation pour prévenir l'injection SQL
+        if (!$this->isTableAllowed($table_name)) {
+            error_log("[SECURITY] Tentative d'accès à une table non autorisée: $table_name");
+            return [];
+        }
+        $stmt = $this->db->prepare("DESCRIBE `$table_name`");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
-     * Get all tables in database
+     * Récupère toutes les tables de la base de données
+     * @return array Liste des noms de tables
      */
     public function getAllTables() {
         $stmt = $this->db->prepare("SHOW TABLES");
@@ -30,10 +54,17 @@ class DatabaseUtil {
     }
 
     /**
-     * Count records in table
+     * Compte le nombre d'enregistrements dans une table
+     * @param string $table Nom de la table
+     * @return int|string Nombre d'enregistrements ou 'N/A' si table non autorisée
      */
     public function countRecords($table) {
-        $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM $table");
+        // Validation pour prévenir l'injection SQL
+        if (!$this->isTableAllowed($table)) {
+            error_log("[SECURITY] Tentative de comptage sur table non autorisée: $table");
+            return 'N/A';
+        }
+        $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM `$table`");
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['count'];

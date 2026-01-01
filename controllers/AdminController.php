@@ -1,15 +1,42 @@
 <?php
 
 /**
- * AdminController - Centralized admin functionality
- * Handles all administration tasks for Super Admins (permission 5) and BDE (permission 3+)
+ * Controleur d'administration centralise
+ * 
+ * Gere toutes les fonctionnalites d'administration de la plateforme :
+ * - Tableau de bord avec statistiques
+ * - Gestion des utilisateurs (CRUD, permissions)
+ * - Parametres systeme et configuration
+ * - Export de donnees (CSV)
+ * - Analytiques et rapports
+ * - Audit de securite et logs
+ * - Outils de maintenance base de donnees
+ * 
+ * Niveaux d'acces :
+ * - Permission 3+ : Dashboard, analytiques evenements, rapports
+ * - Permission 5 : Toutes les fonctionnalites (Super Admin)
+ * 
+ * @package Controllers
  */
 class AdminController {
+    
+    /** @var PDO Connexion a la base de donnees */
     private $db;
+    
+    /** @var Event Modele de gestion des evenements */
     private $eventModel;
+    
+    /** @var Club Modele de gestion des clubs */
     private $clubModel;
+    
+    /** @var User Modele de gestion des utilisateurs */
     private $userModel;
 
+    /**
+     * Constructeur - initialise les dependances
+     * 
+     * @param PDO $database Connexion a la base de donnees
+     */
     public function __construct($database) {
         $this->db = $database;
         $this->eventModel = new Event($database);
@@ -18,51 +45,65 @@ class AdminController {
     }
 
     // ==========================================
-    // DASHBOARD SECTION (Permission 3+)
+    // SECTION TABLEAU DE BORD (Permission 3+)
     // ==========================================
 
     /**
-     * Main admin dashboard with statistics and overview
+     * Tableau de bord principal avec statistiques et apercu
+     * Affiche les metriques cles, activites recentes et actions rapides
+     * 
+     * Statistiques de base (permission 3+) :
+     * - Totaux utilisateurs, clubs, evenements
+     * - Elements en attente de validation
+     * - Repartition par campus et permission
+     * 
+     * Statistiques avancees (permission 5) :
+     * - Inscriptions totales aux evenements
+     * - Elements rejetes
+     * - Nouveaux utilisateurs (7 derniers jours)
+     * - Configuration systeme
+     * 
+     * @return array Donnees pour la vue du dashboard
      */
     public function dashboard() {
         checkPermission(3);
         
         $stats = [];
         
-        // Total users
+        // Nombre total d'utilisateurs
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM users");
         $stats['total_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Total validated clubs
+        // Nombre total de clubs valides
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale = 1");
         $stats['total_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Total validated events
+        // Nombre total d'evenements valides
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale = 1");
         $stats['total_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Pending clubs
+        // Clubs en attente de validation finale (deja valides par tuteur)
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale IS NULL AND validation_tuteur = 1");
         $stats['pending_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Pending events
+        // Evenements en attente de validation finale (valides par tuteur et BDE)
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale IS NULL AND validation_tuteur = 1 AND validation_bde = 1");
         $stats['pending_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Total pending (clubs + events)
+        // Total des elements en attente
         $stats['total_pending'] = $stats['pending_clubs'] + $stats['pending_events'];
         
-        // Users by permission level
+        // Repartition des utilisateurs par niveau de permission
         $stmt = $this->db->query("SELECT permission, COUNT(*) as count FROM users GROUP BY permission ORDER BY permission");
         $stats['users_by_permission'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Clubs by campus
+        // Repartition des clubs par campus
         $stmt = $this->db->query("SELECT campus, COUNT(*) as count FROM fiche_club WHERE validation_finale = 1 GROUP BY campus");
         $stats['clubs_by_campus'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Advanced stats for admins (permission 5)
+        // Statistiques avancees pour les Super Admins uniquement (permission 5)
         if (($_SESSION['permission'] ?? 0) == 5) {
-            // Total subscriptions
+            // Total des inscriptions aux evenements
             try {
                 $stmt = $this->db->query("SELECT COUNT(*) as count FROM subscribe_event");
                 $stats['total_subscriptions'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
@@ -70,18 +111,18 @@ class AdminController {
                 $stats['total_subscriptions'] = 0;
             }
             
-            // Club members count
+            // Nombre de membres de clubs valides
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM membres_club WHERE valide = 1");
             $stats['total_club_members'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
             
-            // Rejected items
+            // Elements rejetes
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale = -1");
             $stats['rejected_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
             
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale = -1");
             $stats['rejected_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
             
-            // Recent user registrations (last 7 days)
+            // Nouveaux utilisateurs inscrits (7 derniers jours)
             try {
                 $stmt = $this->db->query("SELECT COUNT(*) as count FROM users WHERE date_inscription >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
                 $stats['new_users_week'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
@@ -89,11 +130,11 @@ class AdminController {
                 $stats['new_users_week'] = 0;
             }
             
-            // Upcoming events (next 30 days)
+            // Evenements a venir (30 prochains jours)
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale = 1 AND date_ev BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)");
             $stats['upcoming_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
             
-            // Get system config
+            // Configuration systeme
             try {
                 $stmt = $this->db->query("SELECT * FROM config LIMIT 1");
                 $stats['config'] = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -102,7 +143,7 @@ class AdminController {
             }
         }
         
-        // Events by month (last 6 months)
+        // Evenements par mois (6 derniers mois)
         $stmt = $this->db->query("
             SELECT 
                 DATE_FORMAT(date_ev, '%Y-%m') as month,
@@ -115,10 +156,10 @@ class AdminController {
         ");
         $stats['events_by_month'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Recent activities (last 10)
+        // Activites recentes (10 dernieres)
         $recent_activities = [];
         
-        // Recent clubs
+        // Derniers clubs crees
         $stmt = $this->db->query("
             SELECT 'club' as type, nom_club as title, campus, club_id as sort_id 
             FROM fiche_club 
@@ -127,7 +168,7 @@ class AdminController {
         ");
         $recent_clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Recent events
+        // Derniers evenements crees
         $stmt = $this->db->query("
             SELECT 'event' as type, titre as title, campus, date_ev as date, event_id as sort_id 
             FROM fiche_event 
@@ -136,7 +177,7 @@ class AdminController {
         ");
         $recent_events = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Merge and sort by id (most recent first)
+        // Fusionner et trier par ID (plus recent en premier)
         $recent_activities = array_merge($recent_clubs, $recent_events);
         usort($recent_activities, function($a, $b) {
             if (isset($a['date']) && isset($b['date'])) {
@@ -146,7 +187,7 @@ class AdminController {
         });
         $recent_activities = array_slice($recent_activities, 0, 8);
         
-        // Get pending items for quick action
+        // Elements en attente pour actions rapides
         $stmt = $this->db->query("
             SELECT club_id, nom_club, type_club, campus 
             FROM fiche_club 
@@ -173,11 +214,22 @@ class AdminController {
     }
 
     // ==========================================
-    // SETTINGS SECTION (Permission 5 - Super Admin)
+    // SECTION PARAMETRES (Permission 5 - Super Admin)
     // ==========================================
 
     /**
-     * Admin settings page - Super Admin only (permission 5)
+     * Page des parametres d'administration
+     * Accessible uniquement aux Super Admins (permission 5)
+     * 
+     * Fonctionnalites :
+     * - Activer/desactiver la creation de clubs
+     * - Activer/desactiver la creation d'evenements
+     * - Mode maintenance
+     * - Effacer les logs d'erreur
+     * - Validation en masse des clubs et evenements
+     * - Nettoyage des anciens evenements
+     * 
+     * @return array Donnees pour la vue des parametres
      */
     public function settings() {
         checkPermission(5);
@@ -185,7 +237,7 @@ class AdminController {
         $success_msg = '';
         $error_msg = '';
         
-        // Get current config
+        // Recuperer la configuration actuelle
         try {
             $stmt = $this->db->query("SELECT * FROM config LIMIT 1");
             $config = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -193,8 +245,10 @@ class AdminController {
             $config = ['creation_club_active' => 1, 'creation_event_active' => 1, 'maintenance_mode' => 0];
         }
         
-        // Handle form submission
+        // Traitement du formulaire de mise a jour
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            
+            // Mise a jour des parametres principaux
             if (isset($_POST['update_settings'])) {
                 $creation_club_active = isset($_POST['creation_club_active']) ? 1 : 0;
                 $creation_event_active = isset($_POST['creation_event_active']) ? 1 : 0;
@@ -212,7 +266,7 @@ class AdminController {
                 }
             }
             
-            // Clear error logs
+            // Effacement des logs d'erreur
             if (isset($_POST['clear_logs'])) {
                 $logFile = LOGS_PATH . '/error.log';
                 if (file_exists($logFile)) {
@@ -221,7 +275,7 @@ class AdminController {
                 }
             }
             
-            // Bulk actions
+            // Validation en masse de tous les clubs en attente
             if (isset($_POST['bulk_validate_clubs'])) {
                 try {
                     $this->db->query("UPDATE fiche_club SET validation_finale = 1 WHERE validation_finale IS NULL AND validation_tuteur = 1");
@@ -231,6 +285,7 @@ class AdminController {
                 }
             }
             
+            // Validation en masse de tous les evenements en attente
             if (isset($_POST['bulk_validate_events'])) {
                 try {
                     $this->db->query("UPDATE fiche_event SET validation_finale = 1 WHERE validation_finale IS NULL AND validation_tuteur = 1 AND validation_bde = 1");
@@ -240,6 +295,7 @@ class AdminController {
                 }
             }
             
+            // Identification des anciens evenements pour archivage
             if (isset($_POST['clean_old_events'])) {
                 try {
                     $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE date_ev < DATE_SUB(NOW(), INTERVAL 1 YEAR)");
@@ -251,7 +307,7 @@ class AdminController {
             }
         }
         
-        // Get error logs (last 50 lines)
+        // Recuperer les 50 dernieres lignes du log d'erreur
         $error_logs = [];
         $logFile = LOGS_PATH . '/error.log';
         if (file_exists($logFile)) {
@@ -260,7 +316,7 @@ class AdminController {
             $error_logs = array_reverse($error_logs);
         }
         
-        // Get database stats
+        // Statistiques de la base de donnees (nombre d'enregistrements par table)
         $db_stats = [];
         try {
             $tables = ['users', 'fiche_club', 'fiche_event', 'membres_club', 'subscribe_event'];
@@ -273,27 +329,27 @@ class AdminController {
                 }
             }
         } catch (Exception $e) {
-            // Ignore
+            // Ignorer les erreurs
         }
         
-        // Get advanced stats
+        // Statistiques avancees
         $advanced_stats = [];
         
-        // Pending counts
+        // Comptage des elements en attente
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale IS NULL AND validation_tuteur = 1");
         $advanced_stats['pending_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale IS NULL AND validation_tuteur = 1 AND validation_bde = 1");
         $advanced_stats['pending_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Rejected counts
+        // Comptage des elements rejetes
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale = -1");
         $advanced_stats['rejected_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale = -1");
         $advanced_stats['rejected_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Old events
+        // Evenements de plus d'un an
         try {
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE date_ev < DATE_SUB(NOW(), INTERVAL 1 YEAR)");
             $advanced_stats['old_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
@@ -301,7 +357,7 @@ class AdminController {
             $advanced_stats['old_events'] = 0;
         }
         
-        // Events without reports
+        // Evenements passes sans rapport soumis
         try {
             $stmt = $this->db->query("
                 SELECT COUNT(*) as count FROM fiche_event e 
@@ -313,15 +369,15 @@ class AdminController {
             $advanced_stats['events_no_report'] = 0;
         }
         
-        // Users by permission
+        // Repartition des utilisateurs par permission
         $stmt = $this->db->query("SELECT permission, COUNT(*) as count FROM users GROUP BY permission ORDER BY permission");
         $advanced_stats['users_by_permission'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Recent users (last 10)
+        // 10 derniers utilisateurs inscrits
         $stmt = $this->db->query("SELECT id, nom, prenom, mail, permission FROM users ORDER BY id DESC LIMIT 10");
         $advanced_stats['recent_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Get system info
+        // Informations systeme du serveur
         $system_info = [
             'php_version' => phpversion(),
             'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
@@ -333,7 +389,7 @@ class AdminController {
             'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? 'Unknown',
         ];
         
-        // Disk usage
+        // Calcul de l'espace disque utilise par les uploads
         try {
             $uploadPath = UPLOADS_PATH;
             if (is_dir($uploadPath)) {
@@ -361,11 +417,21 @@ class AdminController {
     }
 
     // ==========================================
-    // DATA EXPORT SECTION (Permission 5)
+    // SECTION EXPORT DE DONNEES (Permission 5)
     // ==========================================
 
     /**
-     * Export all data as CSV - Super Admin only
+     * Exporte les donnees de la plateforme en CSV
+     * Accessible uniquement aux Super Admins (permission 5)
+     * 
+     * Types d'export disponibles :
+     * - users : Liste des utilisateurs
+     * - clubs : Liste des clubs
+     * - events : Liste des evenements
+     * - subscriptions : Inscriptions aux evenements
+     * - members : Membres des clubs
+     * 
+     * @return void (sortie directe du fichier CSV)
      */
     public function exportData() {
         checkPermission(5);
@@ -374,6 +440,7 @@ class AdminController {
         
         switch ($type) {
             case 'users':
+                // Export de la liste des utilisateurs
                 $stmt = $this->db->query("SELECT id, nom, prenom, mail, promo, permission FROM users ORDER BY id");
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $filename = 'users_export_' . date('Y-m-d') . '.csv';
@@ -381,6 +448,7 @@ class AdminController {
                 break;
                 
             case 'clubs':
+                // Export de la liste des clubs
                 $stmt = $this->db->query("SELECT club_id, nom_club, type_club, campus, validation_finale FROM fiche_club ORDER BY club_id");
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $filename = 'clubs_export_' . date('Y-m-d') . '.csv';
@@ -388,6 +456,7 @@ class AdminController {
                 break;
                 
             case 'events':
+                // Export de la liste des evenements
                 $stmt = $this->db->query("SELECT event_id, titre, date_ev, campus, validation_finale FROM fiche_event ORDER BY event_id");
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $filename = 'events_export_' . date('Y-m-d') . '.csv';
@@ -395,6 +464,7 @@ class AdminController {
                 break;
             
             case 'subscriptions':
+                // Export des inscriptions aux evenements avec details utilisateur et evenement
                 $stmt = $this->db->query("
                     SELECT se.id, u.nom, u.prenom, u.mail, fe.titre, fe.date_ev
                     FROM subscribe_event se
@@ -408,6 +478,7 @@ class AdminController {
                 break;
             
             case 'members':
+                // Export des membres de clubs avec details
                 $stmt = $this->db->query("
                     SELECT mc.id, u.nom, u.prenom, u.mail, fc.nom_club, mc.valide
                     FROM membres_club mc
@@ -425,12 +496,13 @@ class AdminController {
                 return;
         }
         
+        // En-tetes HTTP pour le telechargement CSV
         header('Content-Type: text/csv; charset=UTF-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Pragma: no-cache');
         header('Expires: 0');
         
-        // BOM for UTF-8 Excel
+        // BOM UTF-8 pour compatibilite Excel
         echo "\xEF\xBB\xBF";
         
         $output = fopen('php://output', 'w');
@@ -445,23 +517,33 @@ class AdminController {
     }
 
     // ==========================================
-    // EVENT ANALYTICS SECTION (Permission 3+)
+    // SECTION ANALYTIQUES EVENEMENTS (Permission 3+)
     // ==========================================
 
     /**
-     * Event Analytics - For BDE and higher (permission >= 3)
-     * Shows subscription stats, popular events, trends
+     * Analytiques des evenements
+     * Pour le BDE et les administrateurs (permission 3+)
+     * 
+     * Metriques affichees :
+     * - Total des evenements valides
+     * - Repartition par campus et par mois
+     * - Evenements les plus populaires (par inscriptions)
+     * - Evenements a venir (30 prochains jours)
+     * - Evenements sans rapport soumis
+     * - Classement des clubs par activite
+     * 
+     * @return array Donnees statistiques pour la vue
      */
     public function eventAnalytics() {
         checkPermission(3);
         
         $stats = [];
         
-        // Total validated events
+        // Total des evenements valides
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale = 1");
         $stats['total_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Events by campus
+        // Repartition des evenements par campus
         $stmt = $this->db->query("
             SELECT campus, COUNT(*) as count 
             FROM fiche_event 
@@ -471,7 +553,7 @@ class AdminController {
         ");
         $stats['by_campus'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Events by month (last 12 months)
+        // Evenements par mois (12 derniers mois)
         $stmt = $this->db->query("
             SELECT 
                 DATE_FORMAT(date_ev, '%Y-%m') as month,
@@ -484,7 +566,7 @@ class AdminController {
         ");
         $stats['by_month'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Most popular events (by subscriptions)
+        // Top 10 des evenements les plus populaires (par nombre d'inscriptions)
         try {
             $stmt = $this->db->query("
                 SELECT fe.event_id, fe.titre, fe.date_ev, fe.campus, fc.nom_club,
@@ -502,7 +584,7 @@ class AdminController {
             $stats['popular_events'] = [];
         }
         
-        // Total subscriptions
+        // Total des inscriptions aux evenements
         try {
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM subscribe_event");
             $stats['total_subscriptions'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
@@ -510,7 +592,7 @@ class AdminController {
             $stats['total_subscriptions'] = 0;
         }
         
-        // Upcoming events (next 30 days)
+        // Evenements a venir (30 prochains jours) avec compteur d'inscriptions
         $stmt = $this->db->query("
             SELECT fe.*, fc.nom_club,
                 (SELECT COUNT(*) FROM subscribe_event se WHERE se.event_id = fe.event_id) as subscription_count
@@ -522,7 +604,7 @@ class AdminController {
         ");
         $stats['upcoming_events'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Events needing attention (past events without reports)
+        // Evenements passes sans rapport (30 derniers jours) - necessite attention
         try {
             $stmt = $this->db->query("
                 SELECT fe.event_id, fe.titre, fe.date_ev, fc.nom_club
@@ -541,7 +623,7 @@ class AdminController {
             $stats['events_without_reports'] = [];
         }
         
-        // Club activity ranking
+        // Classement des clubs par nombre d'evenements organises
         $stmt = $this->db->query("
             SELECT fc.club_id, fc.nom_club, fc.campus,
                 COUNT(fe.event_id) as event_count
@@ -560,29 +642,39 @@ class AdminController {
     }
 
     // ==========================================
-    // USER MANAGEMENT SECTION (Permission 5)
+    // SECTION GESTION DES UTILISATEURS (Permission 5)
     // ==========================================
 
     /**
-     * List all users with advanced management (Super Admin only)
+     * Liste tous les utilisateurs avec gestion avancee
+     * Accessible uniquement aux Super Admins (permission 5)
+     * 
+     * Fonctionnalites :
+     * - Recherche par nom, prenom, email
+     * - Filtres par permission et promotion
+     * - Tri dynamique sur les colonnes
+     * - Affichage du nombre de clubs et inscriptions par utilisateur
+     * 
+     * @return array Donnees pour la vue liste utilisateurs
      */
     public function listUsers() {
         checkPermission(5);
         
-        // Get search/filter parameters
+        // Recuperation des parametres de recherche et filtrage
         $search = $_GET['search'] ?? '';
         $filter_permission = $_GET['permission'] ?? '';
         $filter_promo = $_GET['promo'] ?? '';
         $sort = $_GET['sort'] ?? 'id';
         $order = $_GET['order'] ?? 'DESC';
         
-        // Build query
+        // Construction de la requete avec sous-requetes pour les compteurs
         $query = "SELECT u.*, 
             (SELECT COUNT(*) FROM membres_club mc WHERE mc.membre_id = u.id AND mc.valide = 1) as clubs_count,
             (SELECT COUNT(*) FROM subscribe_event se WHERE se.user_id = u.id) as subscriptions_count
             FROM users u WHERE 1=1";
         $params = [];
         
+        // Filtre de recherche textuelle
         if ($search) {
             $query .= " AND (u.nom LIKE ? OR u.prenom LIKE ? OR u.mail LIKE ?)";
             $params[] = "%$search%";
@@ -590,17 +682,19 @@ class AdminController {
             $params[] = "%$search%";
         }
         
+        // Filtre par niveau de permission
         if ($filter_permission !== '') {
             $query .= " AND u.permission = ?";
             $params[] = $filter_permission;
         }
         
+        // Filtre par promotion
         if ($filter_promo) {
             $query .= " AND u.promo = ?";
             $params[] = $filter_promo;
         }
         
-        // Validate sort column
+        // Validation de la colonne de tri (securite contre injection SQL)
         $allowed_sorts = ['id', 'nom', 'prenom', 'mail', 'promo', 'permission'];
         if (!in_array($sort, $allowed_sorts)) $sort = 'id';
         $order = strtoupper($order) === 'ASC' ? 'ASC' : 'DESC';
@@ -611,12 +705,12 @@ class AdminController {
         $stmt->execute($params);
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Get stats
+        // Statistiques par niveau de permission
         $stats = [];
         $stmt = $this->db->query("SELECT permission, COUNT(*) as count FROM users GROUP BY permission ORDER BY permission");
         $stats['by_permission'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Get available promos for filter
+        // Liste des promotions disponibles pour le filtre
         $stmt = $this->db->query("SELECT DISTINCT promo FROM users WHERE promo IS NOT NULL AND promo != '' ORDER BY promo DESC");
         $promos = $stmt->fetchAll(PDO::FETCH_COLUMN);
         
@@ -635,7 +729,11 @@ class AdminController {
     }
 
     /**
-     * Update user permission (Super Admin only)
+     * Met a jour le niveau de permission d'un utilisateur
+     * Accessible uniquement aux Super Admins (permission 5)
+     * Protection : impossible de modifier sa propre permission
+     * 
+     * @return void (redirection apres traitement)
      */
     public function updatePermission() {
         checkPermission(5);
@@ -647,39 +745,49 @@ class AdminController {
         $user_id = $_POST['user_id'] ?? null;
         $new_permission = $_POST['permission'] ?? null;
         
+        // Validation : permission entre 0 et 5, pas de modification de sa propre permission
         if ($user_id && $new_permission !== null && $new_permission >= 0 && $new_permission <= 5) {
-            // Can't change own permission
             if ($user_id != $_SESSION['id']) {
                 $stmt = $this->db->prepare("UPDATE users SET permission = ? WHERE id = ?");
                 $stmt->execute([$new_permission, $user_id]);
             }
         }
         
-        // Redirect back to referrer or admin users page
+        // Redirection vers la page d'origine ou la liste utilisateurs
         $referer = $_SERVER['HTTP_REFERER'] ?? 'index.php?page=admin-users';
         redirect($referer);
     }
 
     /**
-     * Delete user (Super Admin only)
+     * Supprime un utilisateur et toutes ses donnees associees
+     * Accessible uniquement aux Super Admins (permission 5)
+     * Protection : impossible de supprimer son propre compte
+     * 
+     * Donnees supprimees :
+     * - Adhesions aux clubs
+     * - Inscriptions aux evenements
+     * - Compte utilisateur
+     * 
+     * @return void (redirection apres traitement)
      */
     public function deleteUser() {
         checkPermission(5);
         
         $user_id = $_GET['id'] ?? null;
         
+        // Protection contre l'auto-suppression
         if ($user_id && $user_id != $_SESSION['id']) {
-            // Remove from club memberships
+            // Suppression des adhesions aux clubs
             $stmt = $this->db->prepare("DELETE FROM membres_club WHERE membre_id = ?");
             $stmt->execute([$user_id]);
             
-            // Remove subscriptions
+            // Suppression des inscriptions aux evenements
             try {
                 $stmt = $this->db->prepare("DELETE FROM subscribe_event WHERE user_id = ?");
                 $stmt->execute([$user_id]);
             } catch (Exception $e) {}
             
-            // Delete user
+            // Suppression du compte utilisateur
             $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
             $stmt->execute([$user_id]);
         }
@@ -688,7 +796,15 @@ class AdminController {
     }
 
     /**
-     * View user details (Super Admin only)
+     * Affiche les details d'un utilisateur
+     * Accessible uniquement aux Super Admins (permission 5)
+     * 
+     * Informations affichees :
+     * - Donnees du profil
+     * - Clubs rejoints
+     * - Inscriptions aux evenements
+     * 
+     * @return array Donnees pour la vue detail utilisateur
      */
     public function viewUser() {
         checkPermission(5);
@@ -698,7 +814,7 @@ class AdminController {
             redirect('index.php?page=admin-users');
         }
         
-        // Get user details
+        // Recuperation des informations de l'utilisateur
         $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
         $stmt->execute([$user_id]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -707,7 +823,7 @@ class AdminController {
             redirect('index.php?page=admin-users');
         }
         
-        // Get user's clubs
+        // Clubs dont l'utilisateur est membre
         $stmt = $this->db->prepare("
             SELECT fc.*
             FROM membres_club mc
@@ -717,7 +833,7 @@ class AdminController {
         $stmt->execute([$user_id]);
         $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Get user's subscriptions
+        // Inscriptions aux evenements
         try {
             $stmt = $this->db->prepare("
                 SELECT fe.*, fc.nom_club
@@ -733,7 +849,7 @@ class AdminController {
             $subscriptions = [];
         }
         
-        // Get user's activity log (if exists)
+        // Journal d'activite (pour extension future)
         $activity = [];
         
         return [
@@ -745,16 +861,20 @@ class AdminController {
     }
 
     // ==========================================
-    // AUDIT & SECURITY SECTION (Permission 5)
+    // SECTION AUDIT ET SECURITE (Permission 5)
     // ==========================================
 
     /**
-     * Security audit log
+     * Journal d'audit de securite
+     * Affiche les tentatives de connexion et les erreurs systeme
+     * Accessible uniquement aux Super Admins (permission 5)
+     * 
+     * @return array Donnees pour la vue d'audit
      */
     public function auditLog() {
         checkPermission(5);
         
-        // Get login attempts log if exists
+        // Lecture du fichier de log de securite (100 dernieres lignes)
         $login_attempts = [];
         $securityLogFile = LOGS_PATH . '/security.log';
         if (file_exists($securityLogFile)) {
@@ -763,7 +883,7 @@ class AdminController {
             $login_attempts = array_reverse($login_attempts);
         }
         
-        // Get recent errors
+        // Lecture du fichier de log d'erreurs (100 dernieres lignes)
         $error_logs = [];
         $errorLogFile = LOGS_PATH . '/error.log';
         if (file_exists($errorLogFile)) {
@@ -772,14 +892,14 @@ class AdminController {
             $error_logs = array_reverse($error_logs);
         }
         
-        // Security stats
+        // Statistiques de securite
         $stats = [];
         
-        // Failed login attempts (last 24h) - if we track them
+        // Nombre d'evenements de securite enregistres
         $stats['security_events'] = count($login_attempts);
         $stats['error_count'] = count($error_logs);
         
-        // Users with high permissions
+        // Utilisateurs avec privileges eleves (permission 3+)
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM users WHERE permission >= 3");
         $stats['privileged_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
@@ -791,11 +911,20 @@ class AdminController {
     }
 
     // ==========================================
-    // DATABASE MANAGEMENT (Permission 5)
+    // SECTION GESTION BASE DE DONNEES (Permission 5)
     // ==========================================
 
     /**
-     * Database optimization and cleanup
+     * Outils de maintenance et nettoyage de la base de donnees
+     * Accessible uniquement aux Super Admins (permission 5)
+     * 
+     * Fonctionnalites :
+     * - Nettoyage des enregistrements orphelins
+     * - Archivage des anciens evenements
+     * - Statistiques par table
+     * - Detection des problemes
+     * 
+     * @return array Donnees pour la vue de maintenance
      */
     public function databaseTools() {
         checkPermission(5);
@@ -804,16 +933,16 @@ class AdminController {
         $error_msg = '';
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Cleanup orphan records
+            // Nettoyage des enregistrements orphelins
             if (isset($_POST['cleanup_orphans'])) {
                 try {
-                    // Delete club members for non-existent clubs
+                    // Suppression des membres pour des clubs inexistants
                     $stmt = $this->db->query("DELETE mc FROM membres_club mc LEFT JOIN fiche_club fc ON mc.club_id = fc.club_id WHERE fc.club_id IS NULL");
                     
-                    // Delete subscriptions for non-existent events
+                    // Suppression des inscriptions pour des evenements inexistants
                     $stmt = $this->db->query("DELETE se FROM subscribe_event se LEFT JOIN fiche_event fe ON se.event_id = fe.event_id WHERE fe.event_id IS NULL");
                     
-                    // Delete subscriptions for non-existent users
+                    // Suppression des inscriptions pour des utilisateurs inexistants
                     $stmt = $this->db->query("DELETE se FROM subscribe_event se LEFT JOIN users u ON se.user_id = u.id WHERE u.id IS NULL");
                     
                     $success_msg = "Nettoyage des enregistrements orphelins effectué.";
@@ -822,10 +951,10 @@ class AdminController {
                 }
             }
             
-            // Archive old events
+            // Archivage des anciens evenements (plus d'un an)
             if (isset($_POST['archive_old_events'])) {
                 try {
-                    // Mark old events as archived (using a negative validation or special status)
+                    // Marquage avec validation_finale = -2 pour distinguer des rejetes (-1)
                     $stmt = $this->db->query("UPDATE fiche_event SET validation_finale = -2 WHERE date_ev < DATE_SUB(NOW(), INTERVAL 1 YEAR) AND validation_finale = 1");
                     $count = $stmt->rowCount();
                     $success_msg = "$count événements archivés.";
@@ -835,7 +964,7 @@ class AdminController {
             }
         }
         
-        // Get database stats
+        // Statistiques de chaque table
         $db_stats = [];
         $tables = ['users', 'fiche_club', 'fiche_event', 'membres_club', 'subscribe_event', 'rapport_event'];
         foreach ($tables as $table) {
@@ -849,10 +978,10 @@ class AdminController {
             }
         }
         
-        // Check for potential issues
+        // Detection des problemes potentiels
         $issues = [];
         
-        // Orphan club members
+        // Membres de club orphelins (club supprime mais membre toujours present)
         try {
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM membres_club mc LEFT JOIN fiche_club fc ON mc.club_id = fc.club_id WHERE fc.club_id IS NULL");
             $count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
@@ -861,7 +990,7 @@ class AdminController {
             }
         } catch (Exception $e) {}
         
-        // Old events
+        // Evenements de plus d'un an non archives
         try {
             $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE date_ev < DATE_SUB(NOW(), INTERVAL 1 YEAR) AND validation_finale = 1");
             $count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
@@ -879,11 +1008,19 @@ class AdminController {
     }
 
     // ==========================================
-    // REPORTS SECTION (Permission 3+)
+    // SECTION RAPPORTS (Permission 3+)
     // ==========================================
 
     /**
-     * Generate platform reports
+     * Generation de rapports de la plateforme
+     * Pour le BDE et les administrateurs (permission 3+)
+     * 
+     * Types de rapports :
+     * - monthly : Resume mensuel (evenements, clubs, inscriptions)
+     * - clubs : Performance des clubs (membres, evenements organises)
+     * - users : Engagement utilisateurs par promotion
+     * 
+     * @return array Donnees du rapport selectionne
      */
     public function generateReport() {
         checkPermission(3);
@@ -893,10 +1030,10 @@ class AdminController {
         
         switch ($report_type) {
             case 'monthly':
-                // Monthly summary
+                // Resume mensuel
                 $month = $_GET['month'] ?? date('Y-m');
                 
-                // Events this month
+                // Statistiques des evenements du mois
                 $stmt = $this->db->prepare("
                     SELECT COUNT(*) as total_events,
                         SUM(CASE WHEN validation_finale = 1 THEN 1 ELSE 0 END) as validated,
@@ -907,7 +1044,7 @@ class AdminController {
                 $stmt->execute([$month]);
                 $report_data['events'] = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                // New clubs this month
+                // Nouveaux clubs du mois (approximation basee sur l'ID)
                 $stmt = $this->db->prepare("
                     SELECT COUNT(*) as count 
                     FROM fiche_club 
@@ -920,7 +1057,7 @@ class AdminController {
                     $report_data['new_clubs'] = 0;
                 }
                 
-                // Subscriptions this month
+                // Inscriptions aux evenements du mois
                 try {
                     $stmt = $this->db->prepare("
                         SELECT COUNT(*) as count 
@@ -938,7 +1075,7 @@ class AdminController {
                 break;
                 
             case 'clubs':
-                // Club performance report
+                // Rapport de performance des clubs
                 $stmt = $this->db->query("
                     SELECT fc.club_id, fc.nom_club, fc.campus,
                         (SELECT COUNT(*) FROM membres_club mc WHERE mc.club_id = fc.club_id AND mc.valide = 1) as members_count,
@@ -951,7 +1088,7 @@ class AdminController {
                 break;
                 
             case 'users':
-                // User engagement report
+                // Rapport d'engagement utilisateurs par promotion
                 $stmt = $this->db->query("
                     SELECT 
                         promo,

@@ -1,16 +1,44 @@
 <?php
+/**
+ * =============================================================================
+ * CONTRÔLEUR DES ÉVÉNEMENTS
+ * =============================================================================
+ * 
+ * Gère toutes les opérations liées aux événements :
+ * - Liste et affichage des événements
+ * - Création et modification d'événements
+ * - Événements de l'utilisateur
+ * - Dépôt de rapports post-événement
+ * 
+ * Note : La fonction analytics() a été déplacée vers AdminController
+ * 
+ * @author Équipe de développement EILCO
+ * @version 2.0
+ */
 
 class EventController {
+    /** @var Event Modèle des événements */
     private $eventModel;
+    
+    /** @var PDO Instance de connexion à la base de données */
     private $db;
 
+    /**
+     * Constructeur
+     * @param PDO $database Instance de connexion PDO
+     */
     public function __construct($database) {
         $this->db = $database;
         $this->eventModel = new Event($database);
     }
 
+    /**
+     * Liste tous les événements validés
+     * Route publique accessible à tous
+     * 
+     * @return array Liste des événements
+     */
     public function listEvents() {
-        // Public route - anyone can view events
         $events = $this->eventModel->getAllValidatedEvents();
         
         return [
@@ -18,8 +46,13 @@ class EventController {
         ];
     }
 
+    /**
+     * Affiche les détails d'un événement
+     * Route publique accessible à tous
+     * 
+     * @return array Données de l'événement
+     */
     public function viewEvent() {
-        // Public route - anyone can view event details
         $event_id = $_GET['id'] ?? null;
         if (!$event_id) {
             redirect('index.php');
@@ -35,6 +68,12 @@ class EventController {
         ];
     }
 
+    /**
+     * Création d'un nouvel événement
+     * Nécessite permission >= 2 (membre de bureau)
+     * 
+     * @return array Données pour la vue [error_msg, success_msg]
+     */
     public function createEvent() {
         checkPermission(2);
         
@@ -72,6 +111,12 @@ class EventController {
         ];
     }
 
+    /**
+     * Modification d'un événement existant
+     * Nécessite permission >= 2 (membre de bureau)
+     * 
+     * @return array Données pour la vue [event, error_msg, success_msg]
+     */
     public function updateEvent() {
         checkPermission(2);
         
@@ -120,6 +165,11 @@ class EventController {
         ];
     }
 
+    /**
+     * Liste les événements des clubs de l'utilisateur
+     * 
+     * @return array Liste des événements de l'utilisateur
+     */
     public function myEvents() {
         validateSession();
         
@@ -130,13 +180,21 @@ class EventController {
         ];
     }
 
+    /**
+     * Dépôt de rapport post-événement
+     * Permet aux membres de club de déposer un rapport après un événement
+     * 
+     * Fichiers acceptés : PDF, DOC, DOCX
+     * 
+     * @return array Données pour la vue [events, error_msg, success_msg]
+     */
     public function eventReport() {
         validateSession();
         
         $error_msg = '';
         $success_msg = '';
         
-        // Get user's clubs events
+        // Récupérer les événements des clubs de l'utilisateur
         $stmt = $this->db->prepare("
             SELECT fe.* FROM fiche_event fe
             INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
@@ -153,7 +211,7 @@ class EventController {
             if (!$event_id || !$rapport) {
                 $error_msg = "Tous les champs sont obligatoires.";
             } else {
-                // Handle file upload if present
+                // Gestion de l'upload de fichier
                 $rapport_file = null;
                 if (isset($_FILES['rapport_file']) && $_FILES['rapport_file']['error'] == 0) {
                     $allowed = ['pdf', 'doc', 'docx'];
@@ -170,6 +228,7 @@ class EventController {
                     }
                 }
                 
+                // Insérer le rapport en base de données
                 $stmt = $this->db->prepare("INSERT INTO rapport_event (event_id, user_id, rapport, fichier, date_depot) VALUES (?, ?, ?, ?, NOW())");
                 if ($stmt->execute([$event_id, $_SESSION['id'], $rapport, $rapport_file])) {
                     $success_msg = "Rapport déposé avec succès.";
@@ -185,6 +244,4 @@ class EventController {
             'success_msg' => $success_msg
         ];
     }
-    
-    // Note: analytics() function has been moved to AdminController
 }

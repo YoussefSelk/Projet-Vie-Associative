@@ -1,10 +1,30 @@
 <?php
 /**
- * Environment Configuration Loader
- * Uses vlucas/phpdotenv for production-ready environment variable management
+ * =============================================================================
+ * CHARGEUR DE CONFIGURATION D'ENVIRONNEMENT
+ * =============================================================================
+ * 
+ * Gère le chargement des variables d'environnement :
+ * - Utilise vlucas/phpdotenv pour une gestion robuste
+ * - Parser personnalisé en fallback si phpdotenv n'est pas disponible
+ * - Valeurs par défaut pour le développement
+ * 
+ * Variables d'environnement supportées :
+ * - APP_ENV : 'development' ou 'production'
+ * - APP_DEBUG : 'true' ou 'false'
+ * - DB_HOST, DB_NAME, DB_USER, DB_PASS : Configuration base de données
+ * - MAIL_* : Configuration SMTP
+ * - SESSION_*, COOKIE_* : Configuration sécurité
+ * 
+ * Détection automatique du serveur :
+ * - Apache, Nginx, IIS, LiteSpeed
+ * - Mode CLI
+ * 
+ * @author Équipe de développement EILCO
+ * @version 2.0
  */
 
-// Load composer autoloader for phpdotenv
+// Charger l'autoloader Composer pour phpdotenv
 $autoloadPath = dirname(__DIR__) . '/vendor/autoload.php';
 if (file_exists($autoloadPath)) {
     require_once $autoloadPath;
@@ -13,11 +33,17 @@ if (file_exists($autoloadPath)) {
 use Dotenv\Dotenv;
 
 class Environment {
+    /** @var bool Indicateur de chargement (évite les doubles chargements) */
     private static bool $loaded = false;
+    
+    /** @var array Cache des variables d'environnement */
     private static array $variables = [];
 
     /**
-     * Load environment variables from .env file
+     * Charge les variables d'environnement depuis le fichier .env
+     * Utilise phpdotenv si disponible, sinon un parser personnalisé
+     * 
+     * @param string|null $path Chemin du dossier contenant .env (optionnel)
      */
     public static function load(?string $path = null): void
     {
@@ -28,30 +54,30 @@ class Environment {
         $envDir = $path ?? dirname(__DIR__);
         $envFile = $envDir . '/.env';
         
-        // Use phpdotenv if available and .env exists
+        // Utiliser phpdotenv si disponible et si .env existe
         if (class_exists('Dotenv\Dotenv') && file_exists($envFile)) {
             try {
                 $dotenv = Dotenv::createImmutable($envDir);
                 $dotenv->load();
                 
-                // Define required variables
+                // Définir les variables requises
                 $dotenv->required(['DB_HOST', 'DB_NAME', 'DB_USER']);
                 
-                // Copy to our internal array
+                // Copier dans notre tableau interne
                 self::$variables = $_ENV;
                 self::$loaded = true;
                 return;
             } catch (\Exception $e) {
-                // Fall back to custom loader on error
-                error_log("Dotenv Error: " . $e->getMessage());
+                // Fallback vers le loader personnalisé en cas d'erreur
+                error_log("Erreur Dotenv: " . $e->getMessage());
             }
         }
         
-        // Fallback: Custom .env parser
+        // Fallback : Parser .env personnalisé
         if (file_exists($envFile)) {
             self::parseEnvFile($envFile);
         } else {
-            // In development without .env, use defaults
+            // En développement sans .env, utiliser les valeurs par défaut
             self::loadDefaults();
         }
         
@@ -59,14 +85,17 @@ class Environment {
     }
 
     /**
-     * Parse .env file manually (fallback if phpdotenv not available)
+     * Parse le fichier .env manuellement
+     * Utilisé en fallback si phpdotenv n'est pas disponible
+     * 
+     * @param string $envFile Chemin complet du fichier .env
      */
     private static function parseEnvFile(string $envFile): void
     {
         $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         
         foreach ($lines as $line) {
-            // Skip comments
+            // Ignorer les commentaires
             if (strpos(trim($line), '#') === 0) {
                 continue;
             }
@@ -76,7 +105,7 @@ class Environment {
                 $name = trim($name);
                 $value = trim($value);
                 
-                // Remove quotes if present
+                // Supprimer les guillemets si présents
                 $value = trim($value, '"\'');
                 
                 self::$variables[$name] = $value;
@@ -87,7 +116,8 @@ class Environment {
     }
 
     /**
-     * Load default development values
+     * Charge les valeurs par défaut pour le développement
+     * Utilisé quand aucun fichier .env n'est trouvé
      */
     private static function loadDefaults(): void
     {
@@ -114,7 +144,11 @@ class Environment {
     }
 
     /**
-     * Get an environment variable
+     * Récupère une variable d'environnement
+     * 
+     * @param string $key Nom de la variable
+     * @param mixed $default Valeur par défaut si non trouvée
+     * @return mixed Valeur de la variable ou défaut
      */
     public static function get(string $key, mixed $default = null): mixed
     {
@@ -126,7 +160,9 @@ class Environment {
     }
 
     /**
-     * Check if we're in production
+     * Vérifie si on est en production
+     * 
+     * @return bool True si APP_ENV = 'production'
      */
     public static function isProduction(): bool
     {
@@ -134,7 +170,9 @@ class Environment {
     }
 
     /**
-     * Check if debug mode is enabled
+     * Vérifie si le mode debug est activé
+     * 
+     * @return bool True si APP_DEBUG = 'true'
      */
     public static function isDebug(): bool
     {
@@ -142,7 +180,9 @@ class Environment {
     }
     
     /**
-     * Get database configuration
+     * Récupère la configuration de la base de données
+     * 
+     * @return array Configuration [host, name, user, pass]
      */
     public static function getDbConfig(): array
     {
@@ -155,7 +195,9 @@ class Environment {
     }
     
     /**
-     * Get mail configuration
+     * Récupère la configuration email SMTP
+     * 
+     * @return array Configuration [host, port, username, password, from, from_name]
      */
     public static function getMailConfig(): array
     {
@@ -170,18 +212,19 @@ class Environment {
     }
 
     /**
-     * Detect the current server type
-     * @return string 'apache', 'nginx', 'iis', 'litespeed', 'cli', or 'unknown'
+     * Détecte le type de serveur web actuel
+     * 
+     * @return string 'apache', 'nginx', 'iis', 'litespeed', 'cli', ou 'unknown'
      */
     public static function getServerType(): string
     {
-        // Check if server type is explicitly set
+        // Vérifier si le type est explicitement configuré
         $configuredType = self::get('SERVER_TYPE', 'auto');
         if ($configuredType !== 'auto') {
             return strtolower($configuredType);
         }
 
-        // CLI mode
+        // Mode CLI
         if (php_sapi_name() === 'cli') {
             return 'cli';
         }
@@ -204,10 +247,10 @@ class Environment {
             return 'litespeed';
         }
         
-        // Check for nginx via fastcgi
+        // Vérifier nginx via fastcgi
         if (isset($_SERVER['FCGI_ROLE']) || isset($_SERVER['PHP_SELF'])) {
             if (!empty($_SERVER['DOCUMENT_ROOT'])) {
-                return 'nginx'; // Common for nginx + PHP-FPM setups
+                return 'nginx'; // Configuration nginx + PHP-FPM courante
             }
         }
 
@@ -215,7 +258,10 @@ class Environment {
     }
 
     /**
-     * Check if running on Apache
+     * Vérifie si on tourne sur Apache
+     * Inclut LiteSpeed (compatible Apache)
+     * 
+     * @return bool True si Apache ou LiteSpeed
      */
     public static function isApache(): bool
     {
@@ -224,7 +270,9 @@ class Environment {
     }
 
     /**
-     * Check if running on Nginx
+     * Vérifie si on tourne sur Nginx
+     * 
+     * @return bool True si Nginx
      */
     public static function isNginx(): bool
     {
@@ -232,7 +280,9 @@ class Environment {
     }
 
     /**
-     * Check if running on IIS
+     * Vérifie si on tourne sur IIS (Windows)
+     * 
+     * @return bool True si IIS
      */
     public static function isIIS(): bool
     {
@@ -240,7 +290,9 @@ class Environment {
     }
 
     /**
-     * Check if running in CLI mode
+     * Vérifie si on est en mode CLI (ligne de commande)
+     * 
+     * @return bool True si CLI
      */
     public static function isCLI(): bool
     {
@@ -248,7 +300,10 @@ class Environment {
     }
 
     /**
-     * Get the base URL for the application
+     * Récupère l'URL de base de l'application
+     * Auto-détection si APP_URL n'est pas configuré
+     * 
+     * @return string URL de base (sans slash final)
      */
     public static function getBaseUrl(): string
     {
@@ -258,7 +313,7 @@ class Environment {
             return rtrim($baseUrl, '/');
         }
         
-        // Auto-detect base URL
+        // Auto-détection de l'URL
         if (self::isCLI()) {
             return 'http://localhost';
         }
@@ -270,7 +325,9 @@ class Environment {
     }
 
     /**
-     * Get security configuration
+     * Récupère la configuration de sécurité
+     * 
+     * @return array Configuration [session_lifetime, csrf_lifetime, cookie_*]
      */
     public static function getSecurityConfig(): array
     {

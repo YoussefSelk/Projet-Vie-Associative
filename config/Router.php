@@ -1,16 +1,43 @@
 <?php
 /**
- * Router Class
+ * =============================================================================
+ * ROUTEUR DE L'APPLICATION
+ * =============================================================================
  * 
- * Handles routing logic for the application.
- * Loads routes from configuration file and dispatches to appropriate controller/action.
+ * Gère la logique de routage de l'application :
+ * - Chargement des routes depuis le fichier de configuration
+ * - Validation des tokens CSRF pour les requêtes POST
+ * - Vérification des permissions et authentification
+ * - Dispatch vers le bon contrôleur/méthode
+ * - Rendu des vues avec injection des données
+ * 
+ * Format des routes (défini dans routes/web.php) :
+ * 'nom-page' => [
+ *     'controller' => 'NomController',
+ *     'method' => 'nomMethode',
+ *     'view' => 'dossier/fichier.php',
+ *     'auth' => true/false,
+ *     'permission' => null ou niveau (0-5)
+ * ]
+ * 
+ * @author Équipe de développement EILCO
+ * @version 2.0
  */
 
 class Router
 {
+    /** @var array Routes chargées depuis le fichier de configuration */
     private array $routes = [];
+    
+    /** @var PDO Instance de connexion à la base de données */
     private $db;
     
+    /**
+     * Constructeur du routeur
+     * Charge automatiquement les routes depuis routes/web.php
+     * 
+     * @param PDO $db Instance de connexion PDO
+     */
     public function __construct($db)
     {
         $this->db = $db;
@@ -18,7 +45,8 @@ class Router
     }
     
     /**
-     * Load routes from configuration file
+     * Charge les routes depuis le fichier de configuration
+     * Le fichier doit retourner un tableau associatif de routes
      */
     private function loadRoutes(): void
     {
@@ -29,7 +57,10 @@ class Router
     }
     
     /**
-     * Get sanitized page parameter from URL
+     * Récupère et nettoie le paramètre 'page' de l'URL
+     * Supprime tous les caractères non alphanumériques (sauf - et _)
+     * 
+     * @return string Nom de la page (défaut: 'home')
      */
     public function getPage(): string
     {
@@ -37,7 +68,10 @@ class Router
     }
     
     /**
-     * Validate CSRF token for POST requests
+     * Valide le token CSRF pour les requêtes POST
+     * Les routes publiques (login, register) sont exemptées
+     * 
+     * @return bool True si le token est valide ou non requis
      */
     public function validateCsrf(): bool
     {
@@ -46,6 +80,7 @@ class Router
         }
         
         $page = $this->getPage();
+        // Routes POST publiques exemptées de CSRF
         $publicPostRoutes = ['login', 'register'];
         
         if (in_array($page, $publicPostRoutes)) {
@@ -57,57 +92,60 @@ class Router
     }
     
     /**
-     * Dispatch request to appropriate controller
+     * Dispatch la requête vers le contrôleur approprié
+     * 
+     * Étapes du dispatch :
+     * 1. Validation du token CSRF
+     * 2. Vérification de l'existence de la route
+     * 3. Redirection si déjà connecté (pour login/register)
+     * 4. Vérification de l'authentification
+     * 5. Vérification des permissions
+     * 6. Instanciation du contrôleur et appel de la méthode
+     * 7. Rendu de la vue avec les données
      */
     public function dispatch(): void
     {
         $page = $this->getPage();
         
-        // Validate CSRF
+        // Validation CSRF
         if (!$this->validateCsrf()) {
             ErrorHandler::renderHttpError(403, 'Token de sécurité invalide.');
         }
         
-        // Check if route exists
+        // Vérifier que la route existe
         if (!isset($this->routes[$page])) {
             ErrorHandler::renderHttpError(404, "La page '$page' n'existe pas.");
         }
         
         $route = $this->routes[$page];
         
-        // Handle redirect if already logged in (for login/register pages)
+        // Rediriger si déjà connecté (pour login/register)
         if (isset($route['redirect_if_logged']) && $route['redirect_if_logged'] && isset($_SESSION['id'])) {
             redirect('?page=home');
         }
         
-        // Check authentication
+        // Vérifier l'authentification
         if ($route['auth'] === true) {
             validateSession();
         }
         
-        // Check permission
+        // Vérifier les permissions
         if ($route['permission'] !== null) {
             checkPermission($route['permission']);
         }
         
-        // Instantiate controller
+        // Instancier le contrôleur
         $controllerClass = $route['controller'];
         $controller = new $controllerClass($this->db);
         
-        // Call method
+        // Appeler la méthode
         $method = $route['method'];
         $data = $controller->$method();
         
-        // Render view if specified
+        // Rendre la vue si spécifiée
         if ($route['view'] !== null) {
             if (is_array($data)) {
                 extract($data);
-            }
-            
-            // Debug output for club-view
-            if (isset($route['debug']) && $route['debug'] && $page === 'club-view') {
-                echo "<!-- DEBUG From index: Received club ID = " . ($club['club_id'] ?? 'NULL') . " -->\n";
-                echo "<!-- DEBUG From index: Received club Name = " . ($club['nom_club'] ?? 'NULL') . " -->\n";
             }
             
             include VIEWS_PATH . $route['view'];
@@ -115,7 +153,9 @@ class Router
     }
     
     /**
-     * Get all registered routes
+     * Retourne toutes les routes enregistrées
+     * 
+     * @return array Tableau des routes
      */
     public function getRoutes(): array
     {
@@ -123,7 +163,10 @@ class Router
     }
     
     /**
-     * Check if a route exists
+     * Vérifie si une route existe
+     * 
+     * @param string $page Nom de la page
+     * @return bool True si la route existe
      */
     public function hasRoute(string $page): bool
     {

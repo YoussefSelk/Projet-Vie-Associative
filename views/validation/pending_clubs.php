@@ -1,3 +1,24 @@
+<?php
+/**
+ * Liste des clubs en attente de validation
+ * 
+ * Interface pour le BDE/Tuteur afin de valider les clubs :
+ * - Affichage des clubs soumis
+ * - Details de chaque club (description, campus, createur)
+ * - Boutons d'approbation ou de rejet
+ * - Champ pour commentaires de rejet
+ * 
+ * Workflow de validation :
+ * 1. BDE approuve -> statut = bde_approuve
+ * 2. Tuteur approuve -> statut = actif
+ * 
+ * Variables attendues :
+ * - $clubs : Liste des clubs en attente
+ * - $error_msg / $success_msg : Messages de feedback
+ * 
+ * @package Views/Validation
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

@@ -1,3 +1,25 @@
+<?php
+/**
+ * Tableau de bord analytique des evenements
+ * 
+ * Affiche des statistiques detaillees sur les evenements :
+ * - Graphiques d'evolution temporelle (Chart.js)
+ * - Repartition par type d'evenement
+ * - Taux de participation
+ * - Comparaison entre campus
+ * 
+ * Utilise Chart.js pour la visualisation des donnees.
+ * 
+ * Variables attendues :
+ * - $stats : Statistiques globales
+ * - $events_by_month : Donnees pour graphique temporel
+ * - $events_by_type : Repartition par type
+ * 
+ * Permissions : BDE ou Admin requis
+ * 
+ * @package Views/Event
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

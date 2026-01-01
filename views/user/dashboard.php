@@ -1,3 +1,29 @@
+<?php
+/**
+ * Tableau de bord utilisateur
+ * 
+ * Page d'accueil personnalisee pour l'utilisateur connecte :
+ * - Resume des clubs dont il est membre
+ * - Prochains evenements
+ * - Actions rapides (creer club, creer evenement)
+ * - Statistiques personnelles
+ * 
+ * Le contenu s'adapte au niveau de permission :
+ * - Utilisateur : Vue basique
+ * - Membre club : Actions club visibles
+ * - BDE : Validations en attente
+ * - Tuteur : Clubs a superviser
+ * - Admin : Acces complet
+ * 
+ * Variables attendues :
+ * - $user : Donnees de l'utilisateur courant
+ * - $clubs : Clubs de l'utilisateur
+ * - $events : Evenements a venir
+ * - $stats : Statistiques personnelles
+ * 
+ * @package Views/User
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

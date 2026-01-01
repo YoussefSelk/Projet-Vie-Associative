@@ -1,3 +1,18 @@
+<?php
+/**
+ * Liste des evenements de l'utilisateur
+ * 
+ * Affiche les evenements des clubs dont l'utilisateur est membre :
+ * - Evenements passes et a venir
+ * - Actions specifiques (modifier, deposer rapport)
+ * - Etat vide si aucun evenement
+ * 
+ * Variables attendues :
+ * - $events : Liste des evenements des clubs de l'utilisateur
+ * 
+ * @package Views/Event
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

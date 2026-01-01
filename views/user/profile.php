@@ -1,3 +1,22 @@
+<?php
+/**
+ * Page de profil utilisateur
+ * 
+ * Affiche les informations du profil :
+ * - Avatar et nom complet
+ * - Role et campus
+ * - Email et date d'inscription
+ * - Clubs dont l'utilisateur est membre
+ * - Bouton de modification du profil
+ * 
+ * Variables attendues :
+ * - $user : Donnees de l'utilisateur
+ * - $clubs : Clubs de l'utilisateur
+ * - $error_msg / $success_msg : Messages de feedback
+ * 
+ * @package Views/User
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

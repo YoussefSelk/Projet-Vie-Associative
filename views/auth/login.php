@@ -1,3 +1,20 @@
+<?php
+/**
+ * Page de connexion et reinitialisation du mot de passe
+ * 
+ * Gere plusieurs etapes :
+ * - reset_step 0 : Formulaire de connexion standard
+ * - reset_step 1 : Demande d'email pour reinitialisation
+ * - reset_step 2 : Saisie du code de verification
+ * - reset_step 3 : Nouveau mot de passe
+ * 
+ * Variables attendues du controleur :
+ * - $reset_step : Etape actuelle du processus (0-3)
+ * - $error_message : Message d'erreur eventuel
+ * 
+ * @package Views/Auth
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -12,6 +29,7 @@
 
     <main>
         <div class="page-container">
+            <!-- Carte d'authentification avec en-tete dynamique selon l'etape -->
             <div class="auth-card">
                 <div class="auth-header">
                     <i class="fas fa-user-circle"></i>
@@ -31,10 +49,12 @@
                 </div>
                 
                 <div class="auth-body">
+                    <!-- Affichage des messages d'erreur -->
                     <?php if(!empty($error_message)): ?>
                         <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_message) ?></div>
                     <?php endif; ?>
                     
+                    <!-- Etape 0 : Formulaire de connexion -->
                     <?php if($reset_step == 0): ?>
                         <form method="POST" class="auth-form">
                             <?= Security::csrfField() ?>
@@ -58,6 +78,8 @@
                         <div class="auth-footer">
                             <p>Pas encore inscrit ? <a href="?page=register">Créer un compte</a></p>
                         </div>
+                    
+                    <!-- Etape 1 : Demande d'email pour reinitialisation -->
                     <?php elseif($reset_step == 1): ?>
                         <form method="POST" class="auth-form">
                             <?= Security::csrfField() ?>
@@ -69,6 +91,8 @@
                                 <i class="fas fa-paper-plane"></i> Envoyer le code
                             </button>
                         </form>
+                    
+                    <!-- Etape 2 : Verification du code -->
                     <?php elseif($reset_step == 2): ?>
                         <form method="POST" class="auth-form">
                             <?= Security::csrfField() ?>

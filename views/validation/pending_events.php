@@ -1,3 +1,23 @@
+<?php
+/**
+ * Liste des evenements en attente de validation
+ * 
+ * Interface pour le BDE/Tuteur afin de valider les evenements :
+ * - Affichage des evenements soumis
+ * - Details (date, lieu, club organisateur)
+ * - Boutons d'approbation ou de rejet
+ * 
+ * Workflow identique aux clubs :
+ * 1. BDE approuve -> bde_approuve
+ * 2. Tuteur approuve -> valide
+ * 
+ * Variables attendues :
+ * - $events : Liste des evenements en attente
+ * - $error_msg / $success_msg : Messages de feedback
+ * 
+ * @package Views/Validation
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

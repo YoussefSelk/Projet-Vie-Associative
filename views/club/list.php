@@ -1,3 +1,22 @@
+<?php
+/**
+ * Gestion des clubs - Interface administrateur
+ * 
+ * Permet la recherche et modification des clubs :
+ * - Recherche par nom avec autocompletion
+ * - Affichage des details du club selectionne
+ * - Modification des informations
+ * - Gestion des membres
+ * - Suppression (admin uniquement)
+ * 
+ * Variables attendues :
+ * - $clubs : Liste de tous les clubs pour l'autocompletion
+ * - $selected_club : Club selectionne (si recherche effectuee)
+ * - $error_msg / $success_msg : Messages de feedback
+ * 
+ * @package Views/Club
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

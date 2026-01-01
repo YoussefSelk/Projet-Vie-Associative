@@ -1,3 +1,22 @@
+<?php
+/**
+ * Formulaire de creation d'un nouveau club
+ * 
+ * Permet a un etudiant de proposer la creation d'un club :
+ * - Informations de base (nom, type, description)
+ * - Localisation (campus)
+ * - Contact (email, president)
+ * - Upload du logo (optionnel)
+ * 
+ * Le club cree sera en attente de validation par le BDE puis un tuteur.
+ * 
+ * Variables attendues :
+ * - $error_msg : Message d'erreur eventuel
+ * - $success_msg : Message de succes eventuel
+ * 
+ * @package Views/Club
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

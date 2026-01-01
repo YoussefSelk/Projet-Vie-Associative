@@ -1,3 +1,24 @@
+<?php
+/**
+ * Liste des utilisateurs - Interface BDE/Tuteur
+ * 
+ * Affiche la liste des utilisateurs filtrables :
+ * - Filtrage par campus, role, recherche
+ * - Modification des permissions (selon niveau)
+ * - Actions sur les utilisateurs
+ * 
+ * Permissions :
+ * - BDE : Visualisation uniquement
+ * - Tuteur : Modification limitee
+ * - Admin : Controle complet
+ * 
+ * Variables attendues :
+ * - $users : Liste des utilisateurs
+ * - $current_filter : Filtres actifs
+ * 
+ * @package Views/User
+ */
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>

@@ -109,10 +109,27 @@ class ClubController {
      * @return array Données pour la vue [error_msg, success_msg]
      */
     public function createClub() {
-        checkPermission(3);
+        // Route already ensures auth, no specific permission level required
         
         $error_msg = '';
         $success_msg = '';
+        
+        // Get tutors list (permission = 2 = tuteur)
+        $tutors = $this->db->query("
+            SELECT id, nom, prenom 
+            FROM users 
+            WHERE permission = 2 
+            ORDER BY nom ASC
+        ")->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Get all users for member selection (exclude current user who will be added automatically)
+        $currentUserId = $_SESSION['id'] ?? 0;
+        $users = $this->db->query("
+            SELECT id, nom, prenom, mail, promo 
+            FROM users 
+            WHERE id != $currentUserId
+            ORDER BY nom ASC, prenom ASC
+        ")->fetchAll(PDO::FETCH_ASSOC);
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_club'])) {
             $nom_club = trim($_POST['nom_club'] ?? '');
@@ -123,6 +140,7 @@ class ClubController {
             $projet_associatif = isset($_POST['projet_associatif']) ? 1 : 0;
             $soutenance = isset($_POST['soutenance']) ? 1 : 0;
             $soutenance_date = !empty($_POST['soutenance_date']) ? $_POST['soutenance_date'] : null;
+            $creator_role = trim($_POST['creator_role'] ?? 'Président');
             $members = $_POST['members'] ?? [];
 
             if (!$nom_club || !$type_club || !$description || !$campus) {
@@ -132,50 +150,50 @@ class ClubController {
             elseif ($this->clubModel->getClubByName($nom_club)) {
                 $error_msg = "Un club avec ce nom existe déjà. Veuillez choisir un autre nom.";
             }
-            // Check member count for projet associatif
-            elseif ($projet_associatif && count(array_filter($members, function($m) { return !empty($m['email']); })) < 3) {
-                $error_msg = "Un projet associatif nécessite au moins 3 membres fondateurs.";
+            // Check member count for projet associatif (creator + 2 others = 3 minimum)
+            elseif ($projet_associatif && count(array_filter($members, function($m) { return !empty($m['user_id']); })) < 2) {
+                $error_msg = "Un projet associatif nécessite au moins 3 membres fondateurs (vous + 2 autres).";
             }
             else {
                 try {
-                    // Create the club
+                    // Create the club - respect actual DB structure
+                    // Table fiche_club: club_id, nom_club, type_club, description, logo_club, tuteur, campus,
+                    //                   validation_admin, validation_tuteur, motif_refus, validation_finale
                     $stmt = $this->db->prepare("
-                        INSERT INTO fiche_club (nom_club, type_club, description, campus, tuteur_id, projet_associatif, soutenance_date, validation_finale, createur_id) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)
+                        INSERT INTO fiche_club (nom_club, type_club, description, campus, tuteur, validation_admin, validation_tuteur, validation_finale) 
+                        VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL)
                     ");
                     $result = $stmt->execute([
                         $nom_club,
                         $type_club,
                         $description,
                         $campus,
-                        $tuteur_id,
-                        $projet_associatif,
-                        $soutenance ? $soutenance_date : null,
-                        $_SESSION['id']
+                        $tuteur_id ? (string)$tuteur_id : null // tuteur is VARCHAR in DB, stores user ID as string
                     ]);
                     
                     if ($result) {
                         $club_id = $this->db->lastInsertId();
                         
-                        // Add members if provided
+                        // Add the creator as a member with their chosen role
+                        $creatorId = $_SESSION['id'] ?? null;
+                        if ($creatorId) {
+                            $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
+                            $insertStmt->execute([$club_id, $creatorId, $creator_role]);
+                        }
+                        
+                        // Add selected members
                         if (!empty($members)) {
-                            $memberModel = new ClubMember($this->db);
                             foreach ($members as $member) {
-                                if (!empty($member['email'])) {
-                                    // Find user by email
-                                    $userStmt = $this->db->prepare("SELECT id FROM users WHERE mail = ?");
-                                    $userStmt->execute([$member['email']]);
-                                    $user = $userStmt->fetch(PDO::FETCH_ASSOC);
-                                    
-                                    if ($user) {
-                                        // Check if member already exists
-                                        $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
-                                        $checkStmt->execute([$club_id, $user['id']]);
-                                        if (!$checkStmt->fetch()) {
-                                            // Add member with role
-                                            $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, role, valide) VALUES (?, ?, ?, 1)");
-                                            $insertStmt->execute([$club_id, $user['id'], $member['role'] ?? 'membre']);
-                                        }
+                                $memberId = !empty($member['user_id']) ? intval($member['user_id']) : null;
+                                
+                                if ($memberId && $memberId != $creatorId) {
+                                    // Check if member already exists
+                                    $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
+                                    $checkStmt->execute([$club_id, $memberId]);
+                                    if (!$checkStmt->fetch()) {
+                                        // Add member with fonction
+                                        $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
+                                        $insertStmt->execute([$club_id, $memberId, $member['role'] ?? 'Membre']);
                                     }
                                 }
                             }
@@ -191,7 +209,10 @@ class ClubController {
                         $error_msg = "Erreur lors de la création du club.";
                     }
                 } catch (PDOException $e) {
-                    error_log("Club creation error: " . $e->getMessage());
+                    ErrorHandler::logError("Club creation error: " . $e->getMessage(), 'ERROR', [
+                        'club_name' => $nom_club,
+                        'user_id' => $_SESSION['id'] ?? null
+                    ]);
                     $error_msg = "Erreur lors de la création du club.";
                 }
             }
@@ -199,7 +220,9 @@ class ClubController {
 
         return [
             'error_msg' => $error_msg,
-            'success_msg' => $success_msg
+            'success_msg' => $success_msg,
+            'tutors' => $tutors,
+            'users' => $users
         ];
     }
 
@@ -244,10 +267,11 @@ class ClubController {
                 }
                 
                 // Récupérer les infos du tuteur si présent
-                if (!empty($club['tuteur_id'])) {
+                // Note: In DB, 'tuteur' column stores user ID as VARCHAR
+                if (!empty($club['tuteur'])) {
                     try {
                         $stmt = $this->db->prepare("SELECT nom, prenom, mail FROM users WHERE id = ?");
-                        $stmt->execute([$club['tuteur_id']]);
+                        $stmt->execute([$club['tuteur']]);
                         $tutor = $stmt->fetch(PDO::FETCH_ASSOC);
                     } catch (Exception $e) {
                         $tutor = null;
@@ -337,7 +361,10 @@ class ClubController {
             return mail($tutor['mail'], $subject, $message, $headers);
             
         } catch (Exception $e) {
-            error_log("Failed to notify tutor: " . $e->getMessage());
+            ErrorHandler::logError("Failed to notify tutor: " . $e->getMessage(), 'WARNING', [
+                'tutor_id' => $tuteur_id ?? null,
+                'item_name' => $item_name ?? null
+            ]);
             return false;
         }
     }
@@ -369,13 +396,13 @@ class ClubController {
                 u.prenom,
                 u.mail,
                 u.promo,
-                mc.date_adhesion,
+                mc.fonction,
                 t.nom as tuteur_nom,
                 t.prenom as tuteur_prenom
             FROM membres_club mc
             JOIN users u ON mc.membre_id = u.id
             LEFT JOIN fiche_club fc ON mc.club_id = fc.club_id
-            LEFT JOIN users t ON fc.tuteur_id = t.id
+            LEFT JOIN users t ON fc.tuteur = t.id
             WHERE mc.club_id = ? AND mc.valide = 1
             ORDER BY u.nom ASC
         ");
@@ -383,10 +410,11 @@ class ClubController {
         $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         // Récupérer le nom du tuteur
+        // Note: 'tuteur' is VARCHAR in DB, stores user ID as string
         $tutor_name = '';
-        if (!empty($club['tuteur_id'])) {
+        if (!empty($club['tuteur'])) {
             $tutorStmt = $this->db->prepare("SELECT nom, prenom FROM users WHERE id = ?");
-            $tutorStmt->execute([$club['tuteur_id']]);
+            $tutorStmt->execute([$club['tuteur']]);
             $tutor = $tutorStmt->fetch(PDO::FETCH_ASSOC);
             if ($tutor) {
                 $tutor_name = $tutor['prenom'] . ' ' . $tutor['nom'];
@@ -412,7 +440,7 @@ class ClubController {
             'Prénom',
             'Email',
             'Promotion',
-            'Date d\'adhésion',
+            'Fonction',
             'Tuteur du club'
         ], ';'); // Point-virgule pour Excel français
         
@@ -423,7 +451,7 @@ class ClubController {
                 $member['prenom'] ?? '',
                 $member['mail'] ?? '',
                 $member['promo'] ?? '',
-                $member['date_adhesion'] ? date('d/m/Y', strtotime($member['date_adhesion'])) : '',
+                $member['fonction'] ?? '',
                 $tutor_name
             ], ';');
         }

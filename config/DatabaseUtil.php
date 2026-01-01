@@ -8,10 +8,12 @@ class DatabaseUtil {
     private $db;
     
     // Liste blanche des tables autorisées pour prévenir l'injection SQL
+    // Note: rapport_event n'est pas une table, c'est une colonne de fiche_event
+    // Note: abonnements = table d'inscriptions aux événements (id=user_id, event_id, date_abonnement)
     private static $allowedTables = [
         'users', 'fiche_club', 'fiche_event', 
-        'subscribe_event', 'membres_club', 'rapport_event',
-        'config', 'abonnements'
+        'membres_club', 'mails', 'abonnements',
+        'config', 'ville'
     ];
 
     public function __construct($database) {
@@ -35,7 +37,11 @@ class DatabaseUtil {
     public function getTableStructure($table_name) {
         // Validation pour prévenir l'injection SQL
         if (!$this->isTableAllowed($table_name)) {
-            error_log("[SECURITY] Tentative d'accès à une table non autorisée: $table_name");
+            ErrorHandler::logSecurity(
+                "Tentative d'accès à une table non autorisée: $table_name",
+                'WARN',
+                ['table' => $table_name, 'action' => 'getTableStructure']
+            );
             return [];
         }
         $stmt = $this->db->prepare("DESCRIBE `$table_name`");
@@ -61,7 +67,11 @@ class DatabaseUtil {
     public function countRecords($table) {
         // Validation pour prévenir l'injection SQL
         if (!$this->isTableAllowed($table)) {
-            error_log("[SECURITY] Tentative de comptage sur table non autorisée: $table");
+            ErrorHandler::logSecurity(
+                "Tentative de comptage sur table non autorisée: $table",
+                'WARN',
+                ['table' => $table, 'action' => 'countRecords']
+            );
             return 'N/A';
         }
         $stmt = $this->db->prepare("SELECT COUNT(*) as count FROM `$table`");
@@ -76,7 +86,7 @@ class DatabaseUtil {
     public function verifyStructure() {
         $required_tables = [
             'users', 'fiche_club', 'fiche_event', 
-            'subscribe_event', 'membres_club', 'rapport_event'
+            'membres_club', 'abonnements', 'config', 'mails', 'ville'
         ];
 
         $existing_tables = $this->getAllTables();

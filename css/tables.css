@@ -791,8 +791,8 @@ table:not(.pro-table):not(.no-style) tbody tr:last-child td {
   width: 100%;
   border-collapse: collapse;
   background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 0;
+  overflow: visible;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
@@ -806,11 +806,45 @@ table:not(.pro-table):not(.no-style) tbody tr:last-child td {
   text-transform: uppercase;
   letter-spacing: 0.3px;
   border: none;
+  border-radius: 0 !important;
+}
+
+.data-table thead th:first-child,
+.data-table thead th:last-child {
+  border-radius: 0 !important;
 }
 
 .data-table tbody td {
   padding: 12px 16px;
   border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+/* Action buttons in data tables */
+.data-table td.actions {
+  white-space: nowrap;
+}
+
+.data-table td.actions .btn {
+  padding: 8px 12px;
+  margin: 0 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  min-width: 36px;
+  height: 36px;
+}
+
+.data-table td.actions .btn.btn-sm {
+  padding: 6px 10px;
+  min-width: 32px;
+  height: 32px;
+  font-size: 0.85rem;
+}
+
+.data-table td.actions form {
+  display: inline-flex;
   vertical-align: middle;
 }
 

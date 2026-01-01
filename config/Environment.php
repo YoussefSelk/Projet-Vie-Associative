@@ -69,7 +69,12 @@ class Environment {
                 return;
             } catch (\Exception $e) {
                 // Fallback vers le loader personnalisé en cas d'erreur
-                error_log("Erreur Dotenv: " . $e->getMessage());
+                // Note: ErrorHandler might not be initialized yet, use error_log as fallback
+                if (class_exists('ErrorHandler')) {
+                    ErrorHandler::logError("Erreur Dotenv: " . $e->getMessage(), 'WARNING');
+                } else {
+                    error_log("Erreur Dotenv: " . $e->getMessage());
+                }
             }
         }
         

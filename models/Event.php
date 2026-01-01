@@ -11,10 +11,10 @@
  * - Suppression des événements
  * 
  * Table associée : fiche_event
- * Tables liées : subscribe_event, membres_club
+ * Tables liées : abonnements, membres_club
  * 
  * @author Équipe de développement EILCO
- * @version 2.0
+ * @version 2.1
  */
 
 class Event {
@@ -79,14 +79,14 @@ class Event {
         try {
             $stmt = $this->db->prepare("
                 SELECT fe.* FROM fiche_event fe
-                INNER JOIN subscribe_event se ON fe.event_id = se.event_id
-                WHERE se.user_id = ? AND fe.validation_finale = 1
+                INNER JOIN abonnements a ON fe.event_id = a.event_id
+                WHERE a.id = ? AND fe.validation_finale = 1
                 ORDER BY fe.date_ev DESC
             ");
             $stmt->execute([$user_id]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            // La table subscribe_event peut ne pas exister encore
+            // La table abonnements peut être vide
             return [];
         }
     }
@@ -104,25 +104,64 @@ class Event {
 
     /**
      * Crée un nouvel événement
-     * L'événement est créé avec toutes les validations à 0 (en attente)
+     * L'événement est créé avec toutes les validations à NULL (en attente)
      * 
-     * @param array $data Données de l'événement (titre/nom_event, description, date_ev/date_event, club_orga/club_id, campus)
+     * Structure BD fiche_event:
+     * event_id, date_depot, validation_admin, validation_bde, validation_tuteur, validation_soutenance,
+     * titre, club_orga, campus, date_ev (DATE), horaire_debut (TIME), horaire_fin (TIME),
+     * lieu, id_responsable, description, financement_bde, montant, fiche_sanitaire, affiche,
+     * rapport_event, motif_refus, validation_finale, commentaire_validation
+     * 
+     * @param array $data Données de l'événement
      * @return bool Succès de la création
      */
     public function createEvent($data) {
-        $stmt = $this->db->prepare("INSERT INTO fiche_event (titre, description, date_ev, club_orga, campus, validation_finale, validation_tuteur, validation_bde) VALUES (?, ?, ?, ?, ?, 0, 0, 0)");
+        // Parse date_event (datetime-local format: "2025-12-15T14:30") into date and time parts
+        $date_ev = null;
+        $horaire_debut = null;
+        $horaire_fin = null;
+        
+        if (!empty($data['date_event'])) {
+            $datetime = new DateTime($data['date_event']);
+            $date_ev = $datetime->format('Y-m-d');
+            $horaire_debut = $datetime->format('H:i:s');
+            // Default end time: 2 hours after start
+            $datetime->modify('+2 hours');
+            $horaire_fin = $datetime->format('H:i:s');
+        } elseif (!empty($data['date_ev'])) {
+            $date_ev = $data['date_ev'];
+            $horaire_debut = $data['horaire_debut'] ?? '13:00:00';
+            $horaire_fin = $data['horaire_fin'] ?? '17:00:00';
+        }
+        
+        $stmt = $this->db->prepare("
+            INSERT INTO fiche_event (
+                titre, description, date_ev, horaire_debut, horaire_fin, 
+                club_orga, campus, lieu, id_responsable,
+                financement_bde, montant,
+                validation_admin, validation_bde, validation_tuteur, validation_finale
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)
+        ");
         return $stmt->execute([
-            $data['nom_event'] ?? $data['titre'],
-            $data['description'],
-            $data['date_event'] ?? $data['date_ev'],
+            $data['nom_event'] ?? $data['titre'] ?? '',
+            $data['description'] ?? '',
+            $date_ev,
+            $horaire_debut,
+            $horaire_fin,
             $data['club_id'] ?? $data['club_orga'] ?? null,
-            $data['campus']
+            $data['campus'] ?? '',
+            $data['lieu'] ?? '',
+            $data['user_id'] ?? $data['id_responsable'] ?? null,
+            isset($data['financement_bde']) ? 1 : 0,
+            intval($data['montant'] ?? $data['budget'] ?? 0)
         ]);
     }
 
     /**
      * Met à jour les informations d'un événement
      * Gère le mapping entre les noms de champs courants et les colonnes réelles
+     * 
+     * Structure BD: titre, description, date_ev, horaire_debut, horaire_fin, campus, lieu
      * 
      * @param int $id Identifiant de l'événement
      * @param array $data Données à mettre à jour
@@ -132,19 +171,29 @@ class Event {
         // Mapping des noms de champs vers les colonnes de la base de données
         $field_mapping = [
             'nom_event' => 'titre',
-            'date_event' => 'date_ev',
+            'date_event' => 'date_ev', // Will be processed specially
             'club_id' => 'club_orga'
         ];
         
-        $allowed_fields = ['titre', 'description', 'date_ev', 'campus'];
+        $allowed_fields = ['titre', 'description', 'date_ev', 'horaire_debut', 'horaire_fin', 'campus', 'lieu'];
         $fields = [];
         $values = [];
+
+        // Handle date_event specially - parse datetime into date + time
+        if (!empty($data['date_event'])) {
+            $datetime = new DateTime($data['date_event']);
+            $fields[] = "date_ev = ?";
+            $values[] = $datetime->format('Y-m-d');
+            $fields[] = "horaire_debut = ?";
+            $values[] = $datetime->format('H:i:s');
+            unset($data['date_event']);
+        }
 
         foreach ($data as $key => $value) {
             // Mapper le nom du champ si nécessaire
             $db_field = $field_mapping[$key] ?? $key;
             
-            if (in_array($db_field, $allowed_fields)) {
+            if (in_array($db_field, $allowed_fields) && !in_array("$db_field = ?", $fields)) {
                 $fields[] = "$db_field = ?";
                 $values[] = $value;
             }

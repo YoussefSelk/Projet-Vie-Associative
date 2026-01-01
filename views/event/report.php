@@ -47,6 +47,14 @@
                         <div class="empty-state-small">
                             <i class="fas fa-calendar-times"></i>
                             <p>Aucun événement disponible pour déposer un rapport.</p>
+                            <p class="text-muted" style="font-size: 0.9em; margin-top: 10px;">
+                                <i class="fas fa-info-circle"></i> Pour déposer un rapport, vous devez :
+                            </p>
+                            <ul class="text-muted" style="font-size: 0.85em; text-align: left; max-width: 400px; margin: 10px auto;">
+                                <li>Être membre validé d'un club</li>
+                                <li>Le club doit avoir un événement validé</li>
+                                <li>L'événement ne doit pas déjà avoir de rapport</li>
+                            </ul>
                             <a href="?page=home" class="btn btn-primary"><i class="fas fa-home"></i> Retour</a>
                         </div>
                     <?php else: ?>
@@ -59,7 +67,7 @@
                                     <option value="">-- Choisir un événement --</option>
                                     <?php foreach ($events as $event): ?>
                                         <option value="<?= $event['event_id'] ?>">
-                                            <?= htmlspecialchars($event['titre'] ?? '') ?> 
+                                            <?= htmlspecialchars($event['nom_club'] ?? '') ?> - <?= htmlspecialchars($event['titre'] ?? '') ?> 
                                             (<?= date('d/m/Y', strtotime($event['date_ev'] ?? 'now')) ?>)
                                         </option>
                                     <?php endforeach; ?>
@@ -67,19 +75,9 @@
                             </div>
 
                             <div class="form-group">
-                                <label><i class="fas fa-align-left"></i> Rapport</label>
-                                <textarea name="rapport" class="form-control" rows="8" required placeholder="Décrivez le déroulement de l'événement, le nombre de participants, les points positifs et à améliorer..."></textarea>
-                            </div>
-
-                            <div class="form-group">
-                                <label><i class="fas fa-paperclip"></i> Fichier (optionnel - PDF, DOC, DOCX)</label>
-                                <input type="file" name="rapport_file" class="form-control" accept=".pdf,.doc,.docx">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label><i class="fas fa-camera"></i> Photos de l'événement (optionnel)</label>
-                                <input type="file" name="photos[]" class="form-control" accept="image/*" multiple>
-                                <small class="form-help">Vous pouvez sélectionner plusieurs photos (JPG, PNG, max 5MB chacune)</small>
+                                <label><i class="fas fa-file-pdf"></i> Fichier de rapport (PDF obligatoire)</label>
+                                <input type="file" name="rapport_file" class="form-control" accept=".pdf" required>
+                                <small class="form-help">Format accepté : PDF uniquement</small>
                             </div>
 
                             <div class="form-actions">

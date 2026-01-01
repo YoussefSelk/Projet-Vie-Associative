@@ -23,7 +23,8 @@ global $db;
 
 if(isset($_SESSION['id'])){
     // Recuperer les clubs dont l'utilisateur est membre valide
-    $req_membre_club = $db->prepare("SELECT mc.* FROM membres_club mc LEFT JOIN fiche_club fc ON fc.club_id = mc.club_id WHERE mc.membre_id = ? AND mc.valide = 1 AND fc.validation_admin = 1 AND fc.validation_tuteur = 1");
+    // Un club est considéré validé si validation_finale = 1
+    $req_membre_club = $db->prepare("SELECT mc.* FROM membres_club mc LEFT JOIN fiche_club fc ON fc.club_id = mc.club_id WHERE mc.membre_id = ? AND mc.valide = 1 AND fc.validation_finale = 1");
     $req_membre_club->execute([$_SESSION['id']]);
     $infos_membre_club = $req_membre_club->fetchAll();    
 
@@ -193,6 +194,7 @@ else {
             <?php 
             $stmt = $db->query("SELECT creation_club_active FROM config LIMIT 1");
             $club_creation_active = $stmt->fetchColumn();
+            $user_permission = $_SESSION['permission'] ?? 0;
             
             if ($club_creation_active): ?>
                 <a href="?page=club-create" class="quick-action-item">
@@ -201,11 +203,14 @@ else {
                 </a>
             <?php endif; ?>
             
-            <?php if($is_membre_club == 1): ?>
+            <?php if($is_membre_club == 1 && $user_permission >= 2): ?>
                 <a href="?page=event-create" class="quick-action-item">
                     <i class="fas fa-calendar-plus"></i>
                     <span>Créer un événement</span>
                 </a>
+            <?php endif; ?>
+            
+            <?php if($is_membre_club == 1): ?>
                 <a href="?page=event-report" class="quick-action-item">
                     <i class="fas fa-file-alt"></i>
                     <span>Déposer un rapport</span>
@@ -217,7 +222,15 @@ else {
                 <span>Événements</span>
             </a>
             
-            <?php if ($current_user && $current_user['permission'] >= 3): ?>
+            <?php if ($user_permission >= 3): ?>
+                <?php // Club management requires permission 3+ ?>
+                <a href="?page=club-list" class="quick-action-item">
+                    <i class="fas fa-th-large"></i>
+                    <span>Gérer les clubs</span>
+                </a>
+            <?php endif; ?>
+            
+            <?php if ($user_permission >= 3): ?>
                 <!-- Administration Dropdown -->
                 <div class="quick-action-dropdown">
                     <button class="quick-action-item highlight" onclick="toggleQuickDropdown(this)">
@@ -259,7 +272,7 @@ else {
                             <i class="fas fa-users"></i>
                             Gérer les clubs
                         </a>
-                        <?php if ($current_user['permission'] >= 5): ?>
+                        <?php if ($user_permission >= 5): ?>
                             <div class="dropdown-divider"></div>
                             <a href="?page=admin-users" class="quick-dropdown-item">
                                 <i class="fas fa-users-cog"></i>
@@ -282,7 +295,7 @@ else {
                 </div>
             <?php endif; ?>
             
-            <?php if(!empty($req_clubs) || (isset($_SESSION['permission']) && $_SESSION['permission'] >= 2)): ?>
+            <?php if(!empty($req_clubs) || $user_permission >= 2): ?>
                 <!-- Tutorat Dropdown -->
                 <div class="quick-action-dropdown">
                     <button class="quick-action-item" onclick="toggleQuickDropdown(this)">

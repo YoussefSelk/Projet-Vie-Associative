@@ -160,8 +160,8 @@
                                     </div>
                                     <div class="member-info">
                                         <span class="member-name"><?= htmlspecialchars(($member['prenom'] ?? '') . ' ' . ($member['nom'] ?? '')) ?></span>
-                                        <?php if (!empty($member['role'])): ?>
-                                            <span class="member-role"><?= htmlspecialchars($member['role']) ?></span>
+                                        <?php if (!empty($member['fonction'])): ?>
+                                            <span class="member-role"><?= htmlspecialchars($member['fonction']) ?></span>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -186,10 +186,10 @@
                         </div>
                         <?php endif; ?>
                         
-                        <?php if (!empty($club['remarques']) && isset($_SESSION['id'])): ?>
+                        <?php if (!empty($club['motif_refus']) && isset($_SESSION['id'])): ?>
                         <div class="club-section">
                             <h3><i class="fas fa-comment-alt"></i> Remarques</h3>
-                            <p class="club-remarks"><?= nl2br(htmlspecialchars($club['remarques'])) ?></p>
+                            <p class="club-remarks"><?= nl2br(htmlspecialchars($club['motif_refus'])) ?></p>
                         </div>
                         <?php endif; ?>
                         

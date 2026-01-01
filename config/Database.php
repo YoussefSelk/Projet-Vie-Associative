@@ -58,7 +58,10 @@ class Database {
         } catch (PDOException $e) {
             // En production, journaliser l'erreur sans exposer les détails
             if (Environment::isProduction()) {
-                error_log("Erreur de connexion BDD: " . $e->getMessage());
+                ErrorHandler::logError("Erreur de connexion BDD: " . $e->getMessage(), 'CRITICAL', [
+                    'host' => $this->host,
+                    'database' => $this->db_name
+                ]);
                 die("Échec de la connexion à la base de données. Veuillez contacter l'administrateur.");
             } else {
                 die("Erreur de connexion BDD: " . $e->getMessage());

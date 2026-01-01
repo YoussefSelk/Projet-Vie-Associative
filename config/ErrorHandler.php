@@ -1,11 +1,13 @@
 <?php
 /**
  * =============================================================================
- * GESTIONNAIRE D'ERREURS
+ * GESTIONNAIRE D'ERREURS ET LOGS
  * =============================================================================
  * 
  * Configuration robuste de la gestion des erreurs pour la production :
- * - Journalisation des erreurs dans des fichiers de log
+ * - Journalisation des erreurs dans des fichiers de log séparés
+ *   - error.log : Erreurs PHP, exceptions, erreurs fatales
+ *   - security.log : Événements de sécurité (tentatives d'accès, violations CSRF, etc.)
  * - Affichage de pages d'erreur personnalisées selon l'environnement
  * - Génération de codes de référence pour le suivi du support
  * - Gestion des erreurs fatales, exceptions et shutdown
@@ -21,13 +23,19 @@
  * - 503 : Service indisponible
  * 
  * @author Équipe de développement EILCO
- * @version 2.0
+ * @version 2.1
  */
 
 class ErrorHandler
 {
     /** @var bool Indicateur d'initialisation (évite les doubles initialisations) */
     private static bool $initialized = false;
+    
+    /** @var string Chemin vers le fichier de log d'erreurs */
+    private static string $errorLogPath = '';
+    
+    /** @var string Chemin vers le fichier de log de sécurité */
+    private static string $securityLogPath = '';
     
     /**
      * Initialise le gestionnaire d'erreurs
@@ -55,7 +63,13 @@ class ErrorHandler
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
         }
-        ini_set('error_log', $logDir . '/error.log');
+        
+        // Configurer les chemins des fichiers de log
+        self::$errorLogPath = $logDir . '/error.log';
+        self::$securityLogPath = $logDir . '/security.log';
+        
+        // Le log d'erreur PHP par défaut
+        ini_set('error_log', self::$errorLogPath);
         
         // Enregistrer les handlers personnalisés
         set_error_handler([self::class, 'handleError']);
@@ -63,6 +77,50 @@ class ErrorHandler
         register_shutdown_function([self::class, 'handleShutdown']);
         
         self::$initialized = true;
+    }
+    
+    /**
+     * Journalise une erreur dans le fichier error.log
+     * 
+     * @param string $message Message d'erreur à journaliser
+     * @param string $level Niveau de l'erreur (ERROR, WARNING, NOTICE, DEBUG)
+     * @param array $context Contexte additionnel (optionnel)
+     */
+    public static function logError(string $message, string $level = 'ERROR', array $context = []): void
+    {
+        $timestamp = date('Y-m-d H:i:s');
+        $contextStr = !empty($context) ? ' | ' . json_encode($context, JSON_UNESCAPED_UNICODE) : '';
+        $logMessage = "[$timestamp] [$level] $message$contextStr" . PHP_EOL;
+        
+        $logPath = self::$errorLogPath ?: (defined('ROOT_PATH') ? ROOT_PATH . '/logs/error.log' : __DIR__ . '/../logs/error.log');
+        @file_put_contents($logPath, $logMessage, FILE_APPEND | LOCK_EX);
+    }
+    
+    /**
+     * Journalise un événement de sécurité dans le fichier security.log
+     * Utilisé pour : tentatives de connexion échouées, violations CSRF, 
+     * accès non autorisés, tentatives d'injection SQL, etc.
+     * 
+     * @param string $message Message de sécurité à journaliser
+     * @param string $level Niveau (INFO, WARN, FAIL, CRITICAL)
+     * @param array $context Contexte additionnel (IP, user_id, etc.)
+     */
+    public static function logSecurity(string $message, string $level = 'INFO', array $context = []): void
+    {
+        $timestamp = date('Y-m-d H:i:s');
+        
+        // Ajouter automatiquement l'IP et l'utilisateur si disponibles
+        $context['ip'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $context['user_agent'] = substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 100);
+        if (isset($_SESSION['id'])) {
+            $context['user_id'] = $_SESSION['id'];
+        }
+        
+        $contextStr = !empty($context) ? ' | ' . json_encode($context, JSON_UNESCAPED_UNICODE) : '';
+        $logMessage = "[$timestamp] [$level] $message$contextStr" . PHP_EOL;
+        
+        $logPath = self::$securityLogPath ?: (defined('ROOT_PATH') ? ROOT_PATH . '/logs/security.log' : __DIR__ . '/../logs/security.log');
+        @file_put_contents($logPath, $logMessage, FILE_APPEND | LOCK_EX);
     }
     
     /**

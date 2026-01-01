@@ -103,9 +103,9 @@ class AdminController {
         
         // Statistiques avancees pour les Super Admins uniquement (permission 5)
         if (($_SESSION['permission'] ?? 0) == 5) {
-            // Total des inscriptions aux evenements
+            // Total des inscriptions aux evenements (table abonnements)
             try {
-                $stmt = $this->db->query("SELECT COUNT(*) as count FROM subscribe_event");
+                $stmt = $this->db->query("SELECT COUNT(*) as count FROM abonnements");
                 $stats['total_subscriptions'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
             } catch (Exception $e) {
                 $stats['total_subscriptions'] = 0;
@@ -319,7 +319,7 @@ class AdminController {
         // Statistiques de la base de donnees (nombre d'enregistrements par table)
         $db_stats = [];
         try {
-            $tables = ['users', 'fiche_club', 'fiche_event', 'membres_club', 'subscribe_event'];
+            $tables = ['users', 'fiche_club', 'fiche_event', 'membres_club', 'abonnements'];
             foreach ($tables as $table) {
                 try {
                     $stmt = $this->db->query("SELECT COUNT(*) as count FROM $table");
@@ -357,12 +357,13 @@ class AdminController {
             $advanced_stats['old_events'] = 0;
         }
         
-        // Evenements passes sans rapport soumis
+        // Evenements passes sans rapport soumis (rapport stocké dans fiche_event.rapport_event)
         try {
             $stmt = $this->db->query("
-                SELECT COUNT(*) as count FROM fiche_event e 
-                LEFT JOIN rapport_event r ON e.event_id = r.event_id 
-                WHERE e.validation_finale = 1 AND e.date_ev < NOW() AND r.id IS NULL
+                SELECT COUNT(*) as count FROM fiche_event 
+                WHERE validation_finale = 1 
+                  AND date_ev < NOW() 
+                  AND (rapport_event IS NULL OR rapport_event = '')
             ");
             $advanced_stats['events_no_report'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         } catch (Exception $e) {
@@ -465,16 +466,17 @@ class AdminController {
             
             case 'subscriptions':
                 // Export des inscriptions aux evenements avec details utilisateur et evenement
+                // Table abonnements: id = user_id, event_id, date_abonnement
                 $stmt = $this->db->query("
-                    SELECT se.id, u.nom, u.prenom, u.mail, fe.titre, fe.date_ev
-                    FROM subscribe_event se
-                    JOIN users u ON se.user_id = u.id
-                    JOIN fiche_event fe ON se.event_id = fe.event_id
-                    ORDER BY se.id
+                    SELECT a.id as user_id, u.nom, u.prenom, u.mail, fe.titre, fe.date_ev, a.date_abonnement
+                    FROM abonnements a
+                    JOIN users u ON a.id = u.id
+                    JOIN fiche_event fe ON a.event_id = fe.event_id
+                    ORDER BY a.date_abonnement DESC
                 ");
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 $filename = 'subscriptions_export_' . date('Y-m-d') . '.csv';
-                $headers = ['ID', 'Nom', 'Prénom', 'Email', 'Événement', 'Date événement'];
+                $headers = ['User ID', 'Nom', 'Prénom', 'Email', 'Événement', 'Date événement', 'Date inscription'];
                 break;
             
             case 'members':
@@ -570,9 +572,9 @@ class AdminController {
         try {
             $stmt = $this->db->query("
                 SELECT fe.event_id, fe.titre, fe.date_ev, fe.campus, fc.nom_club,
-                    COUNT(se.id) as subscription_count
+                    COUNT(a.event_id) as subscription_count
                 FROM fiche_event fe
-                LEFT JOIN subscribe_event se ON fe.event_id = se.event_id
+                LEFT JOIN abonnements a ON fe.event_id = a.event_id
                 LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
                 WHERE fe.validation_finale = 1
                 GROUP BY fe.event_id
@@ -584,9 +586,9 @@ class AdminController {
             $stats['popular_events'] = [];
         }
         
-        // Total des inscriptions aux evenements
+        // Total des inscriptions aux evenements (table abonnements)
         try {
-            $stmt = $this->db->query("SELECT COUNT(*) as count FROM subscribe_event");
+            $stmt = $this->db->query("SELECT COUNT(*) as count FROM abonnements");
             $stats['total_subscriptions'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         } catch (Exception $e) {
             $stats['total_subscriptions'] = 0;
@@ -595,7 +597,7 @@ class AdminController {
         // Evenements a venir (30 prochains jours) avec compteur d'inscriptions
         $stmt = $this->db->query("
             SELECT fe.*, fc.nom_club,
-                (SELECT COUNT(*) FROM subscribe_event se WHERE se.event_id = fe.event_id) as subscription_count
+                (SELECT COUNT(*) FROM abonnements a WHERE a.event_id = fe.event_id) as subscription_count
             FROM fiche_event fe
             LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
             WHERE fe.validation_finale = 1 
@@ -604,17 +606,16 @@ class AdminController {
         ");
         $stats['upcoming_events'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Evenements passes sans rapport (30 derniers jours) - necessite attention
+        // Evenements passes sans rapport (30 derniers jours) - rapport stocké dans fiche_event.rapport_event
         try {
             $stmt = $this->db->query("
                 SELECT fe.event_id, fe.titre, fe.date_ev, fc.nom_club
                 FROM fiche_event fe
                 LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                LEFT JOIN rapport_event re ON fe.event_id = re.event_id
                 WHERE fe.validation_finale = 1 
                     AND fe.date_ev < NOW()
                     AND fe.date_ev >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-                    AND re.id IS NULL
+                    AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
                 ORDER BY fe.date_ev DESC
                 LIMIT 5
             ");
@@ -668,9 +669,10 @@ class AdminController {
         $order = $_GET['order'] ?? 'DESC';
         
         // Construction de la requete avec sous-requetes pour les compteurs
+        // Table abonnements: id = user_id
         $query = "SELECT u.*, 
             (SELECT COUNT(*) FROM membres_club mc WHERE mc.membre_id = u.id AND mc.valide = 1) as clubs_count,
-            (SELECT COUNT(*) FROM subscribe_event se WHERE se.user_id = u.id) as subscriptions_count
+            (SELECT COUNT(*) FROM abonnements a WHERE a.id = u.id) as subscriptions_count
             FROM users u WHERE 1=1";
         $params = [];
         
@@ -781,9 +783,9 @@ class AdminController {
             $stmt = $this->db->prepare("DELETE FROM membres_club WHERE membre_id = ?");
             $stmt->execute([$user_id]);
             
-            // Suppression des inscriptions aux evenements
+            // Suppression des inscriptions aux evenements (table abonnements, id = user_id)
             try {
-                $stmt = $this->db->prepare("DELETE FROM subscribe_event WHERE user_id = ?");
+                $stmt = $this->db->prepare("DELETE FROM abonnements WHERE id = ?");
                 $stmt->execute([$user_id]);
             } catch (Exception $e) {}
             
@@ -833,14 +835,14 @@ class AdminController {
         $stmt->execute([$user_id]);
         $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Inscriptions aux evenements
+        // Inscriptions aux evenements (table abonnements, id = user_id)
         try {
             $stmt = $this->db->prepare("
-                SELECT fe.*, fc.nom_club
-                FROM subscribe_event se
-                JOIN fiche_event fe ON se.event_id = fe.event_id
+                SELECT fe.*, fc.nom_club, a.date_abonnement
+                FROM abonnements a
+                JOIN fiche_event fe ON a.event_id = fe.event_id
                 LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                WHERE se.user_id = ?
+                WHERE a.id = ?
                 ORDER BY fe.date_ev DESC
             ");
             $stmt->execute([$user_id]);
@@ -940,10 +942,10 @@ class AdminController {
                     $stmt = $this->db->query("DELETE mc FROM membres_club mc LEFT JOIN fiche_club fc ON mc.club_id = fc.club_id WHERE fc.club_id IS NULL");
                     
                     // Suppression des inscriptions pour des evenements inexistants
-                    $stmt = $this->db->query("DELETE se FROM subscribe_event se LEFT JOIN fiche_event fe ON se.event_id = fe.event_id WHERE fe.event_id IS NULL");
+                    $stmt = $this->db->query("DELETE a FROM abonnements a LEFT JOIN fiche_event fe ON a.event_id = fe.event_id WHERE fe.event_id IS NULL");
                     
                     // Suppression des inscriptions pour des utilisateurs inexistants
-                    $stmt = $this->db->query("DELETE se FROM subscribe_event se LEFT JOIN users u ON se.user_id = u.id WHERE u.id IS NULL");
+                    $stmt = $this->db->query("DELETE a FROM abonnements a LEFT JOIN users u ON a.id = u.id WHERE u.id IS NULL");
                     
                     $success_msg = "Nettoyage des enregistrements orphelins effectué.";
                 } catch (Exception $e) {
@@ -964,9 +966,9 @@ class AdminController {
             }
         }
         
-        // Statistiques de chaque table
+        // Statistiques de chaque table (tables existantes dans la BD)
         $db_stats = [];
-        $tables = ['users', 'fiche_club', 'fiche_event', 'membres_club', 'subscribe_event', 'rapport_event'];
+        $tables = ['users', 'fiche_club', 'fiche_event', 'membres_club', 'abonnements', 'mails', 'config', 'ville'];
         foreach ($tables as $table) {
             try {
                 $stmt = $this->db->query("SELECT COUNT(*) as count FROM $table");
@@ -1061,8 +1063,8 @@ class AdminController {
                 try {
                     $stmt = $this->db->prepare("
                         SELECT COUNT(*) as count 
-                        FROM subscribe_event se
-                        JOIN fiche_event fe ON se.event_id = fe.event_id
+                        FROM abonnements a
+                        JOIN fiche_event fe ON a.event_id = fe.event_id
                         WHERE DATE_FORMAT(fe.date_ev, '%Y-%m') = ?
                     ");
                     $stmt->execute([$month]);

@@ -45,7 +45,11 @@
                         <div class="event-card">
                             <div class="event-date-badge">
                                 <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
-                                <span class="month"><?= strftime('%b', strtotime($event['date_ev'] ?? 'now')) ?></span>
+                                <span class="month"><?php 
+                                    $dateObj = new DateTime($event['date_ev'] ?? 'now');
+                                    $formatter = new IntlDateFormatter('fr_FR', IntlDateFormatter::NONE, IntlDateFormatter::NONE, null, null, 'MMM');
+                                    echo $formatter->format($dateObj);
+                                ?></span>
                             </div>
                             <div class="event-content">
                                 <h3><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h3>

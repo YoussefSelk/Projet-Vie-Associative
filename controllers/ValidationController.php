@@ -286,6 +286,7 @@ class ValidationController {
             if (isset($_POST['validate_club_tutor'])) {
                 $club_id = $_POST['club_id'] ?? null;
                 $action = $_POST['action'] ?? null;
+                $motif = $_POST['motif'] ?? null;
                 
                 if ($club_id && $action) {
                     $validation = ($action === 'approve') ? 1 : 0;
@@ -293,11 +294,21 @@ class ValidationController {
                     // Les admins peuvent valider n'importe quel club
                     // Les tuteurs ne peuvent valider que leurs propres clubs
                     if ($is_admin) {
-                        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ? WHERE club_id = ?");
-                        $result = $stmt->execute([$validation, $club_id]);
+                        if ($action === 'reject' && $motif) {
+                            $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ?, motif_refus = ? WHERE club_id = ?");
+                            $result = $stmt->execute([$validation, $motif, $club_id]);
+                        } else {
+                            $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ? WHERE club_id = ?");
+                            $result = $stmt->execute([$validation, $club_id]);
+                        }
                     } else {
-                        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ? WHERE club_id = ? AND tuteur = ?");
-                        $result = $stmt->execute([$validation, $club_id, $_SESSION['id']]);
+                        if ($action === 'reject' && $motif) {
+                            $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ?, motif_refus = ? WHERE club_id = ? AND tuteur = ?");
+                            $result = $stmt->execute([$validation, $motif, $club_id, $_SESSION['id']]);
+                        } else {
+                            $stmt = $this->db->prepare("UPDATE fiche_club SET validation_tuteur = ? WHERE club_id = ? AND tuteur = ?");
+                            $result = $stmt->execute([$validation, $club_id, $_SESSION['id']]);
+                        }
                     }
                     
                     if ($result && $stmt->rowCount() > 0) {
@@ -325,6 +336,7 @@ class ValidationController {
             if (isset($_POST['validate_event_tutor'])) {
                 $event_id = $_POST['event_id'] ?? null;
                 $action = $_POST['action'] ?? null;
+                $motif = $_POST['motif'] ?? null;
                 
                 if ($event_id && $action) {
                     $validation = ($action === 'approve') ? 1 : 0;
@@ -332,17 +344,32 @@ class ValidationController {
                     // Les admins peuvent valider n'importe quel evenement
                     // Les tuteurs ne peuvent valider que les evenements de leurs clubs
                     if ($is_admin) {
-                        $stmt = $this->db->prepare("UPDATE fiche_event SET validation_tuteur = ? WHERE event_id = ?");
-                        $result = $stmt->execute([$validation, $event_id]);
+                        if ($action === 'reject' && $motif) {
+                            $stmt = $this->db->prepare("UPDATE fiche_event SET validation_tuteur = ?, motif_refus = ? WHERE event_id = ?");
+                            $result = $stmt->execute([$validation, $motif, $event_id]);
+                        } else {
+                            $stmt = $this->db->prepare("UPDATE fiche_event SET validation_tuteur = ? WHERE event_id = ?");
+                            $result = $stmt->execute([$validation, $event_id]);
+                        }
                     } else {
                         // Jointure necessaire pour verifier que l'evenement appartient a un club tutore
-                        $stmt = $this->db->prepare("
-                            UPDATE fiche_event fe
-                            INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                            SET fe.validation_tuteur = ?
-                            WHERE fe.event_id = ? AND fc.tuteur = ?
-                        ");
-                        $result = $stmt->execute([$validation, $event_id, $_SESSION['id']]);
+                        if ($action === 'reject' && $motif) {
+                            $stmt = $this->db->prepare("
+                                UPDATE fiche_event fe
+                                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                                SET fe.validation_tuteur = ?, fe.motif_refus = ?
+                                WHERE fe.event_id = ? AND fc.tuteur = ?
+                            ");
+                            $result = $stmt->execute([$validation, $motif, $event_id, $_SESSION['id']]);
+                        } else {
+                            $stmt = $this->db->prepare("
+                                UPDATE fiche_event fe
+                                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                                SET fe.validation_tuteur = ?
+                                WHERE fe.event_id = ? AND fc.tuteur = ?
+                            ");
+                            $result = $stmt->execute([$validation, $event_id, $_SESSION['id']]);
+                        }
                     }
                     
                     if ($result && $stmt->rowCount() > 0) {

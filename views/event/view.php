@@ -56,7 +56,11 @@
                     <div class="event-detail-header" style="background: linear-gradient(135deg, <?= $campusColor ?> 0%, <?= $campusColor ?>dd 100%);">
                         <div class="event-date-large">
                             <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
-                            <span class="month"><?= strftime('%B %Y', strtotime($event['date_ev'] ?? 'now')) ?></span>
+                            <span class="month"><?php 
+                                $dateObj = new DateTime($event['date_ev'] ?? 'now');
+                                $formatter = new IntlDateFormatter('fr_FR', IntlDateFormatter::NONE, IntlDateFormatter::NONE, null, null, 'MMMM yyyy');
+                                echo $formatter->format($dateObj);
+                            ?></span>
                         </div>
                         <h1><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h1>
                         <div class="event-badges">

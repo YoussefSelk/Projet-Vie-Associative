@@ -156,20 +156,53 @@ class ClubController {
             }
             else {
                 try {
-                    // Create the club - respect actual DB structure
-                    // Table fiche_club: club_id, nom_club, type_club, description, logo_club, tuteur, campus,
-                    //                   validation_admin, validation_tuteur, motif_refus, validation_finale
-                    $stmt = $this->db->prepare("
-                        INSERT INTO fiche_club (nom_club, type_club, description, campus, tuteur, validation_admin, validation_tuteur, validation_finale) 
-                        VALUES (?, ?, ?, ?, ?, NULL, NULL, NULL)
-                    ");
-                    $result = $stmt->execute([
-                        $nom_club,
-                        $type_club,
-                        $description,
-                        $campus,
-                        $tuteur_id ? (string)$tuteur_id : null // tuteur is VARCHAR in DB, stores user ID as string
-                    ]);
+                    // Handle logo upload
+                    $logo_filename = null;
+                    if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+                        $file = $_FILES['logo'];
+                        $allowed_types = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+                        $max_size = 2 * 1024 * 1024; // 2MB
+                        
+                        if (!in_array($file['type'], $allowed_types)) {
+                            $error_msg = "Format de logo non supporté. Utilisez PNG, JPG, GIF ou WebP.";
+                        } elseif ($file['size'] > $max_size) {
+                            $error_msg = "Le logo est trop volumineux. Taille maximale : 2 Mo.";
+                        } else {
+                            // Generate unique filename
+                            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                            $just_filename = 'club_' . uniqid() . '_' . time() . '.' . $extension;
+                            $upload_path = ROOT_PATH . '/uploads/logos/' . $just_filename;
+                            // Store relative path for database (matching existing format)
+                            $logo_filename = '../uploads/logos/' . $just_filename;
+                            
+                            // Ensure upload directory exists
+                            if (!is_dir(ROOT_PATH . '/uploads/logos')) {
+                                mkdir(ROOT_PATH . '/uploads/logos', 0755, true);
+                            }
+                            
+                            if (!move_uploaded_file($file['tmp_name'], $upload_path)) {
+                                $error_msg = "Erreur lors de l'upload du logo.";
+                                $logo_filename = null;
+                            }
+                        }
+                    }
+                    
+                    if (empty($error_msg)) {
+                        // Create the club - respect actual DB structure
+                        // Table fiche_club: club_id, nom_club, type_club, description, logo_club, tuteur, campus,
+                        //                   validation_admin, validation_tuteur, motif_refus, validation_finale
+                        $stmt = $this->db->prepare("
+                            INSERT INTO fiche_club (nom_club, type_club, description, campus, tuteur, logo_club, validation_admin, validation_tuteur, validation_finale) 
+                            VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
+                        ");
+                        $result = $stmt->execute([
+                            $nom_club,
+                            $type_club,
+                            $description,
+                            $campus,
+                            $tuteur_id ? (string)$tuteur_id : '', // tuteur is VARCHAR in DB, empty string if no tutor
+                            $logo_filename
+                        ]);
                     
                     if ($result) {
                         $club_id = $this->db->lastInsertId();
@@ -208,6 +241,7 @@ class ClubController {
                     } else {
                         $error_msg = "Erreur lors de la création du club.";
                     }
+                    } // End of if (empty($error_msg))
                 } catch (PDOException $e) {
                     ErrorHandler::logError("Club creation error: " . $e->getMessage(), 'ERROR', [
                         'club_name' => $nom_club,
@@ -442,7 +476,7 @@ class ClubController {
             'Promotion',
             'Fonction',
             'Tuteur du club'
-        ], ';'); // Point-virgule pour Excel français
+        ], ';', '"', '\\'); // Point-virgule pour Excel français
         
         // Lignes de données
         foreach ($members as $member) {
@@ -453,7 +487,7 @@ class ClubController {
                 $member['promo'] ?? '',
                 $member['fonction'] ?? '',
                 $tutor_name
-            ], ';');
+            ], ';', '"', '\\');
         }
         
         fclose($output);

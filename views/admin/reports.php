@@ -18,14 +18,14 @@
 
 .page-header h1 {
     font-size: 1.8rem;
-    color: #2c3e50;
+    color: #1e293b;
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
 .page-header h1 i {
-    color: #9b59b6;
+    color: #0066cc;
 }
 
 /* Report Type Tabs */
@@ -39,10 +39,10 @@
 .report-tab {
     padding: 12px 25px;
     background: white;
-    border: 2px solid #e9ecef;
+    border: 2px solid #e2e8f0;
     border-radius: 25px;
     text-decoration: none;
-    color: #2c3e50;
+    color: #334155;
     font-weight: 500;
     transition: all 0.2s;
     display: flex;
@@ -51,12 +51,12 @@
 }
 
 .report-tab:hover {
-    border-color: #9b59b6;
-    background: #f8f4fc;
+    border-color: #0066cc;
+    background: #f0f7ff;
 }
 
 .report-tab.active {
-    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    background: linear-gradient(135deg, #0066cc, #004080);
     color: white;
     border-color: transparent;
 }
@@ -71,7 +71,7 @@
 
 .report-header {
     padding: 25px 30px;
-    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    background: linear-gradient(135deg, #0066cc, #004080);
     color: white;
 }
 
@@ -96,7 +96,7 @@
     align-items: center;
     margin-bottom: 25px;
     padding: 20px;
-    background: #f8f9fa;
+    background: #f8fafc;
     border-radius: 12px;
 }
 
@@ -107,18 +107,23 @@
 
 .monthly-selector input[type="month"] {
     padding: 10px 15px;
-    border: 1px solid #ddd;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     font-size: 1rem;
 }
 
 .monthly-selector .btn {
     padding: 10px 20px;
-    background: #9b59b6;
+    background: #0066cc;
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.monthly-selector .btn:hover {
+    background: #0052a3;
 }
 
 /* Stats Grid */
@@ -130,8 +135,8 @@
 }
 
 .report-stat {
-    background: linear-gradient(135deg, #f8f9fa, #fff);
-    border: 2px solid #e9ecef;
+    background: linear-gradient(135deg, #f8fafc, #fff);
+    border: 2px solid #e2e8f0;
     border-radius: 12px;
     padding: 25px;
     text-align: center;
@@ -139,19 +144,20 @@
 }
 
 .report-stat:hover {
-    border-color: #9b59b6;
+    border-color: #0066cc;
     transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 102, 204, 0.1);
 }
 
 .report-stat .number {
     font-size: 2.5rem;
     font-weight: bold;
-    color: #9b59b6;
+    color: #0066cc;
     display: block;
 }
 
 .report-stat .label {
-    color: #7f8c8d;
+    color: #64748b;
     font-size: 0.9rem;
     margin-top: 5px;
 }
@@ -192,14 +198,14 @@
 /* Progress Bar */
 .progress-bar {
     height: 10px;
-    background: #e9ecef;
+    background: #e2e8f0;
     border-radius: 5px;
     overflow: hidden;
 }
 
 .progress-bar .fill {
     height: 100%;
-    background: linear-gradient(90deg, #9b59b6, #8e44ad);
+    background: linear-gradient(90deg, #0066cc, #4cc9f0);
     border-radius: 5px;
 }
 
@@ -212,21 +218,21 @@
 
 .promo-card {
     background: white;
-    border: 2px solid #e9ecef;
+    border: 2px solid #e2e8f0;
     border-radius: 12px;
     padding: 20px;
     transition: all 0.3s;
 }
 
 .promo-card:hover {
-    border-color: #3498db;
-    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.15);
+    border-color: #0066cc;
+    box-shadow: 0 5px 20px rgba(0, 102, 204, 0.15);
 }
 
 .promo-card .promo-name {
     font-size: 1.3rem;
     font-weight: bold;
-    color: #2c3e50;
+    color: #1e293b;
     margin-bottom: 15px;
 }
 
@@ -234,7 +240,7 @@
     display: flex;
     justify-content: space-between;
     padding: 8px 0;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .promo-card .stat-row:last-child {
@@ -242,32 +248,33 @@
 }
 
 .promo-card .stat-label {
-    color: #7f8c8d;
+    color: #64748b;
 }
 
 .promo-card .stat-value {
     font-weight: 600;
-    color: #2c3e50;
+    color: #1e293b;
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #7f8c8d;
+    color: #64748b;
 }
 
 .empty-state i {
     font-size: 4rem;
     margin-bottom: 15px;
     opacity: 0.5;
+    color: #0066cc;
 }
 
 /* Download Button */
 .download-section {
     margin-top: 30px;
     padding-top: 25px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #e2e8f0;
     display: flex;
     justify-content: flex-end;
     gap: 15px;
@@ -283,10 +290,13 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    transition: all 0.2s;
 }
 
-.btn-primary { background: #3498db; color: white; }
-.btn-success { background: #27ae60; color: white; }
+.btn-primary { background: #0066cc; color: white; }
+.btn-primary:hover { background: #0052a3; }
+.btn-success { background: #28a745; color: white; }
+.btn-success:hover { background: #218838; }
     </style>
 </head>
 <body>

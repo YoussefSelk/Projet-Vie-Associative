@@ -201,14 +201,14 @@
   right: 0;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 4px 15px rgba(0, 0, 0, 0.1);
   min-width: 220px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-10px);
   transition: all 0.3s ease;
-  z-index: 1001;
-  overflow: hidden;
+  z-index: 9999;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .user-dropdown-menu.show {
@@ -275,19 +275,23 @@
 .quick-actions-bar {
   background: linear-gradient(135deg, #002855 0%, #001a3a 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  z-index: 1050;
 }
 
 .quick-actions-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
+  position: relative;
 }
 
 .quick-actions-scroll {
   display: flex;
   align-items: center;
   gap: 5px;
-  overflow-x: auto;
+  overflow-x: visible;
+  overflow-y: visible;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding: 10px 0;
@@ -373,14 +377,15 @@
   min-width: 240px;
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), 0 4px 15px rgba(0, 0, 0, 0.1);
   opacity: 0;
   visibility: hidden;
   transform: translateY(10px);
   transition: all 0.3s ease;
-  z-index: 1000;
+  z-index: 9999;
   padding: 8px 0;
   margin-top: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .quick-action-dropdown.open .quick-dropdown-menu {
@@ -512,6 +517,7 @@
     padding: 15px;
     flex-direction: column;
     gap: 10px;
+    z-index: 9998;
   }
 
   .main-header.mobile-open .header-btn {
@@ -521,10 +527,17 @@
 
   .quick-actions-bar {
     padding: 0;
+    overflow: visible;
   }
 
   .quick-actions-container {
     padding: 0 10px;
+    overflow: visible;
+  }
+
+  .quick-actions-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
   }
 
   .quick-action-item {
@@ -538,6 +551,20 @@
 
   .quick-action-item i {
     font-size: 1.1rem;
+  }
+
+  /* Mobile dropdown positioning */
+  .quick-dropdown-menu {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .quick-dropdown-item span {
+    display: inline;
   }
 }
 

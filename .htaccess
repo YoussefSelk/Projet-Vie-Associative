@@ -7,13 +7,13 @@
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
     
     # Prevent direct access to sensitive directories
-    RewriteRule ^(config|models|controllers|views|logs)/ - [F,L]
+    RewriteRule ^(config|models|controllers|views|routes|logs|vendor)/ - [F,L]
     
     # Block access to hidden files and directories
     RewriteRule ^\.(.*)$ - [F,L]
     
     # Block access to sensitive files
-    RewriteRule ^(\.env|\.env\.example|composer\.json|composer\.lock|README\.md|\.git)$ - [F,L]
+    RewriteRule ^(\.env|\.env\..*|composer\.json|composer\.lock|README\.md|API_REFERENCE\.md|MVC_STRUCTURE\.md|PRODUCTION_DEPLOYMENT\.md|INFOS-PERMISSIONS|\.git|\.gitignore|nginx\.conf\.example|web\.config)$ - [F,L]
     
     # Block access to debug/test files in production
     RewriteRule ^(health-check|route-tester)\.php$ - [F,L]

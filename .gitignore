@@ -12,6 +12,9 @@
 # ----- Uploads (user content) -----
 uploads/*
 !uploads/.gitkeep
+!uploads/.htaccess
+!uploads/index.php
+!uploads/web.config
 !uploads/logos/
 uploads/logos/*
 !uploads/logos/.gitkeep
@@ -22,6 +25,8 @@ uploads/rapports/*
 # ----- Logs -----
 logs/*
 !logs/.gitkeep
+!logs/.htaccess
+!logs/index.php
 *.log
 
 # ----- Composer dependencies -----

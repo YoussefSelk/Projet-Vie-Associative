@@ -1,4 +1,4 @@
-# Vie Étudiante - MVC Restructured Project
+# Vie Étudiante EILCO - Plateforme de Gestion Associative
 
 ## Language / Langue
 
@@ -7,45 +7,94 @@ This README is available in two languages.
 - English: see the **English** section
 - Français : voir la section **Français**
 
+---
+
 ## English
 
 ## 📋 Overview
 
-This is a complete restructuring of the "Vie Étudiante" project into a clean MVC (Model-View-Controller) architecture. The project maintains full backward compatibility with the existing database while providing a maintainable, scalable codebase structure.
+**Vie Étudiante EILCO** is a complete student life management platform for EILCO (École d'Ingénieurs du Littoral Côte d'Opale). It enables club creation and management, event organization, member subscriptions, and administrative validation workflows.
+
+The project uses a clean **MVC (Model-View-Controller)** architecture with centralized routing, secure authentication, and role-based permissions.
 
 **Key Features:**
 
-- ✅ Clean MVC architecture
-- ✅ Secure authentication & authorization
-- ✅ Database abstraction through models
-- ✅ Reusable controllers and views
-- ✅ Centralized routing
-- ✅ Session management
-- ✅ Error handling
-- ✅ Email integration
+- ✅ Clean MVC architecture with centralized routing
+- ✅ Secure authentication with bcrypt password hashing
+- ✅ Role-based authorization (5 permission levels)
+- ✅ Club creation with tutor validation workflow
+- ✅ Event management with subscription system
+- ✅ CSV export for club members
+- ✅ File upload (logos, reports)
+- ✅ Email notifications via SMTP
+- ✅ Responsive design
+- ✅ PHP 8.1+ compatibility
+
+## 📚 Documentation
+
+Detailed documentation is available in the [`Docs/`](Docs/) folder:
+
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](Docs/ARCHITECTURE.md) | System architecture and diagrams |
+| [DATABASE.md](Docs/DATABASE.md) | Database schema and queries |
+| [SECURITY.md](Docs/SECURITY.md) | Security implementation details |
+| [ROUTING.md](Docs/ROUTING.md) | Complete routing documentation |
+| [INSTALLATION.md](Docs/INSTALLATION.md) | Setup and installation guide |
+| [CONTRIBUTING.md](Docs/CONTRIBUTING.md) | Contribution guidelines |
+
+Additional documentation:
+- [API_REFERENCE.md](API_REFERENCE.md) - Controller and Model API
+- [MVC_STRUCTURE.md](MVC_STRUCTURE.md) - MVC architecture details
+- [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) - Production deployment
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- PHP 8.0+
-- Composer
-- MySQL 5.7+ or MariaDB
-- Apache with mod_rewrite
-- PHPMailer (included)
-- vlucas/phpdotenv (installed via Composer)
+- PHP 8.0+ (8.1+ recommended)
+- Composer 2.x
+- MySQL 5.7+ or MariaDB 10.3+
+- Apache with mod_rewrite (or Nginx)
+- PHP Extensions: PDO, mbstring, intl, fileinfo
 
 ### Setup
 
-1. **Configure Database** - Edit `config/Database.php` with your credentials
-2. **Configure Email** - Edit `config/Email.php` with your SMTP settings
-3. **Set Permissions** - Ensure `uploads/` is writable
-4. **Test Connection** - Navigate to the project in your browser
+1. **Clone the project**
+   ```bash
+   git clone <repository-url> vie-etudiante
+   cd vie-etudiante
+   ```
+
+2. **Install dependencies**
+   ```bash
+   composer install
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your settings
+   ```
+
+4. **Create database**
+   ```sql
+   CREATE DATABASE vieasso CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+
+5. **Set permissions**
+   ```bash
+   chmod 755 uploads/ logs/
+   chmod 600 .env
+   ```
+
+For detailed installation instructions, see [Docs/INSTALLATION.md](Docs/INSTALLATION.md).
 
 ### First Use
 
-- Visit `index.php?page=login` to access login page
-- Or simply visit root URL for home page
+- Visit `index.php?page=home` for home page
+- Visit `index.php?page=login` to log in
+- Visit `index.php?page=register` to create an account
 
 ## 📁 Project Structure
 
@@ -106,20 +155,23 @@ project/
 
 ### Permission Levels
 
-- **0**: Guest (default)
-- **1**: Member (can view content)
-- **2**: Club Manager (can manage events)
-- **3**: Admin/Tutor (full administrative access)
-- **4**: Super Admin (system administration)
+| Level | Role | Description |
+|-------|------|-------------|
+| 0 | Visiteur | Unverified account |
+| 1 | Membre | Standard student member |
+| 2 | Tuteur | Teacher/tutor (can validate) |
+| 3 | BDE | Student union (extended access) |
+| 5 | Admin | Full system administration |
 
 ### Session Management
 
 Sessions are managed in `config/bootstrap.php` with security settings:
 
-- HttpOnly cookies
+- HttpOnly cookies (not accessible via JavaScript)
 - Secure flag for HTTPS
-- SameSite=Strict protection
-- CSRF protection for POST routes (all POST routes require a valid `csrf_token` except `login` and `register`)
+- SameSite=Lax protection
+- Session regeneration on login
+- CSRF protection for all POST routes
 
 ### Helper Functions
 
@@ -364,10 +416,15 @@ case 'feature-list':
 
 ## 📚 Documentation
 
-- **MVC_STRUCTURE.md** - Architecture overview and detailed structure
-- **API_REFERENCE.md** - Complete model and controller API
-- **PRODUCTION_DEPLOYMENT.md** - Production deployment guide
-- **README.md** - This file
+- **[Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md)** - System architecture overview
+- **[Docs/DATABASE.md](Docs/DATABASE.md)** - Database schema and queries
+- **[Docs/SECURITY.md](Docs/SECURITY.md)** - Security implementation
+- **[Docs/ROUTING.md](Docs/ROUTING.md)** - Complete route documentation
+- **[Docs/INSTALLATION.md](Docs/INSTALLATION.md)** - Setup guide
+- **[Docs/CONTRIBUTING.md](Docs/CONTRIBUTING.md)** - Contribution guidelines
+- **[MVC_STRUCTURE.md](MVC_STRUCTURE.md)** - MVC architecture details
+- **[API_REFERENCE.md](API_REFERENCE.md)** - Complete API documentation
+- **[PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md)** - Production deployment guide
 
 ## 🐛 Troubleshooting
 
@@ -504,22 +561,35 @@ Ce projet est une restructuration de **Vie Étudiante** vers une architecture **
 
 **Prérequis :**
 
-- PHP 7.4+
-- MySQL 5.7+ ou MariaDB
+- PHP 8.0+ (8.1+ recommandé)
+- Composer 2.x
+- MySQL 5.7+ ou MariaDB 10.3+
 - Apache avec `mod_rewrite` (ou Nginx)
-- PHPMailer (fourni dans le projet)
 
-**Installation (résumé) :**
+**Installation :**
 
-1. Configurer la base (voir `config/Database.php` et/ou `.env` si utilisé)
-2. Configurer l’e-mail (voir `config/Email.php` et/ou `.env`)
-3. Vérifier les droits d’écriture sur `uploads/` (et `logs/` si utilisé)
-4. Ouvrir le projet dans le navigateur
+1. `composer install`
+2. Copier `.env.example` vers `.env` et configurer
+3. Créer la base de données `vieasso`
+4. Configurer les permissions sur `uploads/` et `logs/`
 
-**Première utilisation :**
+Voir [Docs/INSTALLATION.md](Docs/INSTALLATION.md) pour les instructions détaillées.
 
-- Connexion : `index.php?page=login`
-- Accueil : `index.php?page=home` (ou racine du site)
+### 🔐 Authentification & Autorisations
+
+**Niveaux de permissions :**
+
+| Niveau | Rôle |
+|--------|------|
+| 0 | Visiteur |
+| 1 | Membre |
+| 2 | Tuteur |
+| 3 | BDE |
+| 5 | Admin |
+
+### 📚 Documentation
+
+Voir le dossier [`Docs/`](Docs/) pour la documentation détaillée.
 
 ### 🔐 Authentification & Autorisations
 

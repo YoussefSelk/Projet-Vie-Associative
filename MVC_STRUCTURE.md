@@ -1,15 +1,22 @@
-# Vie Étudiante - MVC Project Structure
+# Vie Étudiante EILCO - MVC Architecture
 
 ## Language / Langue
 
 - English: see the **English** section
 - Français : voir la section **Français**
 
+---
+
 ## English
 
 ## Project Overview
 
-This is a restructured PHP project using the MVC (Model-View-Controller) architecture pattern. The project maintains backward compatibility with the existing database while providing a cleaner, more maintainable code structure.
+This is a PHP project using the **MVC (Model-View-Controller)** architecture pattern with centralized routing. The project provides a clean, maintainable code structure for managing student clubs, events, and administrative workflows.
+
+**Related Documentation:**
+- [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) - Detailed architecture diagrams
+- [Docs/ROUTING.md](Docs/ROUTING.md) - Complete routing documentation
+- [Docs/DATABASE.md](Docs/DATABASE.md) - Database schema
 
 ## Directory Structure
 
@@ -143,11 +150,16 @@ Invalid routes trigger `ErrorHandler::renderHttpError(404)` which displays a pro
 
 - **Session Management**: Handled in `config/bootstrap.php`
 - **Permission Levels**:
-  - 0: Guest
-  - 1: Member
-  - 2: Club Manager
-  - 3: Admin/Tutor
-  - 4: Super Admin
+
+| Level | Role | Description |
+|-------|------|-------------|
+| 0 | Visiteur | Unverified account |
+| 1 | Membre | Standard student |
+| 2 | Tuteur | Teacher (can validate) |
+| 3 | BDE | Student union |
+| 5 | Admin | Full administration |
+
+See [Docs/SECURITY.md](Docs/SECURITY.md) for detailed security documentation.
 
 **Helper Functions:**
 
@@ -324,4 +336,5 @@ Ne stockez jamais de vrais identifiants SMTP dans Git. Utilisez des placeholders
 
 ---
 
-**Last Updated:** December 31, 2025
+**Version:** 4.0  
+**Last Updated:** January 2025

@@ -5,7 +5,19 @@
 - English: see the **English** section
 - Français : voir la section **Français**
 
+---
+
 ## English
+
+## Overview
+
+This document provides detailed API documentation for all controllers and models in the Vie Étudiante EILCO project.
+
+**Related Documentation:**
+- [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) - System architecture
+- [Docs/ROUTING.md](Docs/ROUTING.md) - Routing documentation
+- [Docs/DATABASE.md](Docs/DATABASE.md) - Database schema
+- [Docs/SECURITY.md](Docs/SECURITY.md) - Security details
 
 ## Table of Contents
 
@@ -23,9 +35,10 @@
 ### Global Notes
 
 - Routing is handled by the `Router` class loading routes from `routes/web.php`
-- Authentication is session-based.
-- **CSRF**: every **POST** route requires a valid `csrf_token`, except `login` and `register`.
+- Authentication is session-based with permission levels (0-5)
+- **CSRF**: every **POST** route requires a valid `csrf_token`
 - Environment configuration via `.env` file using `vlucas/phpdotenv`
+- PHP 8.0+ required (8.1+ recommended for full compatibility)
 
 ---
 
@@ -792,7 +805,8 @@ These are passed to views and can be displayed:
 
 ---
 
-**Last Updated:** December 31, 2025
+**Version:** 4.0  
+**Last Updated:** January 2025
 
 ---
 
@@ -801,8 +815,16 @@ These are passed to views and can be displayed:
 ### Notes globales
 
 - Routage : `index.php?page=...`
-- Authentification : sessions
-- **CSRF** : toutes les routes **POST** exigent un `csrf_token` valide, sauf `login` et `register`.
+- Authentification : sessions avec niveaux de permission (0-5)
+- **CSRF** : toutes les routes **POST** exigent un `csrf_token` valide
+
+### Documentation
+
+Voir le dossier [Docs/](Docs/) pour la documentation détaillée :
+- [ARCHITECTURE.md](Docs/ARCHITECTURE.md) - Architecture
+- [DATABASE.md](Docs/DATABASE.md) - Base de données
+- [SECURITY.md](Docs/SECURITY.md) - Sécurité
+- [ROUTING.md](Docs/ROUTING.md) - Routes
 
 ### Résumé des routes (FR)
 

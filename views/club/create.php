@@ -181,6 +181,115 @@
             opacity: 0.5;
             cursor: not-allowed;
         }
+        
+        /* Logo Upload Styles */
+        .logo-upload-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .logo-preview {
+            width: 120px;
+            height: 120px;
+            border: 3px dashed #d1d5db;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9fafb;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+        
+        .logo-preview:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .logo-preview.has-image {
+            border-style: solid;
+            border-color: #3b82f6;
+        }
+        
+        .logo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .logo-preview .placeholder-icon {
+            color: #9ca3af;
+            font-size: 2.5rem;
+        }
+        
+        .logo-upload-info {
+            flex: 1;
+        }
+        
+        .logo-upload-info label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .logo-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .logo-upload-btn:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            transform: translateY(-1px);
+        }
+        
+        .logo-upload-btn input[type="file"] {
+            display: none;
+        }
+        
+        .logo-hints {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        
+        .logo-hints li {
+            margin-bottom: 4px;
+        }
+        
+        .remove-logo-btn {
+            display: none;
+            margin-top: 10px;
+            padding: 6px 12px;
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .remove-logo-btn:hover {
+            background: #fecaca;
+        }
+        
+        .remove-logo-btn.visible {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
     </style>
 </head>
 <body>
@@ -204,8 +313,33 @@
                         <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?></div>
                     <?php endif; ?>
 
-                    <form method="POST" class="form-modern" id="clubForm">
+                    <form method="POST" class="form-modern" id="clubForm" enctype="multipart/form-data">
                         <?= Security::csrfField() ?>
+                        
+                        <!-- Logo Upload Section -->
+                        <div class="form-group">
+                            <label><i class="fas fa-image"></i> Logo du club (optionnel)</label>
+                            <div class="logo-upload-container">
+                                <div class="logo-preview" id="logoPreview">
+                                    <i class="fas fa-camera placeholder-icon" id="logoPlaceholder"></i>
+                                    <img id="logoImage" src="" alt="Aperçu du logo" style="display: none;">
+                                </div>
+                                <div class="logo-upload-info">
+                                    <label class="logo-upload-btn">
+                                        <i class="fas fa-upload"></i> Choisir une image
+                                        <input type="file" name="logo" id="logoInput" accept="image/png, image/jpeg, image/gif, image/webp">
+                                    </label>
+                                    <ul class="logo-hints">
+                                        <li><i class="fas fa-check-circle" style="color: #10b981;"></i> Formats acceptés : PNG, JPG, GIF, WebP</li>
+                                        <li><i class="fas fa-check-circle" style="color: #10b981;"></i> Taille maximale : 2 Mo</li>
+                                        <li><i class="fas fa-info-circle" style="color: #3b82f6;"></i> Idéalement carré (ex: 200x200 px)</li>
+                                    </ul>
+                                    <button type="button" class="remove-logo-btn" id="removeLogo">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         
                         <div class="form-row">
                             <div class="form-group">
@@ -357,6 +491,55 @@
     <script>
     (function() {
         'use strict';
+        
+        // Logo upload preview functionality
+        var logoInput = document.getElementById('logoInput');
+        var logoPreview = document.getElementById('logoPreview');
+        var logoImage = document.getElementById('logoImage');
+        var logoPlaceholder = document.getElementById('logoPlaceholder');
+        var removeLogoBtn = document.getElementById('removeLogo');
+        
+        if (logoInput) {
+            logoInput.addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (file) {
+                    // Validate file size (2MB max)
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('Le fichier est trop volumineux. Taille maximale : 2 Mo');
+                        logoInput.value = '';
+                        return;
+                    }
+                    
+                    // Validate file type
+                    if (!file.type.match(/^image\/(png|jpeg|jpg|gif|webp)$/)) {
+                        alert('Format non supporté. Utilisez PNG, JPG, GIF ou WebP.');
+                        logoInput.value = '';
+                        return;
+                    }
+                    
+                    var reader = new FileReader();
+                    reader.onload = function(event) {
+                        logoImage.src = event.target.result;
+                        logoImage.style.display = 'block';
+                        logoPlaceholder.style.display = 'none';
+                        logoPreview.classList.add('has-image');
+                        removeLogoBtn.classList.add('visible');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        
+        if (removeLogoBtn) {
+            removeLogoBtn.addEventListener('click', function() {
+                logoInput.value = '';
+                logoImage.src = '';
+                logoImage.style.display = 'none';
+                logoPlaceholder.style.display = 'block';
+                logoPreview.classList.remove('has-image');
+                removeLogoBtn.classList.remove('visible');
+            });
+        }
         
         // Variables d'état
         var memberCount = 0;

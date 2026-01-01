@@ -73,7 +73,7 @@ class MaClasse
      * Propriétés en camelCase
      */
     private int $maVariable;
-    
+
     /**
      * Méthodes en camelCase avec documentation.
      *
@@ -86,7 +86,7 @@ class MaClasse
         if ($condition) {
             // Accolades sur même ligne
         }
-        
+
         return true;
     }
 }
@@ -94,14 +94,14 @@ class MaClasse
 
 #### Conventions de Nommage
 
-| Type | Convention | Exemple |
-|------|------------|---------|
-| Classes | PascalCase | `ClubController` |
-| Méthodes | camelCase | `getUserById()` |
-| Variables | camelCase | `$userName` |
-| Constantes | UPPER_SNAKE | `MAX_FILE_SIZE` |
-| Tables BDD | snake_case | `fiche_club` |
-| Colonnes BDD | snake_case | `date_creation` |
+| Type         | Convention  | Exemple          |
+| ------------ | ----------- | ---------------- |
+| Classes      | PascalCase  | `ClubController` |
+| Méthodes     | camelCase   | `getUserById()`  |
+| Variables    | camelCase   | `$userName`      |
+| Constantes   | UPPER_SNAKE | `MAX_FILE_SIZE`  |
+| Tables BDD   | snake_case  | `fiche_club`     |
+| Colonnes BDD | snake_case  | `date_creation`  |
 
 #### Bonnes Pratiques
 
@@ -139,26 +139,26 @@ $pdo->query("SELECT * FROM users WHERE id = $id");
  * Sous-section avec commentaire de description
  */
 .component {
-    /* Positionnement */
-    position: relative;
-    display: flex;
-    
-    /* Box Model */
-    margin: 10px;
-    padding: 15px;
-    width: 100%;
-    
-    /* Typographie */
-    font-size: 16px;
-    color: #333;
-    
-    /* Visuel */
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    
-    /* Animation */
-    transition: all 0.3s ease;
+  /* Positionnement */
+  position: relative;
+  display: flex;
+
+  /* Box Model */
+  margin: 10px;
+  padding: 15px;
+  width: 100%;
+
+  /* Typographie */
+  font-size: 16px;
+  color: #333;
+
+  /* Visuel */
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+
+  /* Animation */
+  transition: all 0.3s ease;
 }
 ```
 
@@ -166,20 +166,28 @@ $pdo->query("SELECT * FROM users WHERE id = $id");
 
 ```css
 /* Composant principal */
-.card { }
+.card {
+}
 
 /* Élément du composant */
-.card-header { }
-.card-body { }
-.card-footer { }
+.card-header {
+}
+.card-body {
+}
+.card-footer {
+}
 
 /* Modificateur */
-.card-primary { }
-.card-large { }
+.card-primary {
+}
+.card-large {
+}
 
 /* État */
-.card.is-active { }
-.card.has-error { }
+.card.is-active {
+}
+.card.has-error {
+}
 ```
 
 ### JavaScript
@@ -209,13 +217,13 @@ async function fetchData() {
 
 ### Branches
 
-| Branche | Usage |
-|---------|-------|
-| `main` | Production stable |
-| `develop` | Développement actif |
-| `feature/*` | Nouvelles fonctionnalités |
-| `bugfix/*` | Corrections de bugs |
-| `hotfix/*` | Corrections urgentes production |
+| Branche     | Usage                           |
+| ----------- | ------------------------------- |
+| `main`      | Production stable               |
+| `develop`   | Développement actif             |
+| `feature/*` | Nouvelles fonctionnalités       |
+| `bugfix/*`  | Corrections de bugs             |
+| `hotfix/*`  | Corrections urgentes production |
 
 ### Processus de Contribution
 
@@ -238,17 +246,18 @@ git push origin feature/ma-fonctionnalite
 
 Format : `type: description courte`
 
-| Type | Usage |
-|------|-------|
-| `feat` | Nouvelle fonctionnalité |
-| `fix` | Correction de bug |
-| `docs` | Documentation |
-| `style` | Formatage (pas de changement de code) |
+| Type       | Usage                                       |
+| ---------- | ------------------------------------------- |
+| `feat`     | Nouvelle fonctionnalité                     |
+| `fix`      | Correction de bug                           |
+| `docs`     | Documentation                               |
+| `style`    | Formatage (pas de changement de code)       |
 | `refactor` | Refactoring (pas de changement fonctionnel) |
-| `test` | Ajout/modification de tests |
-| `chore` | Maintenance, dépendances |
+| `test`     | Ajout/modification de tests                 |
+| `chore`    | Maintenance, dépendances                    |
 
 **Exemples :**
+
 ```
 feat: ajout export CSV des membres de club
 fix: correction affichage logo club dans modal
@@ -261,6 +270,7 @@ refactor: extraction méthode validation email
 ### 1. Planification
 
 Avant de coder :
+
 - Vérifier qu'un issue n'existe pas déjà
 - Discuter de l'approche si changement majeur
 - Définir les critères d'acceptation
@@ -294,13 +304,13 @@ public function exportPdf(): void
 {
     Security::requirePermission(2);
     $id = (int)($_GET['id'] ?? 0);
-    
+
     $event = Event::find($id);
     if (!$event) {
         Router::redirect('events');
         return;
     }
-    
+
     // Logique d'export...
     require 'views/event/export-pdf.php';
 }
@@ -312,6 +322,7 @@ public function exportPdf(): void
 ### 4. Tests Manuels
 
 Avant de soumettre :
+
 - [ ] Fonctionnalité marche comme prévu
 - [ ] Pas de régression sur fonctionnalités existantes
 - [ ] Responsive (mobile/desktop)
@@ -328,6 +339,7 @@ Avant de soumettre :
 **Description:** Le logo du club ne s'affiche pas dans la modal
 
 **Étapes pour reproduire:**
+
 1. Aller sur ?page=tutoring
 2. Cliquer sur un club avec logo
 3. Observer la modal
@@ -336,6 +348,7 @@ Avant de soumettre :
 **Comportement actuel:** Image cassée (404)
 
 **Environnement:**
+
 - PHP: 8.1
 - Navigateur: Chrome 120
 ```
@@ -377,10 +390,12 @@ $logoPath = '../uploads/logos/' . basename($club['logo_club']);
 
 ```markdown
 # ✅ Bon feedback
+
 "Cette requête pourrait être vulnérable à l'injection SQL.
 Suggestion : utiliser une requête préparée comme ceci : ..."
 
 # ❌ Mauvais feedback
+
 "Ce code est mauvais."
 ```
 
@@ -402,6 +417,7 @@ public static function find(int $id): ?array
 ### Fonctionnalités
 
 Pour toute nouvelle fonctionnalité, mettre à jour :
+
 - `README.md` si changement majeur
 - `Docs/` pour documentation détaillée
 - `API_REFERENCE.md` si nouvelle API

@@ -57,17 +57,17 @@ return [
     'login'    => ['controller' => 'AuthController',  'action' => 'login'],
     'register' => ['controller' => 'AuthController',  'action' => 'register'],
     'logout'   => ['controller' => 'AuthController',  'action' => 'logout'],
-    
+
     // Routes clubs
     'clubs'       => ['controller' => 'ClubController', 'action' => 'list'],
     'club'        => ['controller' => 'ClubController', 'action' => 'view'],
     'club-create' => ['controller' => 'ClubController', 'action' => 'create', 'auth' => true],
-    
+
     // Routes événements
     'events'       => ['controller' => 'EventController', 'action' => 'list'],
     'event'        => ['controller' => 'EventController', 'action' => 'view'],
     'event-create' => ['controller' => 'EventController', 'action' => 'create', 'auth' => true],
-    
+
     // Routes admin
     'admin'          => ['controller' => 'AdminController', 'action' => 'dashboard', 'permission' => 5],
     'admin-users'    => ['controller' => 'AdminController', 'action' => 'users', 'permission' => 5],
@@ -91,70 +91,70 @@ return [
 
 ### Routes Publiques
 
-| Route | Contrôleur | Action | URL | Description |
-|-------|------------|--------|-----|-------------|
-| `home` | HomeController | index | `?page=home` | Page d'accueil |
-| `login` | AuthController | login | `?page=login` | Connexion |
-| `register` | AuthController | register | `?page=register` | Inscription |
-| `logout` | AuthController | logout | `?page=logout` | Déconnexion |
-| `clubs` | ClubController | list | `?page=clubs` | Liste des clubs |
-| `club` | ClubController | view | `?page=club&id=X` | Détail club |
-| `events` | EventController | list | `?page=events` | Liste événements |
-| `event` | EventController | view | `?page=event&id=X` | Détail événement |
+| Route      | Contrôleur      | Action   | URL                | Description      |
+| ---------- | --------------- | -------- | ------------------ | ---------------- |
+| `home`     | HomeController  | index    | `?page=home`       | Page d'accueil   |
+| `login`    | AuthController  | login    | `?page=login`      | Connexion        |
+| `register` | AuthController  | register | `?page=register`   | Inscription      |
+| `logout`   | AuthController  | logout   | `?page=logout`     | Déconnexion      |
+| `clubs`    | ClubController  | list     | `?page=clubs`      | Liste des clubs  |
+| `club`     | ClubController  | view     | `?page=club&id=X`  | Détail club      |
+| `events`   | EventController | list     | `?page=events`     | Liste événements |
+| `event`    | EventController | view     | `?page=event&id=X` | Détail événement |
 
 ### Routes Authentifiées (Membre+)
 
-| Route | Contrôleur | Action | URL | Permission | Description |
-|-------|------------|--------|-----|------------|-------------|
-| `club-create` | ClubController | create | `?page=club-create` | 1 | Créer un club |
-| `event-create` | EventController | create | `?page=event-create` | 1 | Créer un événement |
-| `profile` | UserController | profile | `?page=profile` | 1 | Mon profil |
-| `profile-edit` | UserController | edit | `?page=profile-edit` | 1 | Éditer profil |
-| `my-events` | EventController | myList | `?page=my-events` | 1 | Mes événements |
-| `my-clubs` | ClubController | myClubs | `?page=my-clubs` | 1 | Mes clubs |
-| `dashboard` | UserController | dashboard | `?page=dashboard` | 1 | Tableau de bord |
-| `subscriptions` | SubscriptionController | list | `?page=subscriptions` | 1 | Mes inscriptions |
+| Route           | Contrôleur             | Action    | URL                   | Permission | Description        |
+| --------------- | ---------------------- | --------- | --------------------- | ---------- | ------------------ |
+| `club-create`   | ClubController         | create    | `?page=club-create`   | 1          | Créer un club      |
+| `event-create`  | EventController        | create    | `?page=event-create`  | 1          | Créer un événement |
+| `profile`       | UserController         | profile   | `?page=profile`       | 1          | Mon profil         |
+| `profile-edit`  | UserController         | edit      | `?page=profile-edit`  | 1          | Éditer profil      |
+| `my-events`     | EventController        | myList    | `?page=my-events`     | 1          | Mes événements     |
+| `my-clubs`      | ClubController         | myClubs   | `?page=my-clubs`      | 1          | Mes clubs          |
+| `dashboard`     | UserController         | dashboard | `?page=dashboard`     | 1          | Tableau de bord    |
+| `subscriptions` | SubscriptionController | list      | `?page=subscriptions` | 1          | Mes inscriptions   |
 
 ### Routes Tuteur (Permission 2+)
 
-| Route | Contrôleur | Action | URL | Description |
-|-------|------------|--------|-----|-------------|
-| `validation-clubs` | ValidationController | pendingClubs | `?page=validation-clubs` | Clubs en attente |
+| Route               | Contrôleur           | Action        | URL                       | Description           |
+| ------------------- | -------------------- | ------------- | ------------------------- | --------------------- |
+| `validation-clubs`  | ValidationController | pendingClubs  | `?page=validation-clubs`  | Clubs en attente      |
 | `validation-events` | ValidationController | pendingEvents | `?page=validation-events` | Événements en attente |
-| `tutoring` | ValidationController | tutoring | `?page=tutoring` | Dashboard tuteur |
+| `tutoring`          | ValidationController | tutoring      | `?page=tutoring`          | Dashboard tuteur      |
 
 ### Routes BDE (Permission 3+)
 
-| Route | Contrôleur | Action | URL | Description |
-|-------|------------|--------|-----|-------------|
-| `reports` | AdminController | reports | `?page=reports` | Rapports |
+| Route       | Contrôleur      | Action    | URL               | Description  |
+| ----------- | --------------- | --------- | ----------------- | ------------ |
+| `reports`   | AdminController | reports   | `?page=reports`   | Rapports     |
 | `analytics` | EventController | analytics | `?page=analytics` | Statistiques |
 
 ### Routes Admin (Permission 5)
 
-| Route | Contrôleur | Action | URL | Description |
-|-------|------------|--------|-----|-------------|
-| `admin` | AdminController | dashboard | `?page=admin` | Dashboard admin |
-| `admin-users` | AdminController | users | `?page=admin-users` | Gestion utilisateurs |
-| `admin-user` | AdminController | userView | `?page=admin-user&id=X` | Détail utilisateur |
-| `admin-settings` | AdminController | settings | `?page=admin-settings` | Paramètres système |
-| `admin-database` | AdminController | database | `?page=admin-database` | Gestion BDD |
-| `admin-audit` | AdminController | audit | `?page=admin-audit` | Logs d'audit |
+| Route            | Contrôleur      | Action    | URL                     | Description          |
+| ---------------- | --------------- | --------- | ----------------------- | -------------------- |
+| `admin`          | AdminController | dashboard | `?page=admin`           | Dashboard admin      |
+| `admin-users`    | AdminController | users     | `?page=admin-users`     | Gestion utilisateurs |
+| `admin-user`     | AdminController | userView  | `?page=admin-user&id=X` | Détail utilisateur   |
+| `admin-settings` | AdminController | settings  | `?page=admin-settings`  | Paramètres système   |
+| `admin-database` | AdminController | database  | `?page=admin-database`  | Gestion BDD          |
+| `admin-audit`    | AdminController | audit     | `?page=admin-audit`     | Logs d'audit         |
 
 ### Routes API/Actions
 
-| Route | Contrôleur | Action | Méthode | Description |
-|-------|------------|--------|---------|-------------|
-| `join-club` | ClubController | join | POST | Rejoindre un club |
-| `leave-club` | ClubController | leave | POST | Quitter un club |
-| `subscribe-event` | SubscriptionController | subscribe | POST | S'inscrire événement |
-| `unsubscribe-event` | SubscriptionController | unsubscribe | POST | Se désinscrire |
-| `validate-club` | ValidationController | validateClub | POST | Valider club |
-| `reject-club` | ValidationController | rejectClub | POST | Rejeter club |
-| `validate-event` | ValidationController | validateEvent | POST | Valider événement |
-| `reject-event` | ValidationController | rejectEvent | POST | Rejeter événement |
-| `export-members` | ClubController | exportMembers | GET | Export CSV membres |
-| `upload-report` | EventController | uploadReport | POST | Upload rapport |
+| Route               | Contrôleur             | Action        | Méthode | Description          |
+| ------------------- | ---------------------- | ------------- | ------- | -------------------- |
+| `join-club`         | ClubController         | join          | POST    | Rejoindre un club    |
+| `leave-club`        | ClubController         | leave         | POST    | Quitter un club      |
+| `subscribe-event`   | SubscriptionController | subscribe     | POST    | S'inscrire événement |
+| `unsubscribe-event` | SubscriptionController | unsubscribe   | POST    | Se désinscrire       |
+| `validate-club`     | ValidationController   | validateClub  | POST    | Valider club         |
+| `reject-club`       | ValidationController   | rejectClub    | POST    | Rejeter club         |
+| `validate-event`    | ValidationController   | validateEvent | POST    | Valider événement    |
+| `reject-event`      | ValidationController   | rejectEvent   | POST    | Rejeter événement    |
+| `export-members`    | ClubController         | exportMembers | GET     | Export CSV membres   |
+| `upload-report`     | EventController        | uploadReport  | POST    | Upload rapport       |
 
 ## Classe Router
 
@@ -179,16 +179,16 @@ $router->dispatch($_GET['page'] ?? 'home');
 class Router {
     // Définir les routes
     public function setRoutes(array $routes): void;
-    
+
     // Dispatcher la requête
     public function dispatch(string $page): void;
-    
+
     // Vérifier si route existe
     public function routeExists(string $page): bool;
-    
+
     // Générer URL pour une route
     public static function url(string $route, array $params = []): string;
-    
+
     // Rediriger vers une route
     public static function redirect(string $route, array $params = []): void;
 }
@@ -225,11 +225,11 @@ Router::redirect('club', ['id' => $newClubId]);
 
 ### Paramètres Standards
 
-| Paramètre | Type | Description |
-|-----------|------|-------------|
-| `page` | string | Nom de la route |
-| `id` | int | Identifiant de ressource |
-| `action` | string | Sous-action (edit, delete, etc.) |
+| Paramètre | Type   | Description                      |
+| --------- | ------ | -------------------------------- |
+| `page`    | string | Nom de la route                  |
+| `id`      | int    | Identifiant de ressource         |
+| `action`  | string | Sous-action (edit, delete, etc.) |
 
 ### Récupération dans les Contrôleurs
 
@@ -237,16 +237,16 @@ Router::redirect('club', ['id' => $newClubId]);
 class ClubController {
     public function view() {
         $id = $_GET['id'] ?? null;
-        
+
         if (!$id) {
             Router::redirect('clubs');
             return;
         }
-        
+
         $club = Club::find($id);
         // ...
     }
-    
+
     public function list() {
         $page = $_GET['p'] ?? 1;        // Pagination
         $search = $_GET['q'] ?? '';      // Recherche
@@ -312,9 +312,9 @@ public function dispatch(string $page): void {
         $this->error404();
         return;
     }
-    
+
     $route = $this->routes[$page];
-    
+
     // 2. Authentification requise ?
     if (isset($route['auth']) && $route['auth']) {
         if (!Security::isLoggedIn()) {
@@ -322,7 +322,7 @@ public function dispatch(string $page): void {
             return;
         }
     }
-    
+
     // 3. Permission suffisante ?
     if (isset($route['permission'])) {
         if (!Security::hasPermission($route['permission'])) {
@@ -330,7 +330,7 @@ public function dispatch(string $page): void {
             return;
         }
     }
-    
+
     // 4. Méthode HTTP autorisée ?
     if (isset($route['methods'])) {
         if (!in_array($_SERVER['REQUEST_METHOD'], $route['methods'])) {
@@ -338,7 +338,7 @@ public function dispatch(string $page): void {
             return;
         }
     }
-    
+
     // 5. Appeler le contrôleur
     $controller = new $route['controller']();
     $action = $route['action'];
@@ -363,6 +363,7 @@ RewriteRule ^(.*)$ index.php?page=$1 [QSA,L]
 ```
 
 **URLs résultantes :**
+
 - `/clubs` → `index.php?page=clubs`
 - `/club/5` → `index.php?page=club&id=5`
 - `/admin/users` → `index.php?page=admin-users`
@@ -408,7 +409,7 @@ AdminController    → admin, admin-users, admin-settings
 // Dans le contrôleur, utiliser l'action en paramètre
 public function view() {
     $action = $_GET['action'] ?? 'view';
-    
+
     switch ($action) {
         case 'edit':
             return $this->edit();

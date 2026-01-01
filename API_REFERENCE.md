@@ -14,6 +14,7 @@
 This document provides detailed API documentation for all controllers and models in the Vie Étudiante EILCO project.
 
 **Related Documentation:**
+
 - [Docs/ARCHITECTURE.md](Docs/ARCHITECTURE.md) - System architecture
 - [Docs/ROUTING.md](Docs/ROUTING.md) - Routing documentation
 - [Docs/DATABASE.md](Docs/DATABASE.md) - Database schema
@@ -821,6 +822,7 @@ These are passed to views and can be displayed:
 ### Documentation
 
 Voir le dossier [Docs/](Docs/) pour la documentation détaillée :
+
 - [ARCHITECTURE.md](Docs/ARCHITECTURE.md) - Architecture
 - [DATABASE.md](Docs/DATABASE.md) - Base de données
 - [SECURITY.md](Docs/SECURITY.md) - Sécurité

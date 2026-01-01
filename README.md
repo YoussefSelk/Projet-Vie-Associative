@@ -34,16 +34,17 @@ The project uses a clean **MVC (Model-View-Controller)** architecture with centr
 
 Detailed documentation is available in the [`Docs/`](Docs/) folder:
 
-| Document | Description |
-|----------|-------------|
+| Document                                | Description                      |
+| --------------------------------------- | -------------------------------- |
 | [ARCHITECTURE.md](Docs/ARCHITECTURE.md) | System architecture and diagrams |
-| [DATABASE.md](Docs/DATABASE.md) | Database schema and queries |
-| [SECURITY.md](Docs/SECURITY.md) | Security implementation details |
-| [ROUTING.md](Docs/ROUTING.md) | Complete routing documentation |
-| [INSTALLATION.md](Docs/INSTALLATION.md) | Setup and installation guide |
-| [CONTRIBUTING.md](Docs/CONTRIBUTING.md) | Contribution guidelines |
+| [DATABASE.md](Docs/DATABASE.md)         | Database schema and queries      |
+| [SECURITY.md](Docs/SECURITY.md)         | Security implementation details  |
+| [ROUTING.md](Docs/ROUTING.md)           | Complete routing documentation   |
+| [INSTALLATION.md](Docs/INSTALLATION.md) | Setup and installation guide     |
+| [CONTRIBUTING.md](Docs/CONTRIBUTING.md) | Contribution guidelines          |
 
 Additional documentation:
+
 - [API_REFERENCE.md](API_REFERENCE.md) - Controller and Model API
 - [MVC_STRUCTURE.md](MVC_STRUCTURE.md) - MVC architecture details
 - [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) - Production deployment
@@ -61,23 +62,27 @@ Additional documentation:
 ### Setup
 
 1. **Clone the project**
+
    ```bash
    git clone <repository-url> vie-etudiante
    cd vie-etudiante
    ```
 
 2. **Install dependencies**
+
    ```bash
    composer install
    ```
 
 3. **Configure environment**
+
    ```bash
    cp .env.example .env
    # Edit .env with your settings
    ```
 
 4. **Create database**
+
    ```sql
    CREATE DATABASE vieasso CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
@@ -155,13 +160,13 @@ project/
 
 ### Permission Levels
 
-| Level | Role | Description |
-|-------|------|-------------|
-| 0 | Visiteur | Unverified account |
-| 1 | Membre | Standard student member |
-| 2 | Tuteur | Teacher/tutor (can validate) |
-| 3 | BDE | Student union (extended access) |
-| 5 | Admin | Full system administration |
+| Level | Role     | Description                     |
+| ----- | -------- | ------------------------------- |
+| 0     | Visiteur | Unverified account              |
+| 1     | Membre   | Standard student member         |
+| 2     | Tuteur   | Teacher/tutor (can validate)    |
+| 3     | BDE      | Student union (extended access) |
+| 5     | Admin    | Full system administration      |
 
 ### Session Management
 
@@ -579,13 +584,13 @@ Voir [Docs/INSTALLATION.md](Docs/INSTALLATION.md) pour les instructions détaill
 
 **Niveaux de permissions :**
 
-| Niveau | Rôle |
-|--------|------|
-| 0 | Visiteur |
-| 1 | Membre |
-| 2 | Tuteur |
-| 3 | BDE |
-| 5 | Admin |
+| Niveau | Rôle     |
+| ------ | -------- |
+| 0      | Visiteur |
+| 1      | Membre   |
+| 2      | Tuteur   |
+| 3      | BDE      |
+| 5      | Admin    |
 
 ### 📚 Documentation
 

@@ -4,12 +4,12 @@
 
 ### Logiciels Requis
 
-| Logiciel | Version Minimum | Recommandé |
-|----------|-----------------|------------|
-| PHP | 8.0 | 8.1+ |
-| MySQL / MariaDB | 5.7 / 10.3 | 8.0 / 10.6 |
-| Composer | 2.0 | 2.5+ |
-| Apache / Nginx | 2.4 / 1.18 | Dernière |
+| Logiciel        | Version Minimum | Recommandé |
+| --------------- | --------------- | ---------- |
+| PHP             | 8.0             | 8.1+       |
+| MySQL / MariaDB | 5.7 / 10.3      | 8.0 / 10.6 |
+| Composer        | 2.0             | 2.5+       |
+| Apache / Nginx  | 2.4 / 1.18      | Dernière   |
 
 ### Extensions PHP Requises
 
@@ -39,6 +39,7 @@ composer install
 ```
 
 Cela installe :
+
 - `vlucas/phpdotenv` - Gestion des variables d'environnement
 - `phpmailer/phpmailer` - Envoi d'emails SMTP
 
@@ -47,11 +48,13 @@ Cela installe :
 Copier le fichier d'exemple :
 
 **Linux/macOS :**
+
 ```bash
 cp .env.example .env
 ```
 
 **Windows (PowerShell) :**
+
 ```powershell
 Copy-Item .env.example .env
 ```
@@ -107,6 +110,7 @@ mysql -u root -p vieasso < database/schema.sql
 ### 5. Permissions des Dossiers
 
 **Linux/macOS :**
+
 ```bash
 chmod 755 uploads/
 chmod 755 uploads/logos/
@@ -135,18 +139,19 @@ Créer un VirtualHost :
 <VirtualHost *:80>
     ServerName vie-etudiante.local
     DocumentRoot /chemin/vers/vie-etudiante
-    
+
     <Directory /chemin/vers/vie-etudiante>
         AllowOverride All
         Require all granted
     </Directory>
-    
+
     ErrorLog ${APACHE_LOG_DIR}/vie-etudiante-error.log
     CustomLog ${APACHE_LOG_DIR}/vie-etudiante-access.log combined
 </VirtualHost>
 ```
 
 Activer mod_rewrite :
+
 ```bash
 sudo a2enmod rewrite
 sudo systemctl restart apache2
@@ -188,21 +193,22 @@ server {
 
 ### Variables d'Environnement
 
-| Variable | Description | Valeurs |
-|----------|-------------|---------|
-| `APP_ENV` | Environnement | `development`, `production` |
-| `APP_DEBUG` | Mode debug | `true`, `false` |
-| `DB_HOST` | Hôte MySQL | hostname ou IP |
-| `DB_NAME` | Nom de la base | string |
-| `DB_USER` | Utilisateur MySQL | string |
-| `DB_PASS` | Mot de passe MySQL | string |
-| `MAIL_HOST` | Serveur SMTP | hostname |
-| `MAIL_PORT` | Port SMTP | `25`, `465`, `587` |
-| `MAIL_ENCRYPTION` | Chiffrement | `tls`, `ssl`, `null` |
+| Variable          | Description        | Valeurs                     |
+| ----------------- | ------------------ | --------------------------- |
+| `APP_ENV`         | Environnement      | `development`, `production` |
+| `APP_DEBUG`       | Mode debug         | `true`, `false`             |
+| `DB_HOST`         | Hôte MySQL         | hostname ou IP              |
+| `DB_NAME`         | Nom de la base     | string                      |
+| `DB_USER`         | Utilisateur MySQL  | string                      |
+| `DB_PASS`         | Mot de passe MySQL | string                      |
+| `MAIL_HOST`       | Serveur SMTP       | hostname                    |
+| `MAIL_PORT`       | Port SMTP          | `25`, `465`, `587`          |
+| `MAIL_ENCRYPTION` | Chiffrement        | `tls`, `ssl`, `null`        |
 
 ### Configuration Email
 
 Pour OVH :
+
 ```ini
 MAIL_HOST=ssl0.ovh.net
 MAIL_PORT=465
@@ -210,6 +216,7 @@ MAIL_ENCRYPTION=ssl
 ```
 
 Pour Gmail :
+
 ```ini
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
@@ -228,6 +235,7 @@ APP_DEBUG=false
 ```
 
 Cela active :
+
 - Masquage des erreurs détaillées
 - Headers de sécurité stricts
 - Forçage HTTPS

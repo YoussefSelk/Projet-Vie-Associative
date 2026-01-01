@@ -14,6 +14,7 @@
 This guide covers deploying the Vie Étudiante EILCO platform to a production environment.
 
 **Related Documentation:**
+
 - [Docs/INSTALLATION.md](Docs/INSTALLATION.md) - Development setup
 - [Docs/SECURITY.md](Docs/SECURITY.md) - Security configuration
 - [Docs/DATABASE.md](Docs/DATABASE.md) - Database schema

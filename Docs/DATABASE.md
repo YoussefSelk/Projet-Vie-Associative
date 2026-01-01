@@ -46,30 +46,31 @@ La base de données `vieasso` utilise MySQL/MariaDB et gère toutes les données
 
 Stocke les informations des utilisateurs du système.
 
-| Colonne | Type | Null | Clé | Description |
-|---------|------|------|-----|-------------|
-| `id` | INT | NON | PK | Identifiant unique auto-incrémenté |
-| `email` | VARCHAR(255) | NON | UNIQUE | Email universitaire |
-| `pseudo` | VARCHAR(100) | NON | | Nom d'affichage |
-| `password` | VARCHAR(255) | NON | | Hash bcrypt du mot de passe |
-| `permission` | TINYINT | NON | | Niveau de permission (0-5) |
-| `promo` | VARCHAR(50) | OUI | | Promotion/Année d'études |
-| `filiaire` | VARCHAR(100) | OUI | | Filière d'études |
-| `date_creation` | DATETIME | NON | | Date d'inscription |
-| `avatar` | VARCHAR(255) | OUI | | Chemin vers l'avatar |
-| `bio` | TEXT | OUI | | Biographie utilisateur |
+| Colonne         | Type         | Null | Clé    | Description                        |
+| --------------- | ------------ | ---- | ------ | ---------------------------------- |
+| `id`            | INT          | NON  | PK     | Identifiant unique auto-incrémenté |
+| `email`         | VARCHAR(255) | NON  | UNIQUE | Email universitaire                |
+| `pseudo`        | VARCHAR(100) | NON  |        | Nom d'affichage                    |
+| `password`      | VARCHAR(255) | NON  |        | Hash bcrypt du mot de passe        |
+| `permission`    | TINYINT      | NON  |        | Niveau de permission (0-5)         |
+| `promo`         | VARCHAR(50)  | OUI  |        | Promotion/Année d'études           |
+| `filiaire`      | VARCHAR(100) | OUI  |        | Filière d'études                   |
+| `date_creation` | DATETIME     | NON  |        | Date d'inscription                 |
+| `avatar`        | VARCHAR(255) | OUI  |        | Chemin vers l'avatar               |
+| `bio`           | TEXT         | OUI  |        | Biographie utilisateur             |
 
 **Niveaux de Permission :**
 
-| Valeur | Rôle | Description |
-|--------|------|-------------|
-| 0 | Visiteur | Compte non vérifié |
-| 1 | Membre | Étudiant standard |
-| 2 | Tuteur | Enseignant référent |
-| 3 | BDE | Bureau des Étudiants |
-| 5 | Admin | Administrateur système |
+| Valeur | Rôle     | Description            |
+| ------ | -------- | ---------------------- |
+| 0      | Visiteur | Compte non vérifié     |
+| 1      | Membre   | Étudiant standard      |
+| 2      | Tuteur   | Enseignant référent    |
+| 3      | BDE      | Bureau des Étudiants   |
+| 5      | Admin    | Administrateur système |
 
 **Index :**
+
 - `PRIMARY KEY (id)`
 - `UNIQUE INDEX (email)`
 
@@ -77,19 +78,20 @@ Stocke les informations des utilisateurs du système.
 
 Informations sur les clubs/associations.
 
-| Colonne | Type | Null | Clé | Description |
-|---------|------|------|-----|-------------|
-| `id` | INT | NON | PK | Identifiant unique |
-| `nom_club` | VARCHAR(255) | NON | | Nom du club |
-| `description` | TEXT | NON | | Description détaillée |
-| `responsable` | INT | NON | FK | ID du responsable (users.id) |
-| `date_creation` | DATETIME | NON | | Date de création |
-| `logo_club` | VARCHAR(255) | OUI | | Chemin vers le logo |
-| `tuteur` | VARCHAR(255) | NON | | Nom du tuteur (peut être vide) |
-| `statut` | ENUM | NON | | 'en_attente', 'valide', 'rejete' |
-| `motif_rejet` | TEXT | OUI | | Raison du rejet si applicable |
+| Colonne         | Type         | Null | Clé | Description                      |
+| --------------- | ------------ | ---- | --- | -------------------------------- |
+| `id`            | INT          | NON  | PK  | Identifiant unique               |
+| `nom_club`      | VARCHAR(255) | NON  |     | Nom du club                      |
+| `description`   | TEXT         | NON  |     | Description détaillée            |
+| `responsable`   | INT          | NON  | FK  | ID du responsable (users.id)     |
+| `date_creation` | DATETIME     | NON  |     | Date de création                 |
+| `logo_club`     | VARCHAR(255) | OUI  |     | Chemin vers le logo              |
+| `tuteur`        | VARCHAR(255) | NON  |     | Nom du tuteur (peut être vide)   |
+| `statut`        | ENUM         | NON  |     | 'en_attente', 'valide', 'rejete' |
+| `motif_rejet`   | TEXT         | OUI  |     | Raison du rejet si applicable    |
 
 **Clés Étrangères :**
+
 ```sql
 FOREIGN KEY (responsable) REFERENCES users(id) ON DELETE CASCADE
 ```
@@ -98,26 +100,29 @@ FOREIGN KEY (responsable) REFERENCES users(id) ON DELETE CASCADE
 
 Association entre utilisateurs et clubs.
 
-| Colonne | Type | Null | Clé | Description |
-|---------|------|------|-----|-------------|
-| `id` | INT | NON | PK | Identifiant unique |
-| `id_user` | INT | NON | FK | ID utilisateur |
-| `id_club` | INT | NON | FK | ID club |
-| `role` | VARCHAR(50) | NON | | Rôle dans le club |
-| `date_inscription` | DATETIME | NON | | Date d'adhésion |
+| Colonne            | Type        | Null | Clé | Description        |
+| ------------------ | ----------- | ---- | --- | ------------------ |
+| `id`               | INT         | NON  | PK  | Identifiant unique |
+| `id_user`          | INT         | NON  | FK  | ID utilisateur     |
+| `id_club`          | INT         | NON  | FK  | ID club            |
+| `role`             | VARCHAR(50) | NON  |     | Rôle dans le club  |
+| `date_inscription` | DATETIME    | NON  |     | Date d'adhésion    |
 
 **Rôles Disponibles :**
+
 - `membre` - Membre standard
 - `gestionnaire` - Peut gérer le club
 - `responsable` - Responsable principal
 
 **Clés Étrangères :**
+
 ```sql
 FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE
 FOREIGN KEY (id_club) REFERENCES fiche_club(id) ON DELETE CASCADE
 ```
 
 **Contrainte d'Unicité :**
+
 ```sql
 UNIQUE INDEX (id_user, id_club)
 ```
@@ -126,21 +131,22 @@ UNIQUE INDEX (id_user, id_club)
 
 Événements organisés par les clubs.
 
-| Colonne | Type | Null | Clé | Description |
-|---------|------|------|-----|-------------|
-| `id` | INT | NON | PK | Identifiant unique |
-| `nom_event` | VARCHAR(255) | NON | | Nom de l'événement |
-| `description` | TEXT | NON | | Description détaillée |
-| `date_event` | DATETIME | NON | | Date et heure de l'événement |
-| `date_limite` | DATETIME | OUI | | Date limite d'inscription |
-| `lieu` | VARCHAR(255) | NON | | Lieu de l'événement |
-| `capacite` | INT | OUI | | Capacité maximale (null = illimité) |
-| `id_club` | INT | NON | FK | Club organisateur |
-| `statut` | ENUM | NON | | 'en_attente', 'valide', 'rejete' |
-| `motif_rejet` | TEXT | OUI | | Raison du rejet |
-| `date_creation` | DATETIME | NON | | Date de création |
+| Colonne         | Type         | Null | Clé | Description                         |
+| --------------- | ------------ | ---- | --- | ----------------------------------- |
+| `id`            | INT          | NON  | PK  | Identifiant unique                  |
+| `nom_event`     | VARCHAR(255) | NON  |     | Nom de l'événement                  |
+| `description`   | TEXT         | NON  |     | Description détaillée               |
+| `date_event`    | DATETIME     | NON  |     | Date et heure de l'événement        |
+| `date_limite`   | DATETIME     | OUI  |     | Date limite d'inscription           |
+| `lieu`          | VARCHAR(255) | NON  |     | Lieu de l'événement                 |
+| `capacite`      | INT          | OUI  |     | Capacité maximale (null = illimité) |
+| `id_club`       | INT          | NON  | FK  | Club organisateur                   |
+| `statut`        | ENUM         | NON  |     | 'en_attente', 'valide', 'rejete'    |
+| `motif_rejet`   | TEXT         | OUI  |     | Raison du rejet                     |
+| `date_creation` | DATETIME     | NON  |     | Date de création                    |
 
 **Clés Étrangères :**
+
 ```sql
 FOREIGN KEY (id_club) REFERENCES fiche_club(id) ON DELETE CASCADE
 ```
@@ -149,21 +155,23 @@ FOREIGN KEY (id_club) REFERENCES fiche_club(id) ON DELETE CASCADE
 
 Inscriptions des utilisateurs aux événements.
 
-| Colonne | Type | Null | Clé | Description |
-|---------|------|------|-----|-------------|
-| `id` | INT | NON | PK | Identifiant unique |
-| `id_user` | INT | NON | FK | ID utilisateur |
-| `id_event` | INT | NON | FK | ID événement |
-| `date_inscription` | DATETIME | NON | | Date d'inscription |
-| `statut` | ENUM | NON | | 'inscrit', 'annule' |
+| Colonne            | Type     | Null | Clé | Description         |
+| ------------------ | -------- | ---- | --- | ------------------- |
+| `id`               | INT      | NON  | PK  | Identifiant unique  |
+| `id_user`          | INT      | NON  | FK  | ID utilisateur      |
+| `id_event`         | INT      | NON  | FK  | ID événement        |
+| `date_inscription` | DATETIME | NON  |     | Date d'inscription  |
+| `statut`           | ENUM     | NON  |     | 'inscrit', 'annule' |
 
 **Clés Étrangères :**
+
 ```sql
 FOREIGN KEY (id_user) REFERENCES users(id) ON DELETE CASCADE
 FOREIGN KEY (id_event) REFERENCES fiche_event(id) ON DELETE CASCADE
 ```
 
 **Contrainte d'Unicité :**
+
 ```sql
 UNIQUE INDEX (id_user, id_event)
 ```
@@ -172,26 +180,27 @@ UNIQUE INDEX (id_user, id_event)
 
 Rapports post-événement (bilans).
 
-| Colonne | Type | Null | Clé | Description |
-|---------|------|------|-----|-------------|
-| `id` | INT | NON | PK | Identifiant unique |
-| `event_id` | INT | NON | FK | ID événement |
-| `fichier` | VARCHAR(255) | NON | | Chemin vers le fichier |
-| `date_upload` | DATETIME | NON | | Date de téléversement |
-| `description` | TEXT | OUI | | Description du rapport |
+| Colonne       | Type         | Null | Clé | Description            |
+| ------------- | ------------ | ---- | --- | ---------------------- |
+| `id`          | INT          | NON  | PK  | Identifiant unique     |
+| `event_id`    | INT          | NON  | FK  | ID événement           |
+| `fichier`     | VARCHAR(255) | NON  |     | Chemin vers le fichier |
+| `date_upload` | DATETIME     | NON  |     | Date de téléversement  |
+| `description` | TEXT         | OUI  |     | Description du rapport |
 
 ### Table `config`
 
 Configuration système dynamique.
 
-| Colonne | Type | Null | Clé | Description |
-|---------|------|------|-----|-------------|
-| `id` | INT | NON | PK | Identifiant unique |
-| `config_key` | VARCHAR(100) | NON | UNIQUE | Clé de configuration |
-| `config_value` | TEXT | OUI | | Valeur de configuration |
-| `updated_at` | DATETIME | NON | | Dernière modification |
+| Colonne        | Type         | Null | Clé    | Description             |
+| -------------- | ------------ | ---- | ------ | ----------------------- |
+| `id`           | INT          | NON  | PK     | Identifiant unique      |
+| `config_key`   | VARCHAR(100) | NON  | UNIQUE | Clé de configuration    |
+| `config_value` | TEXT         | OUI  |        | Valeur de configuration |
+| `updated_at`   | DATETIME     | NON  |        | Dernière modification   |
 
 **Clés de Configuration :**
+
 - `site_name` - Nom du site
 - `maintenance_mode` - Mode maintenance (0/1)
 - `registration_enabled` - Inscriptions ouvertes (0/1)
@@ -202,8 +211,8 @@ Configuration système dynamique.
 ### Obtenir tous les clubs validés avec leur responsable
 
 ```sql
-SELECT 
-    c.*, 
+SELECT
+    c.*,
     u.pseudo as responsable_nom,
     u.email as responsable_email
 FROM fiche_club c
@@ -215,7 +224,7 @@ ORDER BY c.nom_club;
 ### Compter les membres par club
 
 ```sql
-SELECT 
+SELECT
     c.id,
     c.nom_club,
     COUNT(m.id) as nombre_membres
@@ -229,7 +238,7 @@ ORDER BY nombre_membres DESC;
 ### Événements à venir avec nombre d'inscrits
 
 ```sql
-SELECT 
+SELECT
     e.*,
     c.nom_club,
     COUNT(a.id) as inscrits
@@ -276,8 +285,8 @@ ORDER BY date_inscription DESC;
 ### Création de la Base
 
 ```sql
-CREATE DATABASE IF NOT EXISTS vieasso 
-CHARACTER SET utf8mb4 
+CREATE DATABASE IF NOT EXISTS vieasso
+CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;
 
 USE vieasso;
@@ -408,12 +417,12 @@ mysql -u root -p vieasso < backup_20240115.sql
 
 ```sql
 -- Supprimer les événements passés de plus de 2 ans
-DELETE FROM fiche_event 
+DELETE FROM fiche_event
 WHERE date_event < DATE_SUB(NOW(), INTERVAL 2 YEAR);
 
 -- Nettoyer les comptes non vérifiés (permission = 0) de plus de 30 jours
-DELETE FROM users 
-WHERE permission = 0 
+DELETE FROM users
+WHERE permission = 0
 AND date_creation < DATE_SUB(NOW(), INTERVAL 30 DAY);
 ```
 

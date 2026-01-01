@@ -126,6 +126,7 @@ Code Source/
 ### Router (config/Router.php)
 
 Le routeur centralise la gestion des URLs :
+
 - Charge les routes depuis `routes/web.php`
 - Vérifie l'authentification et les permissions
 - Valide les tokens CSRF pour les POST
@@ -134,6 +135,7 @@ Le routeur centralise la gestion des URLs :
 ### Security (config/Security.php)
 
 Gère la sécurité applicative :
+
 - Headers HTTP sécurisés (X-Frame-Options, CSP, etc.)
 - Génération/validation tokens CSRF
 - Détection HTTPS
@@ -142,6 +144,7 @@ Gère la sécurité applicative :
 ### ErrorHandler (config/ErrorHandler.php)
 
 Gestion centralisée des erreurs :
+
 - Pages d'erreur personnalisées (403, 404, 500, 503)
 - Mode développement avec stack trace
 - Mode production avec messages utilisateur
@@ -149,14 +152,14 @@ Gestion centralisée des erreurs :
 
 ## Niveaux de Permission
 
-| Niveau | Rôle | Description |
-|--------|------|-------------|
-| 0 | Visiteur | Accès lecture seule aux contenus publics |
-| 1 | Membre | Utilisateur inscrit standard |
-| 2 | Gestionnaire | Membre de bureau de club |
-| 3 | BDE | Bureau des Étudiants, validation niveau 1 |
-| 4 | Tuteur | Enseignant tuteur, validation niveau 2 |
-| 5 | Admin | Administrateur système |
+| Niveau | Rôle         | Description                               |
+| ------ | ------------ | ----------------------------------------- |
+| 0      | Visiteur     | Accès lecture seule aux contenus publics  |
+| 1      | Membre       | Utilisateur inscrit standard              |
+| 2      | Gestionnaire | Membre de bureau de club                  |
+| 3      | BDE          | Bureau des Étudiants, validation niveau 1 |
+| 4      | Tuteur       | Enseignant tuteur, validation niveau 2    |
+| 5      | Admin        | Administrateur système                    |
 
 ## Base de Données
 

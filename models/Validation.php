@@ -63,11 +63,13 @@ class Validation {
      * Met à jour les statuts de validation d'un club
      * Permet de valider partiellement ou totalement un club
      * 
+     * Structure BD: validation_admin, validation_tuteur, motif_refus, validation_finale
+     * 
      * @param int $club_id Identifiant du club
      * @param int|null $admin_validation Validation par l'admin (0 ou 1)
      * @param int|null $tuteur_validation Validation par le tuteur (0 ou 1)
      * @param int|null $final_validation Validation finale (0, 1 ou -1)
-     * @param string|null $remarques Commentaires sur la validation
+     * @param string|null $remarques Commentaires/motif de refus
      * @return bool Succès de l'opération
      */
     public function validateClub($club_id, $admin_validation = null, $tuteur_validation = null, $final_validation = null, $remarques = null) {
@@ -87,7 +89,8 @@ class Validation {
             $values[] = $final_validation;
         }
         if ($remarques !== null) {
-            $updates[] = "remarques = ?";
+            // Use 'motif_refus' - actual column name in DB
+            $updates[] = "motif_refus = ?";
             $values[] = $remarques;
         }
 
@@ -140,11 +143,14 @@ class Validation {
      * Met à jour les statuts de validation d'un événement
      * Permet de valider partiellement ou totalement un événement
      * 
+     * Structure BD: validation_admin, validation_bde, validation_tuteur, validation_soutenance,
+     *               motif_refus, validation_finale, commentaire_validation
+     * 
      * @param int $event_id Identifiant de l'événement
      * @param int|null $bde_validation Validation par le BDE (0 ou 1)
      * @param int|null $tuteur_validation Validation par le tuteur (0 ou 1)
      * @param int|null $final_validation Validation finale (0, 1 ou -1)
-     * @param string|null $remarques Commentaires sur la validation
+     * @param string|null $remarques Commentaires/motif de refus
      * @return bool Succès de l'opération
      */
     public function validateEvent($event_id, $bde_validation = null, $tuteur_validation = null, $final_validation = null, $remarques = null) {
@@ -164,7 +170,8 @@ class Validation {
             $values[] = $final_validation;
         }
         if ($remarques !== null) {
-            $updates[] = "remarques = ?";
+            // Use 'motif_refus' - actual column name in DB
+            $updates[] = "motif_refus = ?";
             $values[] = $remarques;
         }
 

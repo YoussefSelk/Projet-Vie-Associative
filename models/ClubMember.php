@@ -62,13 +62,16 @@ class ClubMember {
      * Ajoute un utilisateur comme membre d'un club
      * Le membre est créé avec valide = 0 (en attente de validation)
      * 
+     * Structure BD membres_club: id, membre_id, club_id, fonction, soutenance, valide
+     * 
      * @param int $club_id Identifiant du club
      * @param int $user_id Identifiant de l'utilisateur
+     * @param string $fonction Rôle/fonction dans le club (Président, Trésorier, Secrétaire, Membre, etc.)
      * @return bool Succès de l'opération
      */
-    public function addMember($club_id, $user_id) {
-        $stmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, valide) VALUES (?, ?, 0)");
-        return $stmt->execute([$club_id, $user_id]);
+    public function addMember($club_id, $user_id, $fonction = 'Membre') {
+        $stmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 0)");
+        return $stmt->execute([$club_id, $user_id, $fonction]);
     }
 
     /**

@@ -5,7 +5,7 @@
  * Permet a un etudiant de proposer la creation d'un club :
  * - Informations de base (nom, type, description)
  * - Localisation (campus)
- * - Contact (email, president)
+ * - Membres fondateurs avec autocomplétion
  * - Upload du logo (optionnel)
  * 
  * Le club cree sera en attente de validation par le BDE puis un tuteur.
@@ -13,6 +13,8 @@
  * Variables attendues :
  * - $error_msg : Message d'erreur eventuel
  * - $success_msg : Message de succes eventuel
+ * - $tutors : Liste des tuteurs disponibles
+ * - $users : Liste des utilisateurs pour l'autocomplétion
  * 
  * @package Views/Club
  */
@@ -21,6 +23,165 @@
 <html lang="fr">
 <head>
     <?php include VIEWS_PATH . '/includes/head.php'; ?>
+    <style>
+        /* Styles pour l'autocomplétion des membres */
+        .member-search-container {
+            flex: 2;
+            position: relative;
+        }
+        
+        .autocomplete-suggestions {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        
+        .suggestion-item:hover {
+            background: #f0f7ff;
+        }
+        
+        .suggestion-item .suggestion-name {
+            font-weight: 500;
+        }
+        
+        .suggestion-item .suggestion-name i {
+            color: #3498db;
+            margin-right: 8px;
+        }
+        
+        .suggestion-item .suggestion-details {
+            color: #666;
+            margin-left: 24px;
+            font-size: 0.85em;
+        }
+        
+        .no-results {
+            padding: 10px;
+            color: #666;
+        }
+        
+        /* Styles pour la ligne d'ajout de membre */
+        .member-add-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: flex-start;
+        }
+        
+        .role-select-container {
+            flex: 1;
+        }
+        
+        .role-select {
+            width: 100%;
+        }
+        
+        /* Styles pour les membres ajoutés */
+        .member-form-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .member-form-row .member-avatar {
+            width: 45px;
+            height: 45px;
+            min-width: 45px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        
+        .member-form-row .member-details {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .member-form-row .member-details .member-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+        
+        .member-form-row .member-details small {
+            display: block;
+            color: #666;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .member-role-badge {
+            flex-shrink: 0;
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: #3498db;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        .btn-remove-member {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+        
+        .btn-remove-member:hover {
+            background: #c0392b;
+            transform: scale(1.05);
+        }
+        
+        /* Bouton désactivé */
+        .btn-add-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -77,12 +238,7 @@
                                 <label><i class="fas fa-chalkboard-teacher"></i> Tuteur (si disponible)</label>
                                 <select name="tuteur_id" class="form-control">
                                     <option value="">Pas de tuteur assigné</option>
-                                    <?php
-                                    // Get tutors (permission level 5 or personnel)
-                                    global $db;
-                                    $tutors = $db->query("SELECT id, nom, prenom FROM users WHERE permission >= 5 OR promo = 'personnel' ORDER BY nom ASC")->fetchAll(PDO::FETCH_ASSOC);
-                                    foreach ($tutors as $tutor):
-                                    ?>
+                                    <?php foreach ($tutors ?? [] as $tutor): ?>
                                         <option value="<?= $tutor['id'] ?>"><?= htmlspecialchars($tutor['prenom'] . ' ' . $tutor['nom']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -113,25 +269,82 @@
                             </div>
                         </div>
                         
-                        <!-- Members Section -->
+                        <!-- Section Membres Fondateurs -->
                         <div class="form-section" id="membersSection">
-                            <h4><i class="fas fa-users"></i> Membres fondateurs <span id="memberCount">(0 membre)</span></h4>
-                            <p class="text-muted" id="memberRequirement" style="display: none;">
-                                <i class="fas fa-info-circle"></i> Un projet associatif nécessite au moins 3 membres.
-                            </p>
-                            <div id="membersList" class="members-form-list">
-                                <!-- Members will be added here dynamically -->
+                            <h4>
+                                <i class="fas fa-users"></i> Membres fondateurs 
+                                <span id="memberCount">(0 membre)</span>
+                            </h4>
+                            
+                            <!-- Votre rôle dans le club -->
+                            <div class="form-group" style="background: #e8f4fd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                                <label><i class="fas fa-user-tag"></i> Votre rôle dans le club</label>
+                                <select name="creator_role" class="form-control" required>
+                                    <option value="Président">Président</option>
+                                    <option value="Vice-Président">Vice-Président</option>
+                                    <option value="Trésorier">Trésorier</option>
+                                    <option value="Secrétaire">Secrétaire</option>
+                                    <option value="Membre">Membre</option>
+                                </select>
+                                <small class="text-muted"><i class="fas fa-info-circle"></i> Vous serez automatiquement ajouté avec ce rôle.</small>
                             </div>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="addMemberField()">
-                                <i class="fas fa-plus"></i> Ajouter un membre
-                            </button>
+                            
+                            <p class="text-muted" id="memberRequirement" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i> <span id="memberRequirementText">Ajoutez au moins 2 autres membres pour un projet associatif.</span>
+                            </p>
+                            <p class="text-success" id="memberRequirementOk" style="display: none;">
+                                <i class="fas fa-check-circle"></i> Nombre de membres suffisant pour un projet associatif.
+                            </p>
+                            
+                            <!-- Liste des membres ajoutés -->
+                            <h5 style="margin-top: 20px; margin-bottom: 10px;"><i class="fas fa-user-plus"></i> Autres membres</h5>
+                            <div id="membersList" class="members-form-list"></div>
+                            
+                            <!-- Formulaire d'ajout de membre -->
+                            <div class="member-add-row">
+                                <div class="member-search-container">
+                                    <input type="text" 
+                                           id="memberSearchInput" 
+                                           class="form-control" 
+                                           placeholder="Rechercher un membre par nom..." 
+                                           autocomplete="off">
+                                    <div id="memberSuggestions" class="autocomplete-suggestions"></div>
+                                </div>
+                                <div class="role-select-container">
+                                    <select id="newMemberRole" class="form-control role-select">
+                                        <option value="Membre">Membre</option>
+                                        <option value="Président">Président</option>
+                                        <option value="Vice-Président">Vice-Président</option>
+                                        <option value="Trésorier">Trésorier</option>
+                                        <option value="Secrétaire">Secrétaire</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-add-disabled" id="addMemberBtn" disabled>
+                                    <i class="fas fa-plus"></i> Ajouter
+                                </button>
+                            </div>
                         </div>
+                        
+                        <!-- Données utilisateurs pour JS -->
+                        <script>
+                            var usersData = <?= json_encode(array_map(function($u) {
+                                return [
+                                    'id' => $u['id'],
+                                    'name' => $u['prenom'] . ' ' . $u['nom'],
+                                    'email' => $u['mail'],
+                                    'promo' => $u['promo'] ?? ''
+                                ];
+                            }, $users ?? [])) ?>;
+                        </script>
 
+                        <!-- Actions du formulaire -->
                         <div class="form-actions">
                             <button type="submit" name="create_club" class="btn btn-success btn-lg">
                                 <i class="fas fa-plus-circle"></i> Créer le club
                             </button>
-                            <a href="?page=admin" class="btn btn-outline"><i class="fas fa-times"></i> Annuler</a>
+                            <a href="?page=dashboard" class="btn btn-outline">
+                                <i class="fas fa-times"></i> Annuler
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -142,62 +355,259 @@
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
     
     <script>
-        let memberCount = 0;
+    (function() {
+        'use strict';
         
-        function addMemberField() {
+        // Variables d'état
+        var memberCount = 0;
+        var addedMembers = {};
+        var selectedUser = null;
+        
+        // Éléments DOM
+        var searchInput = document.getElementById('memberSearchInput');
+        var suggestionsDiv = document.getElementById('memberSuggestions');
+        var addBtn = document.getElementById('addMemberBtn');
+        var membersList = document.getElementById('membersList');
+        var roleSelect = document.getElementById('newMemberRole');
+        var memberCountSpan = document.getElementById('memberCount');
+        var clubForm = document.getElementById('clubForm');
+        var projetAssociatifCheck = document.getElementById('projetAssociatif');
+        var soutenanceCheck = document.querySelector('input[name="soutenance"]');
+        var soutenanceDateGroup = document.getElementById('soutenanceDateGroup');
+        var memberRequirement = document.getElementById('memberRequirement');
+        
+        // Fonction pour activer/désactiver le bouton Ajouter
+        function setAddButtonEnabled(enabled) {
+            addBtn.disabled = !enabled;
+            if (enabled) {
+                addBtn.classList.remove('btn-add-disabled');
+            } else {
+                addBtn.classList.add('btn-add-disabled');
+            }
+        }
+        
+        // Fonction pour mettre à jour le compteur de membres et vérifier les conditions
+        function updateMemberCount() {
+            var count = membersList.querySelectorAll('.member-form-row').length;
+            var totalCount = count + 1; // +1 pour le créateur
+            memberCountSpan.textContent = '(' + totalCount + ' membre' + (totalCount > 1 ? 's' : '') + ' au total)';
+            
+            // Vérifier si projet associatif est coché
+            if (projetAssociatifCheck && projetAssociatifCheck.checked) {
+                updateMemberRequirement(count);
+            }
+        }
+        
+        // Fonction pour mettre à jour l'affichage du requirement
+        function updateMemberRequirement(otherMembersCount) {
+            var memberRequirementOk = document.getElementById('memberRequirementOk');
+            var memberRequirementText = document.getElementById('memberRequirementText');
+            
+            if (otherMembersCount >= 2) {
+                // Suffisamment de membres
+                memberRequirement.style.display = 'none';
+                if (memberRequirementOk) memberRequirementOk.style.display = 'block';
+            } else {
+                // Pas assez de membres
+                var remaining = 2 - otherMembersCount;
+                if (memberRequirementText) {
+                    memberRequirementText.textContent = 'Ajoutez encore ' + remaining + ' membre' + (remaining > 1 ? 's' : '') + ' pour un projet associatif (vous + 2 autres minimum).';
+                }
+                memberRequirement.style.display = 'block';
+                if (memberRequirementOk) memberRequirementOk.style.display = 'none';
+            }
+        }
+        
+        // Fonction pour échapper le HTML
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+        
+        // Fonction pour afficher les suggestions
+        function showSuggestions(matches) {
+            if (matches.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="no-results"><i class="fas fa-search"></i> Aucun résultat</div>';
+            } else {
+                var html = '';
+                for (var i = 0; i < matches.length; i++) {
+                    var u = matches[i];
+                    html += '<div class="suggestion-item" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '" data-email="' + escapeHtml(u.email) + '" data-promo="' + escapeHtml(u.promo) + '">' +
+                        '<div class="suggestion-name"><i class="fas fa-user"></i>' + escapeHtml(u.name) + '</div>' +
+                        '<div class="suggestion-details">' + escapeHtml(u.promo || 'N/A') + ' • ' + escapeHtml(u.email) + '</div>' +
+                    '</div>';
+                }
+                suggestionsDiv.innerHTML = html;
+            }
+            suggestionsDiv.style.display = 'block';
+        }
+        
+        // Fonction pour ajouter un membre
+        function addMember() {
+            if (!selectedUser) {
+                alert('Veuillez sélectionner un membre dans les suggestions.');
+                return;
+            }
+            
+            if (addedMembers[selectedUser.id]) {
+                alert('Ce membre a déjà été ajouté.');
+                return;
+            }
+            
+            var role = roleSelect.value;
             memberCount++;
-            const container = document.getElementById('membersList');
-            const memberDiv = document.createElement('div');
+            addedMembers[selectedUser.id] = true;
+            
+            var memberDiv = document.createElement('div');
             memberDiv.className = 'member-form-row';
             memberDiv.id = 'member_' + memberCount;
-            memberDiv.innerHTML = `
-                <input type="email" name="members[${memberCount}][email]" class="form-control" placeholder="Email du membre">
-                <select name="members[${memberCount}][role]" class="form-control">
-                    <option value="membre">Membre</option>
-                    <option value="president">Président</option>
-                    <option value="vice-president">Vice-Président</option>
-                    <option value="tresorier">Trésorier</option>
-                    <option value="secretaire">Secrétaire</option>
-                </select>
-                <button type="button" class="btn btn-danger btn-sm" onclick="removeMember(${memberCount})">
-                    <i class="fas fa-trash"></i>
-                </button>
-            `;
-            container.appendChild(memberDiv);
-            updateMemberCount();
-        }
-        
-        function removeMember(id) {
-            document.getElementById('member_' + id).remove();
-            updateMemberCount();
-        }
-        
-        function updateMemberCount() {
-            const count = document.querySelectorAll('.member-form-row').length;
-            document.getElementById('memberCount').textContent = '(' + count + ' membre' + (count > 1 ? 's' : '') + ')';
-        }
-        
-        // Show/hide soutenance date based on checkbox
-        document.querySelector('input[name="soutenance"]').addEventListener('change', function() {
-            document.getElementById('soutenanceDateGroup').style.display = this.checked ? 'block' : 'none';
-        });
-        
-        // Show warning for projet associatif
-        document.getElementById('projetAssociatif').addEventListener('change', function() {
-            document.getElementById('memberRequirement').style.display = this.checked ? 'block' : 'none';
-        });
-        
-        // Form validation
-        document.getElementById('clubForm').addEventListener('submit', function(e) {
-            const isProjetAssociatif = document.getElementById('projetAssociatif').checked;
-            const memberCount = document.querySelectorAll('.member-form-row').length;
+            memberDiv.setAttribute('data-user-id', selectedUser.id);
             
-            if (isProjetAssociatif && memberCount < 3) {
+            memberDiv.innerHTML = 
+                '<input type="hidden" name="members[' + memberCount + '][user_id]" value="' + selectedUser.id + '">' +
+                '<input type="hidden" name="members[' + memberCount + '][email]" value="' + escapeHtml(selectedUser.email) + '">' +
+                '<input type="hidden" name="members[' + memberCount + '][role]" value="' + escapeHtml(role) + '">' +
+                '<div class="member-avatar">' +
+                    '<i class="fas fa-user"></i>' +
+                '</div>' +
+                '<div class="member-details">' +
+                    '<span class="member-name">' + escapeHtml(selectedUser.name) + '</span>' +
+                    '<small>' + escapeHtml(selectedUser.promo || 'N/A') + ' • ' + escapeHtml(selectedUser.email) + '</small>' +
+                '</div>' +
+                '<span class="member-role-badge">' + escapeHtml(role) + '</span>' +
+                '<button type="button" class="btn btn-danger btn-sm btn-remove-member" data-member-id="' + memberCount + '" data-user-id="' + selectedUser.id + '">' +
+                    '<i class="fas fa-trash"></i>' +
+                '</button>';
+            
+            membersList.appendChild(memberDiv);
+            
+            // Reset
+            searchInput.value = '';
+            roleSelect.value = 'Membre';
+            selectedUser = null;
+            setAddButtonEnabled(false);
+            suggestionsDiv.style.display = 'none';
+            
+            updateMemberCount();
+        }
+        
+        // Fonction pour supprimer un membre
+        function removeMember(memberId, userId) {
+            var memberDiv = document.getElementById('member_' + memberId);
+            if (memberDiv) {
+                memberDiv.remove();
+                delete addedMembers[userId];
+                updateMemberCount();
+            }
+        }
+        
+        // Event: Recherche de membre
+        searchInput.addEventListener('input', function() {
+            var query = this.value.toLowerCase().trim();
+            selectedUser = null;
+            setAddButtonEnabled(false);
+            
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            
+            var matches = [];
+            for (var i = 0; i < usersData.length && matches.length < 10; i++) {
+                var u = usersData[i];
+                if (!addedMembers[u.id]) {
+                    if (u.name.toLowerCase().indexOf(query) !== -1 || 
+                        u.email.toLowerCase().indexOf(query) !== -1 ||
+                        u.promo.toLowerCase().indexOf(query) !== -1) {
+                        matches.push(u);
+                    }
+                }
+            }
+            
+            showSuggestions(matches);
+        });
+        
+        // Event: Clic sur une suggestion
+        suggestionsDiv.addEventListener('click', function(e) {
+            var item = e.target.closest('.suggestion-item');
+            if (item) {
+                selectedUser = {
+                    id: item.getAttribute('data-id'),
+                    name: item.getAttribute('data-name'),
+                    email: item.getAttribute('data-email'),
+                    promo: item.getAttribute('data-promo')
+                };
+                searchInput.value = selectedUser.name;
+                suggestionsDiv.style.display = 'none';
+                setAddButtonEnabled(true);
+            }
+        });
+        
+        // Event: Clic en dehors des suggestions
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+        
+        // Event: Clic sur le bouton Ajouter
+        addBtn.addEventListener('click', addMember);
+        
+        // Event: Clic sur le bouton Supprimer d'un membre
+        membersList.addEventListener('click', function(e) {
+            var removeBtn = e.target.closest('.btn-remove-member');
+            if (removeBtn) {
+                var memberId = removeBtn.getAttribute('data-member-id');
+                var userId = removeBtn.getAttribute('data-user-id');
+                removeMember(memberId, userId);
+            }
+        });
+        
+        // Event: Checkbox soutenance
+        if (soutenanceCheck) {
+            soutenanceCheck.addEventListener('change', function() {
+                soutenanceDateGroup.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+        
+        // Event: Checkbox projet associatif
+        if (projetAssociatifCheck) {
+            projetAssociatifCheck.addEventListener('change', function() {
+                var count = membersList.querySelectorAll('.member-form-row').length;
+                var memberRequirementOk = document.getElementById('memberRequirementOk');
+                
+                if (this.checked) {
+                    updateMemberRequirement(count);
+                } else {
+                    memberRequirement.style.display = 'none';
+                    if (memberRequirementOk) memberRequirementOk.style.display = 'none';
+                }
+            });
+        }
+        
+        // Event: Validation du formulaire
+        clubForm.addEventListener('submit', function(e) {
+            var isProjetAssociatif = projetAssociatifCheck && projetAssociatifCheck.checked;
+            var currentMemberCount = membersList.querySelectorAll('.member-form-row').length;
+            
+            if (isProjetAssociatif && currentMemberCount < 2) {
                 e.preventDefault();
-                alert('Un projet associatif nécessite au moins 3 membres fondateurs.');
+                alert('Un projet associatif nécessite au moins 3 membres fondateurs (vous + 2 autres).');
                 return false;
             }
         });
+        
+        // Event: Touche Entrée sur le champ de recherche
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedUser) {
+                    addMember();
+                }
+            }
+        });
+    })();
     </script>
 </body>
 </html>

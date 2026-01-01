@@ -120,8 +120,15 @@ class AuthController {
                 $_SESSION['verification_attempts']++;
                 $_SESSION['verification_attempts_time'] = time();
                 if ($_SESSION['verification_attempts'] >= 5) {
+                    ErrorHandler::logSecurity("Rate limit atteint - trop de tentatives de vérification", 'WARN', [
+                        'email' => $_SESSION['reset_mail'] ?? 'unknown'
+                    ]);
                     die("Trop de tentatives, veuillez réessayer plus tard.");
                 }
+                ErrorHandler::logSecurity("Code de réinitialisation incorrect", 'FAIL', [
+                    'email' => $_SESSION['reset_mail'] ?? 'unknown',
+                    'attempts' => $_SESSION['verification_attempts']
+                ]);
                 $error_message = "<p style='color: red;'>Code de vérification incorrect.</p>";
             } else {
                 unset($_SESSION['verification_attempts']);
@@ -172,8 +179,19 @@ class AuthController {
                     $_SESSION['nom'] = $user['nom'];
                     $_SESSION['prenom'] = $user['prenom'];
                     $_SESSION['permission'] = $user['permission'];
+                    
+                    // Log successful login
+                    ErrorHandler::logSecurity("Connexion réussie", 'INFO', [
+                        'user_id' => $user['id'],
+                        'email' => $mail
+                    ]);
+                    
                     redirect('index.php');
                 } else {
+                    // Log failed login attempt
+                    ErrorHandler::logSecurity("Échec de connexion - identifiants invalides", 'FAIL', [
+                        'email' => $mail
+                    ]);
                     $error_message = 'Identifiants invalides';
                 }
             } else {

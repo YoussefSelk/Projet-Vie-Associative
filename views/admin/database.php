@@ -319,8 +319,10 @@
             'fiche_club' => 'fa-user-friends',
             'fiche_event' => 'fa-calendar',
             'membres_club' => 'fa-id-card',
-            'subscribe_event' => 'fa-calendar-check',
-            'rapport_event' => 'fa-file-alt'
+            'abonnements' => 'fa-calendar-check',
+            'mails' => 'fa-envelope',
+            'config' => 'fa-cog',
+            'ville' => 'fa-city'
         ];
         foreach ($db_stats as $table => $data): 
         ?>

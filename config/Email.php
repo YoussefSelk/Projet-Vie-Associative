@@ -16,13 +16,13 @@ function sendEmail($to, $subject, $message) {
 
     // Validate email configuration
     if (empty($smtp_username) || empty($smtp_password)) {
-        error_log("Email configuration error: SMTP credentials not set");
+        ErrorHandler::logError("Email configuration error: SMTP credentials not set", 'WARNING');
         return false;
     }
 
     // Validate recipient email
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
-        error_log("Invalid recipient email address: $to");
+        ErrorHandler::logError("Invalid recipient email address: $to", 'WARNING', ['recipient' => $to]);
         return false;
     }
 
@@ -47,7 +47,10 @@ function sendEmail($to, $subject, $message) {
 
         return $mail->send();
     } catch (Exception $e) {
-        error_log("Email sending failed: " . $mail->ErrorInfo);
+        ErrorHandler::logError("Email sending failed: " . $mail->ErrorInfo, 'ERROR', [
+            'recipient' => $to,
+            'subject' => $subject
+        ]);
         
         if (Environment::isProduction()) {
             return false;

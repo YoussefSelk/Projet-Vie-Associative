@@ -96,9 +96,20 @@
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label><i class="fas fa-calendar"></i> Date et heure <span class="required">*</span></label>
-                                <input type="datetime-local" name="date_event" class="form-control" required>
+                                <label><i class="fas fa-calendar"></i> Date <span class="required">*</span></label>
+                                <input type="date" name="date_ev" class="form-control" required>
                             </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-clock"></i> Heure début <span class="required">*</span></label>
+                                <input type="time" name="horaire_debut" class="form-control" value="13:30" required>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-clock"></i> Heure fin <span class="required">*</span></label>
+                                <input type="time" name="horaire_fin" class="form-control" value="17:30" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
                             <div class="form-group">
                                 <label><i class="fas fa-map-marker-alt"></i> Campus <span class="required">*</span></label>
                                 <select name="campus" class="form-control" required>
@@ -109,32 +120,20 @@
                                     <option value="Boulogne">Boulogne</option>
                                 </select>
                             </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fas fa-map-pin"></i> Lieu précis <span class="event-required">*</span></label>
-                            <input type="text" name="lieu" class="form-control" placeholder="Ex: Amphi A, Salle B203, Parvis...">
+                            <div class="form-group">
+                                <label><i class="fas fa-map-pin"></i> Lieu précis <span class="required">*</span></label>
+                                <input type="text" name="lieu" class="form-control" placeholder="Ex: Amphi A, Salle B203, Parvis..." required>
+                            </div>
                         </div>
                         
                         <!-- Event-specific fields -->
                         <div id="eventFields" class="form-section">
                             <h4><i class="fas fa-clipboard-list"></i> Détails de l'événement</h4>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label><i class="fas fa-euro-sign"></i> Budget estimé</label>
-                                    <input type="number" name="budget" class="form-control" placeholder="Ex: 500" step="0.01" min="0">
-                                </div>
-                                <div class="form-group">
-                                    <label><i class="fas fa-users"></i> Nombre de participants max</label>
-                                    <input type="number" name="nb_participants" class="form-control" placeholder="Ex: 100" min="1">
-                                </div>
-                            </div>
-                            
                             <div class="form-group">
-                                <label><i class="fas fa-building"></i> Club organisateur</label>
-                                <select name="club_id" class="form-control">
-                                    <option value="">Aucun club</option>
+                                <label><i class="fas fa-building"></i> Club organisateur <span class="required">*</span></label>
+                                <select name="club_id" class="form-control" required>
+                                    <option value="">Sélectionnez un club...</option>
                                     <?php
                                     global $db;
                                     $clubs = $db->query("SELECT club_id, nom_club FROM fiche_club WHERE validation_finale = 1 ORDER BY nom_club ASC")->fetchAll(PDO::FETCH_ASSOC);
@@ -143,6 +142,19 @@
                                         <option value="<?= $club['club_id'] ?>"><?= htmlspecialchars($club['nom_club']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-check">
+                                        <input type="checkbox" name="financement_bde" value="1">
+                                        <span><i class="fas fa-hand-holding-usd"></i> Demande de financement BDE</span>
+                                    </label>
+                                </div>
+                                <div class="form-group" id="montantGroup" style="display: none;">
+                                    <label><i class="fas fa-euro-sign"></i> Montant demandé (€)</label>
+                                    <input type="number" name="montant" class="form-control" placeholder="Ex: 100" min="0" value="0">
+                                </div>
                             </div>
                         </div>
 
@@ -177,6 +189,15 @@
                 });
             });
         });
+        
+        // Financement BDE toggle
+        const financementCheckbox = document.querySelector('input[name="financement_bde"]');
+        const montantGroup = document.getElementById('montantGroup');
+        if (financementCheckbox && montantGroup) {
+            financementCheckbox.addEventListener('change', function() {
+                montantGroup.style.display = this.checked ? 'block' : 'none';
+            });
+        }
     </script>
     
     <style>

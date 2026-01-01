@@ -102,13 +102,15 @@ $campuses = [
                     </a>
                 </li>
                 
-                <!-- All Clubs Link -->
+                <?php if ($auth_permission_NAVBAR >= 3): ?>
+                <!-- All Clubs Link - Permission 3+ required -->
                 <li class="nav-item">
                     <a href="?page=club-list" class="nav-link">
                         <i class="fas fa-th-large"></i>
                         <span>Tous les clubs</span>
                     </a>
                 </li>
+                <?php endif; ?>
             <?php endif; ?>
         </ul>
     </div>

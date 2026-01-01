@@ -154,7 +154,11 @@ function checkPermission($required_level) {
         // Journalisation de la tentative d'accès non autorisé
         $userId = $_SESSION['id'] ?? 'unknown';
         $requestedPage = $_GET['page'] ?? 'unknown';
-        error_log("[SECURITY] Tentative d'accès non autorisé: Utilisateur ID $userId (permission: $userPermission) a tenté d'accéder à '$requestedPage' (requis: $required_level)");
+        ErrorHandler::logSecurity(
+            "Tentative d'accès non autorisé: Utilisateur ID $userId a tenté d'accéder à '$requestedPage'",
+            'WARN',
+            ['permission' => $userPermission, 'required' => $required_level, 'page' => $requestedPage]
+        );
         
         // Lever une erreur 403 Forbidden
         ErrorHandler::renderHttpError(403, "Vous n'avez pas les permissions nécessaires pour accéder à cette page. Niveau requis: $required_level, votre niveau: $userPermission");

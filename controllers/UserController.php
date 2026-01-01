@@ -57,7 +57,7 @@ class UserController {
         $my_clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $stats['clubs_count'] = count($my_clubs);
         
-        // Récupérer les inscriptions aux événements
+        // Récupérer les inscriptions aux événements (table abonnements)
         try {
             $stmt = $this->db->prepare("
                 SELECT fe.*, fc.nom_club,
@@ -66,10 +66,10 @@ class UserController {
                         WHEN fe.date_ev <= DATE_ADD(NOW(), INTERVAL 7 DAY) THEN 'soon'
                         ELSE 'upcoming'
                     END as status
-                FROM subscribe_event se
-                JOIN fiche_event fe ON se.event_id = fe.event_id
+                FROM abonnements a
+                JOIN fiche_event fe ON a.event_id = fe.event_id
                 LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                WHERE se.user_id = ? AND fe.validation_finale = 1
+                WHERE a.id = ? AND fe.validation_finale = 1
                 ORDER BY fe.date_ev ASC
             ");
             $stmt->execute([$user_id]);
@@ -95,11 +95,11 @@ class UserController {
                     SELECT fe.*, fc.nom_club
                     FROM fiche_event fe
                     JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                    LEFT JOIN subscribe_event se ON fe.event_id = se.event_id AND se.user_id = ?
+                    LEFT JOIN abonnements a ON fe.event_id = a.event_id AND a.id = ?
                     WHERE fe.club_orga IN ($placeholders)
                         AND fe.validation_finale = 1
                         AND fe.date_ev >= NOW()
-                        AND se.id IS NULL
+                        AND a.event_id IS NULL
                     ORDER BY fe.date_ev ASC
                     LIMIT 5
                 ");

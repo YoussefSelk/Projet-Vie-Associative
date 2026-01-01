@@ -12,7 +12,11 @@
 # ----- Uploads (user content) -----
 uploads/*
 !uploads/.gitkeep
+!uploads/logos/
+uploads/logos/*
 !uploads/logos/.gitkeep
+!uploads/rapports/
+uploads/rapports/*
 !uploads/rapports/.gitkeep
 
 # ----- Logs -----

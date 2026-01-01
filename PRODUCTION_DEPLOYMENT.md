@@ -5,7 +5,18 @@
 - English: see the **English** section
 - Français : voir la section **Français**
 
+---
+
 ## English
+
+## Overview
+
+This guide covers deploying the Vie Étudiante EILCO platform to a production environment.
+
+**Related Documentation:**
+- [Docs/INSTALLATION.md](Docs/INSTALLATION.md) - Development setup
+- [Docs/SECURITY.md](Docs/SECURITY.md) - Security configuration
+- [Docs/DATABASE.md](Docs/DATABASE.md) - Database schema
 
 ## Pre-Deployment Checklist
 
@@ -278,7 +289,8 @@ Consider setting up:
 
 ---
 
-**Last Updated:** December 31, 2025
+**Version:** 4.0  
+**Last Updated:** January 2025
 
 ---
 

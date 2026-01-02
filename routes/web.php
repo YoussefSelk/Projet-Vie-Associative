@@ -258,6 +258,14 @@ return [
         'view' => '/admin/reports.php'
     ],
     
+    'admin-event-reports' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'AdminController',
+        'method' => 'eventReports',
+        'view' => '/admin/event_reports.php'
+    ],
+    
     // ==========================================
     // ROUTES SUPER ADMIN (Permission 5 uniquement)
     // ==========================================

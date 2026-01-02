@@ -86,8 +86,9 @@ class AdminController {
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale IS NULL AND validation_tuteur = 1");
         $stats['pending_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Evenements en attente de validation finale (valides par tuteur et BDE)
-        $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale IS NULL AND validation_tuteur = 1 AND validation_bde = 1");
+        // Evenements en attente de validation finale (valides par BDE ET tuteur ou admin)
+        // La validation tuteur est optionnelle si admin a valide (tuteur peut etre absent)
+        $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale IS NULL AND validation_bde = 1 AND (validation_tuteur = 1 OR validation_admin = 1)");
         $stats['pending_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
         // Total des elements en attente
@@ -196,11 +197,12 @@ class AdminController {
         ");
         $pending_clubs_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
+        // Evenements en attente : BDE valide ET (tuteur OU admin valide)
         $stmt = $this->db->query("
             SELECT e.event_id, e.titre, e.campus, e.date_ev, c.nom_club 
             FROM fiche_event e
             LEFT JOIN fiche_club c ON e.club_orga = c.club_id
-            WHERE e.validation_finale IS NULL AND e.validation_tuteur = 1 AND e.validation_bde = 1
+            WHERE e.validation_finale IS NULL AND e.validation_bde = 1 AND (e.validation_tuteur = 1 OR e.validation_admin = 1)
             LIMIT 5
         ");
         $pending_events_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -286,9 +288,10 @@ class AdminController {
             }
             
             // Validation en masse de tous les evenements en attente
+            // Valide les events avec BDE + (tuteur OU admin)
             if (isset($_POST['bulk_validate_events'])) {
                 try {
-                    $this->db->query("UPDATE fiche_event SET validation_finale = 1 WHERE validation_finale IS NULL AND validation_tuteur = 1 AND validation_bde = 1");
+                    $this->db->query("UPDATE fiche_event SET validation_finale = 1 WHERE validation_finale IS NULL AND validation_bde = 1 AND (validation_tuteur = 1 OR validation_admin = 1)");
                     $success_msg = "Tous les événements en attente ont été validés.";
                 } catch (Exception $e) {
                     $error_msg = "Erreur lors de la validation des événements.";
@@ -339,7 +342,8 @@ class AdminController {
         $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale IS NULL AND validation_tuteur = 1");
         $advanced_stats['pending_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale IS NULL AND validation_tuteur = 1 AND validation_bde = 1");
+        // Evenements : BDE valide ET (tuteur OU admin valide)
+        $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_event WHERE validation_finale IS NULL AND validation_bde = 1 AND (validation_tuteur = 1 OR validation_admin = 1)");
         $advanced_stats['pending_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
         // Comptage des elements rejetes
@@ -1108,6 +1112,42 @@ class AdminController {
         return [
             'report_type' => $report_type,
             'report_data' => $report_data
+        ];
+    }
+
+    /**
+     * Consultation des rapports d'événements déposés
+     * Affiche la liste des événements avec rapports soumis
+     * 
+     * @return array Données pour la vue de consultation des rapports
+     */
+    public function eventReports() {
+        checkPermission(2);
+        
+        $eventReportModel = new EventReport($this->db);
+        
+        // Récupérer les événements avec rapports
+        $eventsWithReports = $eventReportModel->getEventsWithReports();
+        
+        // Récupérer les événements sans rapports (pour statistiques)
+        $eventsWithoutReports = $eventReportModel->getEventsWithoutReports();
+        
+        // Statistiques
+        $stats = [
+            'total_with_reports' => count($eventsWithReports),
+            'total_without_reports' => count($eventsWithoutReports),
+            'completion_rate' => 0
+        ];
+        
+        $totalPastEvents = $stats['total_with_reports'] + $stats['total_without_reports'];
+        if ($totalPastEvents > 0) {
+            $stats['completion_rate'] = round(($stats['total_with_reports'] / $totalPastEvents) * 100, 1);
+        }
+        
+        return [
+            'events_with_reports' => $eventsWithReports,
+            'events_without_reports' => $eventsWithoutReports,
+            'stats' => $stats
         ];
     }
 }

@@ -45,18 +45,37 @@
                         <i class="fas fa-user"></i>
                     </div>
                     <h1><?= htmlspecialchars($user['prenom'] . ' ' . $user['nom']) ?></h1>
+
                     <?php 
-                    $roles = [
-                        0 => 'Non vérifié',
-                        1 => 'Étudiant',
-                        2 => 'Membre club',
-                        3 => 'BDE',
-                        4 => 'Administrateur',
-                        5 => 'Tuteur'
-                    ];
+                        $roles = [
+                                    0 => [
+                                        'label' => 'Invité (Guest)',
+                                        'icon'  => 'fa-user'
+                                    ],
+                                    1 => [
+                                        'label' => 'Étudiant',
+                                        'icon'  => 'fa-user-graduate'
+                                    ],
+                                    2 => [
+                                        'label' => 'Enseignants tuteurs de clubs',
+                                        'icon'  => 'fa-chalkboard-teacher'
+                                    ],
+                                    3 => [
+                                        'label' => 'BDE - Bureau des Étudiants',
+                                        'icon'  => 'fa-users'
+                                    ],
+                                    4 => [
+                                        'label' => 'Personnels administratifs',
+                                        'icon'  => 'fa-briefcase'
+                                    ],
+                                    5 => [
+                                        'label' => 'Administrateur',
+                                        'icon'  => 'fa-user-shield'
+                                    ]
+                                ];
                     $role = $roles[$user['permission'] ?? 1] ?? 'Étudiant';
                     ?>
-                    <span class="badge badge-primary"><?= $role ?></span>
+                    <span class="badge badge-primary"><i class="fa <?= $role['icon'] ?>"></i> <?= htmlspecialchars($role['label']) ?></span>
                 </div>
                 
                 <div class="profile-body">

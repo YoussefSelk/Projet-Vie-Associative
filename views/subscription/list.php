@@ -66,11 +66,15 @@
                         <div class="event-card" data-search="<?= htmlspecialchars($searchData) ?>">
                             <div class="event-date-badge">
                                 <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
-                                <span class="month"><?php 
-                                    $dateObj = new DateTime($event['date_ev'] ?? 'now');
-                                    $formatter = new IntlDateFormatter('fr_FR', IntlDateFormatter::NONE, IntlDateFormatter::NONE, null, null, 'MMM');
-                                    echo $formatter->format($dateObj);
-                                ?></span>
+                                <span class="month">
+                                    <?php
+                                    setlocale(LC_TIME, 'fr_FR.UTF-8', 'fr_FR', 'fr');
+
+                                    $timestamp = strtotime($event['date_ev'] ?? 'now');
+                                    echo strftime('%b', $timestamp);
+                                    ?>
+                                </span>
+
                             </div>
                             <div class="event-content">
                                 <h3><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h3>

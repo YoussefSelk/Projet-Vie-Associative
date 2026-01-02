@@ -190,7 +190,7 @@ class Validation {
      * @return bool Succès de l'opération
      */
     public function rejectEvent($event_id, $remarques_refus = '') {
-        $stmt = $this->db->prepare("UPDATE fiche_event SET validation_finale = -1, remarques = ? WHERE event_id = ?");
+        $stmt = $this->db->prepare("UPDATE fiche_event SET validation_finale = -1, motif_refus = ? WHERE event_id = ?");
         return $stmt->execute([$remarques_refus, $event_id]);
     }
     

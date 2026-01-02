@@ -211,8 +211,13 @@ class EventController {
      * Dépôt de rapport post-événement
      * Permet aux membres de club de déposer un rapport après un événement
      * 
-     * Fichiers acceptés : PDF, DOC, DOCX
+     * Fichiers acceptés : PDF uniquement
      * Le rapport est stocké dans la colonne rapport_event de fiche_event (VARCHAR 255 = chemin du fichier)
+     * 
+     * Conditions pour déposer un rapport:
+     * - Être membre VALIDE d'un club (mc.valide = 1)
+     * - L'événement doit être validé (validation_finale = 1)
+     * - L'événement ne doit pas déjà avoir de rapport
      * 
      * @return array Données pour la vue [events, error_msg, success_msg]
      */
@@ -223,12 +228,15 @@ class EventController {
         $success_msg = '';
         
         // Récupérer tous les événements validés des clubs de l'utilisateur qui n'ont pas encore de rapport
-        // Note: On récupère les événements de tous les clubs dont l'utilisateur est membre
+        // Important: On vérifie que l'utilisateur est membre VALIDE du club (mc.valide = 1)
         $stmt = $this->db->prepare("
-            SELECT fe.*, fc.nom_club FROM fiche_event fe
+            SELECT fe.*, fc.nom_club 
+            FROM fiche_event fe
             INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
             INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
             WHERE mc.membre_id = ? 
+              AND mc.valide = 1
+              AND fc.validation_finale = 1
               AND fe.validation_finale = 1
               AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
             ORDER BY fe.date_ev DESC
@@ -270,12 +278,15 @@ class EventController {
                         if ($stmt->execute([$db_path, $event_id])) {
                             $success_msg = "Rapport déposé avec succès.";
                             
-                            // Rafraîchir la liste des événements
+                            // Rafraîchir la liste des événements (avec les mêmes conditions)
                             $stmt = $this->db->prepare("
-                                SELECT fe.*, fc.nom_club FROM fiche_event fe
+                                SELECT fe.*, fc.nom_club 
+                                FROM fiche_event fe
                                 INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
                                 INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
                                 WHERE mc.membre_id = ? 
+                                  AND mc.valide = 1
+                                  AND fc.validation_finale = 1
                                   AND fe.validation_finale = 1
                                   AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
                                 ORDER BY fe.date_ev DESC

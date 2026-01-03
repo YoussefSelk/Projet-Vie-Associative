@@ -227,8 +227,8 @@ class ErrorHandler
             $message = "[$timestamp] Erreur Fatale: {$error['message']} dans {$error['file']} à la ligne {$error['line']}";
             error_log($message);
             
-            // Nettoyer tout output existant
-            if (ob_get_level()) {
+            // Nettoyer TOUS les niveaux de output buffer existants
+            while (ob_get_level()) {
                 ob_end_clean();
             }
             
@@ -295,11 +295,14 @@ class ErrorHandler
         int $errorLine,
         array $stackTrace = []
     ): void {
-        http_response_code($httpCode);
-        
-        // Nettoyer tout output existant
-        if (ob_get_level()) {
+        // Nettoyer TOUS les niveaux de output buffer existants
+        while (ob_get_level()) {
             ob_end_clean();
+        }
+        
+        // Envoyer le code HTTP si les headers n'ont pas été envoyés
+        if (!headers_sent()) {
+            http_response_code($httpCode);
         }
         
         // Préparer les variables pour les templates d'erreur

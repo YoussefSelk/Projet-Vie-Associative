@@ -57,9 +57,9 @@
                         <div class="event-date-large">
                             <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
                             <span class="month"><?php 
-                                $dateObj = new DateTime($event['date_ev'] ?? 'now');
-                                $formatter = new IntlDateFormatter('fr_FR', IntlDateFormatter::NONE, IntlDateFormatter::NONE, null, null, 'MMMM yyyy');
-                                echo $formatter->format($dateObj);
+                                $moisFr = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+                                $dateTs = strtotime($event['date_ev'] ?? 'now');
+                                echo $moisFr[date('n', $dateTs) - 1] . ' ' . date('Y', $dateTs);
                             ?></span>
                         </div>
                         <h1><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h1>

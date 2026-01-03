@@ -46,9 +46,8 @@
                             <div class="event-date-badge">
                                 <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
                                 <span class="month"><?php 
-                                    $dateObj = new DateTime($event['date_ev'] ?? 'now');
-                                    // $formatter = new IntlDateFormatter('fr_FR', IntlDateFormatter::NONE, IntlDateFormatter::NONE, null, null, 'MMM');
-                                    // echo $formatter->format($dateObj);
+                                    $moisFr = ['jan', 'fév', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
+                                    echo $moisFr[date('n', strtotime($event['date_ev'] ?? 'now')) - 1];
                                 ?></span>
                             </div>
                             <div class="event-content">

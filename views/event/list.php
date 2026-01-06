@@ -85,7 +85,12 @@
                                 <span class="month"><?= $months_fr[$monthIndex] ?></span>
                             </div>
                             <div class="event-content">
+                                <p class="club-name" style="color: #666; font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">
+                                    <i class="fas fa-users"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club inconnu') ?>
+                                </p>
+                                
                                 <h3><?= htmlspecialchars($event['titre']) ?></h3>
+                                
                                 <div class="event-meta">
                                     <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
                                         <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>

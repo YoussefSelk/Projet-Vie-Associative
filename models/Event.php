@@ -34,11 +34,21 @@ class Event {
      * 
      * @return array Liste des événements validés triés par date décroissante
      */
-    public function getAllValidatedEvents() {
-        $stmt = $this->db->prepare("SELECT * FROM fiche_event WHERE validation_finale = 1 ORDER BY date_ev DESC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    /**
+ * Récupère tous les événements validés avec le nom de leur club
+ */
+public function getAllValidatedEvents() {
+    // Jointure entre fiche_event (fe) et fiche_club (fc)
+    $stmt = $this->db->prepare("
+        SELECT fe.*, fc.nom_club 
+        FROM fiche_event fe 
+        INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id 
+        WHERE fe.validation_finale = 1 
+        ORDER BY fe.date_ev DESC
+    ");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     /**
      * Récupère un événement par son identifiant

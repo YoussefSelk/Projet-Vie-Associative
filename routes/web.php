@@ -177,6 +177,22 @@ return [
         'method' => 'listClubs',
         'view' => '/club/list.php'
     ],
+
+    'my-clubs' => [
+        'permission' => null,
+        'auth' => true,
+        'controller' => 'ClubController',
+        'method' => 'myClubs',
+        'view' => '/club/my_clubs.php'
+    ],
+
+    'club-edit' => [
+        'permission' => null,
+        'auth' => true,
+        'controller' => 'ClubController',
+        'method' => 'editClub',
+        'view' => '/club/edit.php'
+    ],
     
     'club-view' => [
         'permission' => null,

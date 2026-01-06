@@ -1,22 +1,22 @@
 <?php
 /**
- * Espace tuteur - Tableau de bord
+ * Espace administrateur - Tableau de bord
  * 
- * Interface dediee aux tuteurs pour superviser leurs clubs :
+ * Interface dediee aux administrateurs pour superviser tous les clubs et evenements :
  * - Clubs en attente de validation finale
  * - Evenements a approuver
- * - Liste des clubs dont ils sont tuteurs
+ * - Liste de tous les clubs
  * - Rapports d'evenements a consulter
  * 
- * Un tuteur ne voit que les elements des clubs
- * qui lui sont assignes.
+ * Un administrateur voit tous les elements du systeme
+ * sans restriction.
  * 
  * Variables attendues :
  * - $pending_clubs : Clubs a valider
  * - $pending_events : Evenements a valider
- * - $my_clubs : Clubs tutores
+ * - $all_clubs : Tous les clubs du systeme
  * 
- * Permissions : Tuteur (niveau 3) ou superieur
+ * Permissions : Administrateur (niveau 5)
  * 
  * @package Views/Validation
  */
@@ -26,14 +26,14 @@
 <head>
     <?php include VIEWS_PATH . '/includes/head.php'; ?>
     <style>
-        /* Tutor Dashboard Styles */
-        .tutor-dashboard {
+        /* Admin Dashboard Styles */
+        .admin-dashboard {
             max-width: 1200px;
             margin: 0 auto;
         }
         
         /* Stats Cards */
-        .tutor-stats {
+        .admin-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
@@ -764,10 +764,9 @@
     <?php include VIEWS_PATH . '/includes/barre_nav.php'; ?>
 
     <main>
-        <div class="page-container tutor-dashboard">
+        <div class="page-container admin-dashboard">
             <div class="page-header">
-                <h1><i class="fas fa-user-graduate"></i> Espace Tuteur</h1>
-                <p class="subtitle">Gérez les validations de vos clubs et événements</p>
+               <p class="subtitle">Supervisez et validez tous les clubs et événements du système</p>
             </div>
 
             <?php if(!empty($error_msg)): ?>
@@ -779,7 +778,7 @@
             <?php endif; ?>
 
             <!-- Stats Cards -->
-            <div class="tutor-stats">
+            <div class="admin-stats">
                 <div class="stat-card pending">
                     <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
                     <div class="stat-content">
@@ -842,6 +841,7 @@
                 <div class="validation-cards-container" id="validationCards">
                     <!-- Pending Clubs -->
                     <?php foreach ($pending_clubs ?? [] as $club): ?>
+                        <?php if (($club['validation_finale'] ?? 0) == 1) continue; ?>
                         <div class="validation-card-advanced club-card" 
                              data-type="clubs" 
                              data-search="<?= strtolower(htmlspecialchars($club['nom_club'] . ' ' . $club['type_club'] . ' ' . $club['campus'])) ?>">
@@ -887,7 +887,7 @@
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
                                         <input type="hidden" name="action" value="approve">
-                                        <button type="submit" name="validate_club_tutor" class="btn-approve">
+                                        <button type="submit" name="validate_club_admin" class="btn-approve">
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
@@ -968,10 +968,10 @@
                 </div>
             <?php endif; ?>
 
-            <!-- Tutored Clubs Section -->
+            <!-- All Clubs Section -->
             <div class="card mt-20">
                 <div class="card-header">
-                    <h3><i class="fas fa-users"></i> Mes clubs tutorés (<?= count($tutored_clubs ?? []) ?>)</h3>
+                    <h3><i class="fas fa-building"></i> Tous les clubs du système (<?= count($tutored_clubs ?? []) ?>)</h3>
                 </div>
                 <div class="card-body">
                     <?php if (empty($tutored_clubs)): ?>
@@ -979,8 +979,8 @@
                             <div class="empty-icon" style="background: #dbeafe; color: #2563eb;">
                                 <i class="fas fa-building"></i>
                             </div>
-                            <h3>Aucun club tutoré</h3>
-                            <p>Vous ne tutorez aucun club actuellement.</p>
+                            <h3>Aucun club</h3>
+                            <p>Aucun club dans le système pour le moment.</p>
                         </div>
                     <?php else: ?>
                         <div class="tutored-clubs-enhanced">
@@ -1058,7 +1058,7 @@
                     <input type="hidden" name="club_id" id="modalClubIdReject" value="">
                     <input type="hidden" name="action" value="reject">
                     <input type="hidden" name="motif" id="clubMotifInput" value="">
-                    <button type="submit" name="validate_club_tutor" class="btn-reject">
+                    <button type="submit" name="validate_club_admin" class="btn-reject">
                         <i class="fas fa-times"></i> Confirmer le rejet
                     </button>
                 </form>

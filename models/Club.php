@@ -94,6 +94,24 @@ class Club {
     }
 
     /**
+     * Récupère tous les clubs créés par un utilisateur (en tant que Président)
+     * Jointe avec la table membres_club pour récupérer les clubs où l'utilisateur est Président
+     * 
+     * @param int $user_id Identifiant de l'utilisateur
+     * @return array Liste des clubs créés par l'utilisateur
+     */
+    public function getClubsByUser($user_id) {
+        $stmt = $this->db->prepare("
+            SELECT fc.* FROM fiche_club fc
+            INNER JOIN membres_club mc ON fc.club_id = mc.club_id
+            WHERE mc.membre_id = ? AND mc.fonction = 'Président' AND mc.valide = 1
+            ORDER BY fc.nom_club ASC
+        ");
+        $stmt->execute([$user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Crée un nouveau club
      * Le club est créé avec validation_finale = 0 (en attente de validation)
      * 
@@ -114,12 +132,15 @@ class Club {
     /**
      * Met à jour les informations d'un club
      * Seuls les champs autorisés peuvent être modifiés
+     * IMPORTANT : Si le club était rejeté (validation_admin = 0), réinitialise automatiquement
+     * validation_admin et validation_finale à NULL pour que le club soit remis en attente d'examen
      * 
      * @param int $id Identifiant du club
      * @param array $data Données à mettre à jour
+     * @param bool $resetValidation Paramètre hérité, non utilisé (la réinitialisation est automatique)
      * @return bool Succès de l'opération
      */
-    public function updateClub($id, $data) {
+    public function updateClub($id, $data, $resetValidation = false) {
         $allowed_fields = ['nom_club', 'type_club', 'description', 'campus'];
         $fields = [];
         $values = [];
@@ -129,6 +150,19 @@ class Club {
                 $fields[] = "$field = ?";
                 $values[] = $data[$field];
             }
+        }
+
+        // Vérifier si le club était en correction (validation_admin = 0)
+        // Si oui, réinitialiser les statuts de validation pour qu'il soit réexaminé
+        $check = $this->db->prepare("SELECT validation_admin FROM fiche_club WHERE club_id = ?");
+        $check->execute([$id]);
+        $club = $check->fetch(PDO::FETCH_ASSOC);
+        
+        if ($club && $club['validation_admin'] === 0) {
+            // Le club était rejeté, le remettre en attente
+            $fields[] = "validation_admin = NULL";
+            $fields[] = "validation_finale = NULL";
+            // Motif_refus reste pour traçabilité, mais peut être nettoyé si nécessaire
         }
 
         if (empty($fields)) {

@@ -156,6 +156,10 @@ else {
                         <a href="?page=profile" class="dropdown-item">
                             <i class="fas fa-user"></i> Mon Profil
                         </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="?page=my-clubs" class="dropdown-item">
+                            <i class="fas fa-folder-open"></i> Mes Demandes de Clubs
+                        </a>
                         <?php if($is_membre_club == 1): ?>
                             <a href="?page=my-events" class="dropdown-item">
                                 <i class="fas fa-calendar-alt"></i> Mes Événements
@@ -168,6 +172,7 @@ else {
                         <a href="?page=logout" class="dropdown-item logout-item">
                             <i class="fas fa-sign-out-alt"></i> Déconnexion
                         </a>
+
                     </div>
                 </div>
             <?php else: ?>
@@ -203,6 +208,11 @@ else {
                     <span>Créer un club</span>
                 </a>
             <?php endif; ?>
+
+            <a href="?page=my-clubs" class="quick-action-item">
+                <i class="fas fa-folder-open"></i>
+                <span>Mes Clubs</span>
+            </a>
             
             <?php if($is_membre_club == 1 && $user_permission >= 2): ?>
                 <a href="?page=event-create" class="quick-action-item">

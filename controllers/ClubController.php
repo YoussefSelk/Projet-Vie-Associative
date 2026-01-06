@@ -261,6 +261,140 @@ class ClubController {
     }
 
     /**
+     * Affiche la liste des demandes de clubs créés par l'utilisateur connecté
+     * Permet de voir l'état de validation et de modifier les clubs refusés
+     * 
+     * @return array Données des clubs de l'utilisateur
+     */
+    public function myClubs() {
+        $user_id = $_SESSION['id'] ?? null;
+        
+        if (!$user_id) {
+            redirect('index.php?page=login');
+        }
+
+        $clubs = $this->clubModel->getClubsByUser($user_id);
+        $error_msg = '';
+        $success_msg = '';
+
+        // Suppression d'un club refusé
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_club'])) {
+            $club_id = $_POST['club_id'] ?? null;
+            
+            if ($club_id) {
+                // Vérifier que l'utilisateur est bien le créateur (Président)
+                $stmt = $this->db->prepare("
+                    SELECT mc.fonction FROM membres_club mc
+                    WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.fonction = 'Président'
+                ");
+                $stmt->execute([$club_id, $user_id]);
+                
+                if ($stmt->fetch()) {
+                    // Vérifier que le club est refusé
+                    $club = $this->clubModel->getClubById($club_id);
+                    if ($club && $club['validation_finale'] == 0) {
+                        if ($this->clubModel->deleteClub($club_id)) {
+                            $success_msg = "Club supprimé avec succès.";
+                            $clubs = $this->clubModel->getClubsByUser($user_id);
+                        } else {
+                            $error_msg = "Erreur lors de la suppression du club.";
+                        }
+                    } else {
+                        $error_msg = "Vous ne pouvez supprimer que les clubs refusés.";
+                    }
+                } else {
+                    $error_msg = "Vous n'avez pas la permission de supprimer ce club.";
+                }
+            }
+        }
+
+        return [
+            'clubs' => $clubs,
+            'error_msg' => $error_msg,
+            'success_msg' => $success_msg
+        ];
+    }
+
+    /**
+     * Édite un club refusé pour le resoummettre à validation
+     * Vérifie que l'utilisateur est bien le créateur (Président)
+     * 
+     * @return array Données du club et messages de statut
+     */
+    public function editClub() {
+        $user_id = $_SESSION['id'] ?? null;
+        $club_id = $_GET['id'] ?? null;
+        
+        if (!$user_id) {
+            redirect('index.php?page=login');
+        }
+
+        if (!$club_id) {
+            redirect('index.php?page=my-clubs');
+        }
+
+        $club = $this->clubModel->getClubById($club_id);
+        $error_msg = '';
+        $success_msg = '';
+
+        if (!$club) {
+            $error_msg = "Club non trouvé.";
+        } else {
+            // Vérifier que l'utilisateur est bien le créateur (Président)
+            $stmt = $this->db->prepare("
+                SELECT mc.fonction FROM membres_club mc
+                WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.fonction = 'Président'
+            ");
+            $stmt->execute([$club_id, $user_id]);
+            
+            if (!$stmt->fetch()) {
+                $error_msg = "Vous n'avez pas la permission de modifier ce club.";
+            } elseif ($club['validation_finale'] != 0) {
+                $error_msg = "Vous ne pouvez modifier que les clubs refusés.";
+            } else {
+                // Traiter la soumission du formulaire
+                if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_club'])) {
+                    $nom_club = trim($_POST['nom_club'] ?? '');
+                    $type_club = trim($_POST['type_club'] ?? '');
+                    $description = trim($_POST['description'] ?? '');
+                    $campus = trim($_POST['campus'] ?? '');
+
+                    if (!$nom_club || !$type_club || !$description || !$campus) {
+                        $error_msg = "Tous les champs sont obligatoires.";
+                    } elseif (!in_array($campus, ["Calais", "Longuenesse", "Dunkerque", "Boulogne"])) {
+                        $error_msg = "Campus invalide.";
+                    } else {
+                        // Vérifier que le nouveau nom n'existe pas déjà (sauf pour ce club)
+                        if ($this->clubModel->clubNameExists($nom_club, $club_id)) {
+                            $error_msg = "Un club avec ce nom existe déjà.";
+                        } else {
+                            $data = [
+                                'nom_club' => $nom_club,
+                                'type_club' => $type_club,
+                                'description' => $description,
+                                'campus' => $campus
+                            ];
+
+                            // Mettre à jour le club et réinitialiser la validation
+                            if ($this->clubModel->updateClub($club_id, $data, true)) {
+                                redirect('index.php?page=my-clubs&success=1');
+                            } else {
+                                $error_msg = "Erreur lors de la modification du club.";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return [
+            'club' => $club,
+            'error_msg' => $error_msg,
+            'success_msg' => $success_msg
+        ];
+    }
+
+    /**
      * Affiche les détails d'un club
      * Accessible à tous les utilisateurs
      * 

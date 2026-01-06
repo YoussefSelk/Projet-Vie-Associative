@@ -102,15 +102,17 @@ class Validation {
     }
     
     /**
-     * Rejette un club (validation_finale = -1)
+     * Rejette un club avec demande de modification
+     * Définit validation_admin = 0 et validation_finale = 0 pour indiquer un refus
+     * Le club reste en attente de modifications de l'étudiant (statut "À corriger")
      * 
      * @param int $club_id Identifiant du club à rejeter
-     * @param string $remarques_refus Motif du refus (optionnel)
+     * @param string $motif_refus Motif du refus expliquant ce qui doit être corrigé
      * @return bool Succès de l'opération
      */
-    public function rejectClub($club_id, $remarques_refus = '') {
-        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_finale = -1 WHERE club_id = ?");
-        return $stmt->execute([$club_id]);
+    public function rejectClub($club_id, $motif_refus = '') {
+        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE club_id = ?");
+        return $stmt->execute([$motif_refus, $club_id]);
     }
 
     // =========================================================================

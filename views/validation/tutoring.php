@@ -946,7 +946,7 @@
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                                         <input type="hidden" name="action" value="approve">
-                                        <button type="submit" name="validate_event_tutor" class="btn-approve">
+                                        <button type="submit" name="validate_event_admin" class="btn-approve">
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
@@ -1128,7 +1128,7 @@
                     <input type="hidden" name="event_id" id="modalEventIdReject" value="">
                     <input type="hidden" name="action" value="reject">
                     <input type="hidden" name="motif" id="eventMotifInput" value="">
-                    <button type="submit" name="validate_event_tutor" class="btn-reject">
+                    <button type="submit" name="validate_event_admin" class="btn-reject">
                         <i class="fas fa-times"></i> Confirmer le rejet
                     </button>
                 </form>

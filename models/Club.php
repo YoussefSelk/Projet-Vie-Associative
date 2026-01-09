@@ -132,12 +132,12 @@ class Club {
     /**
      * Met à jour les informations d'un club
      * Seuls les champs autorisés peuvent être modifiés
-     * IMPORTANT : Si le club était rejeté (validation_admin = 0), réinitialise automatiquement
-     * validation_admin et validation_finale à NULL pour que le club soit remis en attente d'examen
+     * IMPORTANT : Si le club était rejeté (validation_admin = 0) ou modifié pendant le cycle,
+     * réinitialise les validations à NULL pour que le club soit remis en attente d'examen
      * 
      * @param int $id Identifiant du club
      * @param array $data Données à mettre à jour
-     * @param bool $resetValidation Paramètre hérité, non utilisé (la réinitialisation est automatique)
+     * @param bool $resetValidation Force la réinitialisation des validations (pour les clubs en attente modifiés)
      * @return bool Succès de l'opération
      */
     public function updateClub($id, $data, $resetValidation = false) {
@@ -152,17 +152,20 @@ class Club {
             }
         }
 
-        // Vérifier si le club était en correction (validation_admin = 0)
-        // Si oui, réinitialiser les statuts de validation pour qu'il soit réexaminé
-        $check = $this->db->prepare("SELECT validation_admin FROM fiche_club WHERE club_id = ?");
+        // Vérifier l'état du club pour déterminer si on doit réinitialiser les validations
+        $check = $this->db->prepare("SELECT validation_admin, validation_tuteur, validation_finale FROM fiche_club WHERE club_id = ?");
         $check->execute([$id]);
         $club = $check->fetch(PDO::FETCH_ASSOC);
         
-        if ($club && $club['validation_admin'] === 0) {
-            // Le club était rejeté, le remettre en attente
+        // Réinitialiser les validations si :
+        // - Le club était rejeté (validation_admin = 0)
+        // - Ou si resetValidation est demandé (modification pendant le cycle de validation)
+        if ($club && ($club['validation_admin'] === 0 || $resetValidation)) {
+            // Remettre le club en attente de validation
             $fields[] = "validation_admin = NULL";
+            $fields[] = "validation_tuteur = NULL";
             $fields[] = "validation_finale = NULL";
-            // Motif_refus reste pour traçabilité, mais peut être nettoyé si nécessaire
+            $fields[] = "motif_refus = NULL";
         }
 
         if (empty($fields)) {

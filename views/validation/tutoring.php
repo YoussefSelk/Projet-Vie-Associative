@@ -558,6 +558,14 @@
                 transform: translateY(0);
             }
         }
+
+        /* Members list in club modal */
+        .members-list { display: grid; gap: 8px; }
+        .member-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.95rem; }
+        .member-name { font-weight: 600; }
+        .member-role { background: #eef2ff; color: #3730a3; border-radius: 9999px; padding: 2px 8px; font-size: 0.75rem; }
+        .member-email { color: #555; font-size: 0.85rem; }
+        .member-promo { color: #666; font-size: 0.85rem; }
         
         .reject-reason-box {
             background: linear-gradient(135deg, #fef2f2, #fee2e2);
@@ -842,9 +850,21 @@
                     <!-- Pending Clubs -->
                     <?php foreach ($pending_clubs ?? [] as $club): ?>
                         <?php if (($club['validation_finale'] ?? 0) == 1) continue; ?>
+                        <?php
+                        // Précharger les membres du club pour affichage dans la modale
+                        $clubMembers = [];
+                        try {
+                            $stmt = $db->prepare("SELECT u.prenom, u.nom, u.mail, u.promo, mc.fonction\n                                                   FROM membres_club mc\n                                                   JOIN users u ON mc.membre_id = u.id\n                                                   WHERE mc.club_id = ? AND mc.valide = 1\n                                                   ORDER BY CASE WHEN mc.fonction = 'Président' THEN 0 ELSE 1 END, u.nom, u.prenom");
+                            $stmt->execute([$club['club_id']]);
+                            $clubMembers = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+                        } catch (Exception $e) {
+                            $clubMembers = [];
+                        }
+                        ?>
                         <div class="validation-card-advanced club-card" 
                              data-type="clubs" 
-                             data-search="<?= strtolower(htmlspecialchars($club['nom_club'] . ' ' . $club['type_club'] . ' ' . $club['campus'])) ?>">
+                             data-search="<?= strtolower(htmlspecialchars($club['nom_club'] . ' ' . $club['type_club'] . ' ' . $club['campus'])) ?>"
+                             data-members='<?= htmlspecialchars(json_encode($clubMembers), ENT_QUOTES, 'UTF-8') ?>'>
                             <div class="card-main">
                                 <div class="card-content">
                                     <div class="card-title-row">
@@ -880,7 +900,7 @@
                                     <?php endif; ?>
                                 </div>
                                 <div class="card-actions">
-                                    <button type="button" class="btn-view-details" onclick="openClubModal(<?= htmlspecialchars(json_encode($club)) ?>)">
+                                    <button type="button" class="btn-view-details" onclick="openClubModal(<?= htmlspecialchars(json_encode($club)) ?>, this)">
                                         <i class="fas fa-eye"></i> Voir détails
                                     </button>
                                     <form method="POST">
@@ -891,7 +911,7 @@
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
-                                    <button type="button" class="btn-reject" onclick="openClubModalReject(<?= htmlspecialchars(json_encode($club)) ?>)">
+                                    <button type="button" class="btn-reject" onclick="openClubModalReject(<?= htmlspecialchars(json_encode($club)) ?>, this)">
                                         <i class="fas fa-times"></i> Rejeter
                                     </button>
                                 </div>
@@ -1036,6 +1056,10 @@
                     <h4>Description</h4>
                     <p id="modalClubDescription">-</p>
                 </div>
+                <div class="detail-section">
+                    <h4>Membres</h4>
+                    <div id="modalClubMembers" class="members-list"></div>
+                </div>
             </div>
             <!-- Rejection Reason Section -->
             <div class="modal-reject-section" id="clubRejectSection" style="display: none;">
@@ -1066,7 +1090,7 @@
                     <?= Security::csrfField() ?>
                     <input type="hidden" name="club_id" id="modalClubIdApprove" value="">
                     <input type="hidden" name="action" value="approve">
-                    <button type="submit" name="validate_club_tutor" class="btn-approve">
+                    <button type="submit" name="validate_club_admin" class="btn-approve">
                         <i class="fas fa-check"></i> Approuver ce club
                     </button>
                 </form>
@@ -1149,6 +1173,11 @@
     <script>
     (function() {
         'use strict';
+        function esc(str) {
+            return String(str || '').replace(/[&<>"']/g, function(c){
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]);
+            });
+        }
         
         // Search and Filter functionality
         var searchInput = document.getElementById('searchInput');
@@ -1200,7 +1229,7 @@
         });
         
         // Modal functions - exposed globally
-        window.openClubModal = function(club) {
+        window.openClubModal = function(club, el) {
             document.getElementById('modalClubName').textContent = club.nom_club || '-';
             document.getElementById('modalClubType').textContent = club.type_club || '-';
             document.getElementById('modalClubCampus').textContent = club.campus || '-';
@@ -1215,6 +1244,36 @@
                 logoContainer.innerHTML = '<img src="' + club.logo_club + '" alt="Logo du club">';
             } else {
                 logoContainer.innerHTML = '<i class="fas fa-building no-logo"></i>';
+            }
+
+            // Render club members
+            var membersContainer = document.getElementById('modalClubMembers');
+            if (membersContainer) {
+                membersContainer.innerHTML = '';
+                var members = [];
+                if (el) {
+                    var card = el.closest('.validation-card-advanced');
+                    if (card) {
+                        try { members = JSON.parse(card.getAttribute('data-members') || '[]'); } catch (e) { members = []; }
+                    }
+                }
+                if (members && members.length) {
+                    members.forEach(function(m) {
+                        var row = document.createElement('div');
+                        row.className = 'member-row';
+                        var name = esc((m.prenom || '') + ' ' + (m.nom || ''));
+                        var role = esc(m.fonction || '-');
+                        var email = esc(m.mail || '');
+                        var promo = esc(m.promo || '');
+                        row.innerHTML = '<span class="member-name">' + name + '</span>'+
+                                        '<span class="member-role">' + role + '</span>'+
+                                        (promo ? '<span class="member-promo">' + promo + '</span>' : '')+
+                                        (email ? '<span class="member-email"><i class="fas fa-envelope"></i> ' + email + '</span>' : '');
+                        membersContainer.appendChild(row);
+                    });
+                } else {
+                    membersContainer.innerHTML = '<div class="text-muted">Aucun membre renseigné.</div>';
+                }
             }
             
             document.getElementById('clubModal').classList.add('active');
@@ -1249,8 +1308,8 @@
         };
         
         // Open club modal directly in reject mode
-        window.openClubModalReject = function(club) {
-            openClubModal(club);
+        window.openClubModalReject = function(club, el) {
+            openClubModal(club, el);
             // Delay to ensure modal is open first
             setTimeout(function() {
                 showClubRejectForm();

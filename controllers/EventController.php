@@ -194,16 +194,55 @@ class EventController {
 
     /**
      * Liste les événements des clubs de l'utilisateur
+     * Permet également la suppression des événements refusés
      * 
      * @return array Liste des événements de l'utilisateur
      */
     public function myEvents() {
         validateSession();
         
-        $events = $this->eventModel->getEventsByUser($_SESSION['id']);
+        $user_id = $_SESSION['id'];
+        $error_msg = '';
+        $success_msg = '';
+
+        // Suppression d'un événement refusé
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_event'])) {
+            $event_id = $_POST['event_id'] ?? null;
+            
+            if ($event_id) {
+                // Vérifier que l'utilisateur est bien membre du club organisateur
+                $stmt = $this->db->prepare("
+                    SELECT fe.event_id, fe.validation_finale, fe.motif_refus
+                    FROM fiche_event fe
+                    INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
+                    WHERE fe.event_id = ? AND mc.membre_id = ? AND mc.valide = 1
+                ");
+                $stmt->execute([$event_id, $user_id]);
+                $event = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($event) {
+                    // Vérifier que l'événement est refusé (validation_finale = 0 avec motif_refus)
+                    if ($event['validation_finale'] == 0 && !empty($event['motif_refus'])) {
+                        if ($this->eventModel->deleteEvent($event_id)) {
+                            $success_msg = "Événement supprimé avec succès.";
+                        } else {
+                            $error_msg = "Erreur lors de la suppression de l'événement.";
+                        }
+                    } else {
+                        $error_msg = "Vous ne pouvez supprimer que les événements refusés.";
+                    }
+                } else {
+                    $error_msg = "Vous n'avez pas la permission de supprimer cet événement.";
+                }
+            }
+        }
+
+        $events = $this->eventModel->getEventsByUser($user_id);
         
         return [
-            'events' => $events
+            'events' => $events,
+            'error_msg' => $error_msg,
+            'success_msg' => $success_msg
         ];
     }
 

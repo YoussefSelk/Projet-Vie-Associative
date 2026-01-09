@@ -384,12 +384,14 @@ class ValidationController {
                 if ($event_id && $action && $is_admin) {
                     if ($action === 'approve') {
                         // L'admin approuve : validation_admin = 1 ET validation_finale = 1
+                        // Décision immédiate et définitive, peu importe l'état du tuteur/BDE
                         $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_finale = 1, motif_refus = NULL WHERE event_id = ?");
                         $result = $stmt->execute([$event_id]);
                         $success_msg = "Événement validé définitivement par l'administration.";
                     } else {
-                        // L'admin rejette : validation_admin = 0 SEULEMENT
-                        $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 0, motif_refus = ? WHERE event_id = ?");
+                        // L'admin rejette : validation_admin = 0 ET validation_finale = 0
+                        // Permet à l'étudiant de voir sa fiche comme "rejetée" et de l'éditer
+                        $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?");
                         $result = $stmt->execute([$motif, $event_id]);
                         $success_msg = "Événement rejeté par l'administration.";
                     }

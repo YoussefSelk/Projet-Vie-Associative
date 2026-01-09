@@ -416,6 +416,32 @@
             transform: translateY(-1px);
         }
         
+        /* Bouton Forcer la validation - Réservé Admin */
+        .btn-force {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            white-space: nowrap;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff;
+        }
+        
+        .btn-force:hover {
+            background: linear-gradient(135deg, #d97706, #b45309);
+            transform: translateY(-1px);
+        }
+        
+        .btn-force i {
+            font-size: 0.9rem;
+        }
+        
         /* Modal Styles */
         .modal-overlay {
             display: none;
@@ -780,6 +806,10 @@
             <?php if(!empty($error_msg)): ?>
                 <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg) ?></div>
             <?php endif; ?>
+
+            <?php if(!empty($info_msg)): ?>
+                <div class="alert alert-info"><i class="fas fa-info-circle"></i> <?= htmlspecialchars($info_msg) ?></div>
+            <?php endif; ?>
             
             <?php if(!empty($success_msg)): ?>
                 <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?></div>
@@ -911,6 +941,16 @@
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
+                                    <?php if ($is_admin): ?>
+                                    <form method="POST">
+                                        <?= Security::csrfField() ?>
+                                        <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
+                                        <input type="hidden" name="action" value="force_approve">
+                                        <button type="submit" name="validate_club_admin" class="btn-force" title="Valider sans attendre le tuteur">
+                                            <i class="fas fa-bolt"></i> Forcer
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
                                     <button type="button" class="btn-reject" onclick="openClubModalReject(<?= htmlspecialchars(json_encode($club)) ?>, this)">
                                         <i class="fas fa-times"></i> Rejeter
                                     </button>
@@ -970,6 +1010,16 @@
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
+                                    <?php if ($is_admin): ?>
+                                    <form method="POST">
+                                        <?= Security::csrfField() ?>
+                                        <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
+                                        <input type="hidden" name="action" value="force_approve">
+                                        <button type="submit" name="validate_event_admin" class="btn-force" title="Valider sans attendre le tuteur">
+                                            <i class="fas fa-bolt"></i> Forcer
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
                                     <button type="button" class="btn-reject" onclick="openEventModalReject(<?= htmlspecialchars(json_encode($event)) ?>)">
                                         <i class="fas fa-times"></i> Rejeter
                                     </button>
@@ -1086,6 +1136,16 @@
                         <i class="fas fa-times"></i> Confirmer le rejet
                     </button>
                 </form>
+                <?php if ($is_admin): ?>
+                <form method="POST" id="modalClubForceForm">
+                    <?= Security::csrfField() ?>
+                    <input type="hidden" name="club_id" id="modalClubIdForce" value="">
+                    <input type="hidden" name="action" value="force_approve">
+                    <button type="submit" name="validate_club_admin" class="btn-force" title="Valider immédiatement sans attendre le tuteur">
+                        <i class="fas fa-bolt"></i> Forcer la validation
+                    </button>
+                </form>
+                <?php endif; ?>
                 <form method="POST" id="modalClubApproveForm">
                     <?= Security::csrfField() ?>
                     <input type="hidden" name="club_id" id="modalClubIdApprove" value="">
@@ -1156,6 +1216,16 @@
                         <i class="fas fa-times"></i> Confirmer le rejet
                     </button>
                 </form>
+                <?php if ($is_admin): ?>
+                <form method="POST" id="modalEventForceForm">
+                    <?= Security::csrfField() ?>
+                    <input type="hidden" name="event_id" id="modalEventIdForce" value="">
+                    <input type="hidden" name="action" value="force_approve">
+                    <button type="submit" name="validate_event_admin" class="btn-force" title="Valider immédiatement sans attendre le tuteur">
+                        <i class="fas fa-bolt"></i> Forcer la validation
+                    </button>
+                </form>
+                <?php endif; ?>
                 <form method="POST" id="modalEventApproveForm">
                     <?= Security::csrfField() ?>
                     <input type="hidden" name="event_id" id="modalEventIdApprove" value="">
@@ -1237,6 +1307,10 @@
             document.getElementById('modalClubDescription').textContent = club.description || 'Aucune description fournie.';
             document.getElementById('modalClubIdApprove').value = club.club_id;
             document.getElementById('modalClubIdReject').value = club.club_id;
+            // Force validation (admin only)
+            if (document.getElementById('modalClubIdForce')) {
+                document.getElementById('modalClubIdForce').value = club.club_id;
+            }
             
             // Display club logo if available
             var logoContainer = document.getElementById('modalClubLogo');
@@ -1303,6 +1377,10 @@
             
             document.getElementById('modalEventIdApprove').value = event.event_id;
             document.getElementById('modalEventIdReject').value = event.event_id;
+            // Force validation (admin only)
+            if (document.getElementById('modalEventIdForce')) {
+                document.getElementById('modalEventIdForce').value = event.event_id;
+            }
             document.getElementById('eventModal').classList.add('active');
             document.body.style.overflow = 'hidden';
         };

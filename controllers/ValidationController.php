@@ -259,8 +259,9 @@ class ValidationController {
         validateSession();
         
         // Determiner le niveau d'acces de l'utilisateur
-        $is_admin = ($_SESSION['permission'] == 5);
-        $is_tutor = ($_SESSION['permission'] >= 2);
+        $user_permission = (int)($_SESSION['permission'] ?? 0);
+        $is_admin = ($user_permission == 5);
+        $is_tutor = ($user_permission >= 2);
         
         // Verification des permissions : doit etre au moins tuteur (permission 2)
         if (!$is_tutor) {
@@ -272,9 +273,11 @@ class ValidationController {
         $stmt->execute([$_SESSION['id']]);
         $tutored_clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Si pas de clubs tutores et pas admin, refuser l'acces
+        // Si pas de clubs tutorés : on autorise l'accès, mais la page sera vide (tuteur)
+        // Cela évite de bloquer un compte tuteur nouvellement créé/attribué.
+        $info_msg = '';
         if (empty($tutored_clubs) && !$is_admin) {
-            ErrorHandler::renderHttpError(403, "Vous n'êtes tuteur d'aucun club. Vous devez être assigné comme tuteur d'un club pour accéder à cette page.");
+            $info_msg = "Vous n'êtes tuteur d'aucun club pour le moment. Dès qu'un club vous sera assigné, ses validations apparaîtront ici.";
         }
         
         $error_msg = '';
@@ -284,10 +287,10 @@ class ValidationController {
         // Les admins voient tous les clubs, les tuteurs voient seulement leurs clubs
         if ($is_admin) {
             $pending_clubs = $this->db->prepare("
-                SELECT fc.*, u.nom as tuteur_nom, u.prenom as tuteur_prenom
-                FROM fiche_club fc
-                LEFT JOIN users u ON fc.tuteur = u.id
-                WHERE fc.validation_tuteur IS NULL
+                SELECT fc.*, u.nom as tuteur_nom, u.prenom as tuteur_prenom 
+                FROM fiche_club fc 
+                LEFT JOIN users u ON fc.tuteur = u.id 
+                WHERE fc.validation_admin IS NULL;
             ");
             $pending_clubs->execute();
         } else {
@@ -332,20 +335,40 @@ class ValidationController {
 
             if ($club_id && $action) {
                 if ($is_admin) {
-                    // --- LOGIQUE ADMINISTRATEUR ---
-                    if ($action === 'approve') {
-                        // L'admin approuve : validation_admin = 1 ET validation_finale = 1
-                        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 1, validation_finale = 1, motif_refus = NULL WHERE club_id = ?");
-                        $result = $stmt->execute([$club_id]);
-                        $success_msg = "Club validé définitivement par l'administration.";
+    // --- LOGIQUE ADMINISTRATEUR ---
+                if ($action === 'force_approve') {
+                    // CAS 1 : L'admin FORCE la validation (Urgence/Absence tuteur)
+                    // On active tout immédiatement
+                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 1, validation_finale = 1, motif_refus = NULL WHERE club_id = ?");
+                    $stmt->execute([$club_id]);
+                    $success_msg = "Club validé IMMÉDIATEMENT par l'administration (Validation forcée).";
+                    
+                } elseif ($action === 'approve') {
+                    // CAS 2 : Validation NORMALE
+                    // On met validation_admin à 1
+                    $this->db->prepare("UPDATE fiche_club SET validation_admin = 1 WHERE club_id = ?")->execute([$club_id]);
+
+                    // On vérifie si le tuteur a DÉJÀ validé (pour savoir s'il faut passer à finale = 1)
+                    $check = $this->db->prepare("SELECT validation_tuteur FROM fiche_club WHERE club_id = ?");
+                    $check->execute([$club_id]);
+                    $club_status = $check->fetch();
+
+                    if ($club_status['validation_tuteur'] == 1) {
+                        // Le tuteur avait déjà validé, donc avec l'admin, c'est fini !
+                        $this->db->prepare("UPDATE fiche_club SET validation_finale = 1, motif_refus = NULL WHERE club_id = ?")->execute([$club_id]);
+                        $success_msg = "Club approuvé. Le tuteur ayant déjà validé, le club est maintenant actif.";
                     } else {
-                        // L'admin rejette : validation_admin = 0 SEULEMENT
-                        // Ne pas toucher validation_finale, ça reste chez l'admin (n'apparait pas chez tuteur)
-                        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, motif_refus = ? WHERE club_id = ?");
-                        $result = $stmt->execute([$motif, $club_id]);
-                        $success_msg = "Club rejeté par l'administration.";
+                        // Le tuteur n'a pas encore validé
+                        $success_msg = "Approbation admin enregistrée. En attente de la signature du tuteur pour activation finale.";
                     }
+
                 } else {
+                    // CAS 3 : L'admin REJETTE
+                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE club_id = ?");
+                    $stmt->execute([$motif, $club_id]);
+                    $success_msg = "Club rejeté par l'administration.";
+                }
+            } else {
                     // --- LOGIQUE TUTEUR ---
                     $val = ($action === 'approve') ? 1 : 0;
                     // Le tuteur ne modifie que sa colonne. La validation finale reste à NULL.
@@ -455,6 +478,7 @@ class ValidationController {
             'tutored_clubs' => $tutored_clubs,
             'pending_clubs' => $pending_clubs,
             'pending_events' => $pending_events,
+            'info_msg' => $info_msg,
             'error_msg' => $error_msg,
             'success_msg' => $success_msg
         ];

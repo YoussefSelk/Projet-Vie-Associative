@@ -255,7 +255,7 @@
                                 ?>
                                 <span class="club-status-badge <?= $statusClass ?>">
                                     <?= $status ?>
-                                </span>
+                                </span> 
                             </div>
 
                             <div class="club-meta">

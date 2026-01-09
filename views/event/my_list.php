@@ -32,6 +32,18 @@
                 <p class="subtitle">Événements organisés par mes clubs</p>
             </div>
 
+            <?php if (!empty($error_msg)): ?>
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (!empty($success_msg)): ?>
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?>
+                </div>
+            <?php endif; ?>
+
             <?php if (empty($events)): ?>
                 <div class="empty-state">
                     <i class="fas fa-calendar-times"></i>
@@ -59,25 +71,50 @@
                                     <?php 
                                     $status = '';
                                     $statusClass = '';
-                                    if ($event['validation_finale'] === null || $event['validation_finale'] == 0) {
+                                    $isRejected = false;
+                                    if ($event['validation_finale'] === null) {
+                                        $status = 'En attente';
+                                        $statusClass = 'badge-warning';
+                                    } elseif ($event['validation_finale'] == 0 && !empty($event['motif_refus'])) {
+                                        $status = 'Refusé';
+                                        $statusClass = 'badge-danger';
+                                        $isRejected = true;
+                                    } elseif ($event['validation_finale'] == 0) {
                                         $status = 'En attente';
                                         $statusClass = 'badge-warning';
                                     } elseif ($event['validation_finale'] == 1) {
                                         $status = 'Approuvé';
                                         $statusClass = 'badge-success';
                                     } else {
-                                        $status = 'Rejeté';
+                                        $status = 'Refusé';
                                         $statusClass = 'badge-danger';
+                                        $isRejected = true;
                                     }
                                     ?>
                                     <span class="badge <?= $statusClass ?>"><?= $status ?></span>
                                 </div>
+                                <?php if ($isRejected && !empty($event['motif_refus'])): ?>
+                                    <div class="refusal-reason" style="background-color: #ffe6e6; border-left: 4px solid #dc3545; padding: 8px 12px; border-radius: 4px; margin: 10px 0;">
+                                        <small style="color: #721c24;"><strong>Motif :</strong> <?= htmlspecialchars($event['motif_refus']) ?></small>
+                                    </div>
+                                <?php endif; ?>
                                 <?php if (!empty($event['description'])): ?>
                                     <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 100)) ?>...</p>
                                 <?php endif; ?>
-                                <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-eye"></i> Voir détails
-                                </a>
+                                <div class="event-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye"></i> Voir détails
+                                    </a>
+                                    <?php if ($isRejected): ?>
+                                        <form method="POST" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet événement ?');">
+                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                            <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
+                                            <button type="submit" name="delete_event" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i> Supprimer
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>

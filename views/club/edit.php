@@ -203,6 +203,84 @@
                             <small style="color: #666;">Décrivez les objectifs, les activités et l'impact de votre club.</small>
                         </div>
 
+                        <!-- Section Gestion des Membres -->
+                        <div class="form-group">
+                            <label><i class="fas fa-users"></i> Membres du club</label>
+                            <small style="color: #666; display: block; margin-bottom: 10px;">
+                                Ajoutez ou modifiez les membres de votre club. Vous (Président) êtes automatiquement membre.
+                            </small>
+                            
+                            <div id="members-container">
+                                <?php if (!empty($currentMembers)): ?>
+                                    <?php foreach ($currentMembers as $index => $member): ?>
+                                        <div class="member-row" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                                            <select name="members[<?= $index ?>][user_id]" class="form-control" style="flex: 2;">
+                                                <option value="">-- Sélectionner un membre --</option>
+                                                <?php foreach ($users as $user): ?>
+                                                    <option value="<?= $user['id'] ?>" <?= ($member['id'] == $user['id']) ? 'selected' : '' ?>>
+                                                        <?= htmlspecialchars($user['nom'] . ' ' . $user['prenom']) ?>
+                                                        <?php if (!empty($user['promo'])): ?> (<?= htmlspecialchars($user['promo']) ?>)<?php endif; ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <select name="members[<?= $index ?>][role]" class="form-control" style="flex: 1;">
+                                                <option value="Membre" <?= ($member['fonction'] == 'Membre') ? 'selected' : '' ?>>Membre</option>
+                                                <option value="Vice-président" <?= ($member['fonction'] == 'Vice-président') ? 'selected' : '' ?>>Vice-président</option>
+                                                <option value="Trésorier" <?= ($member['fonction'] == 'Trésorier') ? 'selected' : '' ?>>Trésorier</option>
+                                                <option value="Secrétaire" <?= ($member['fonction'] == 'Secrétaire') ? 'selected' : '' ?>>Secrétaire</option>
+                                                <option value="Responsable Communication" <?= ($member['fonction'] == 'Responsable Communication') ? 'selected' : '' ?>>Responsable Communication</option>
+                                                <option value="Responsable Événements" <?= ($member['fonction'] == 'Responsable Événements') ? 'selected' : '' ?>>Responsable Événements</option>
+                                            </select>
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 10px;" onclick="addMemberRow()">
+                                <i class="fas fa-plus"></i> Ajouter un membre
+                            </button>
+                        </div>
+
+                        <script>
+                        let memberIndex = <?= !empty($currentMembers) ? count($currentMembers) : 0 ?>;
+                        const users = <?= json_encode($users ?? []) ?>;
+                        
+                        function addMemberRow() {
+                            const container = document.getElementById('members-container');
+                            const row = document.createElement('div');
+                            row.className = 'member-row';
+                            row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center;';
+                            
+                            let optionsHtml = '<option value="">-- Sélectionner un membre --</option>';
+                            users.forEach(user => {
+                                optionsHtml += `<option value="${user.id}">${user.nom} ${user.prenom}${user.promo ? ' (' + user.promo + ')' : ''}</option>`;
+                            });
+                            
+                            row.innerHTML = `
+                                <select name="members[${memberIndex}][user_id]" class="form-control" style="flex: 2;">
+                                    ${optionsHtml}
+                                </select>
+                                <select name="members[${memberIndex}][role]" class="form-control" style="flex: 1;">
+                                    <option value="Membre" selected>Membre</option>
+                                    <option value="Vice-président">Vice-président</option>
+                                    <option value="Trésorier">Trésorier</option>
+                                    <option value="Secrétaire">Secrétaire</option>
+                                    <option value="Responsable Communication">Responsable Communication</option>
+                                    <option value="Responsable Événements">Responsable Événements</option>
+                                </select>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            `;
+                            
+                            container.appendChild(row);
+                            memberIndex++;
+                        }
+                        </script>
+
                         <div class="form-actions">
                             <a href="?page=my-clubs" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i> Retour

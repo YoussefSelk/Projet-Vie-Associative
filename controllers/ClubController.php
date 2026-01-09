@@ -237,7 +237,8 @@ class ClubController {
                             $this->notifyTutor($tuteur_id, $nom_club, 'club');
                         }
                         
-                        $success_msg = "Club créé avec succès. Il est en attente de validation.";
+                        // Redirection vers la page de détails du club pour afficher immédiatement les membres
+                        redirect('index.php?page=club-view&id=' . $club_id . '&created=1');
                     } else {
                         $error_msg = "Erreur lors de la création du club.";
                     }
@@ -349,15 +350,34 @@ class ClubController {
             
             if (!$stmt->fetch()) {
                 $error_msg = "Vous n'avez pas la permission de modifier ce club.";
-            } elseif ($club['validation_finale'] != 0) {
-                $error_msg = "Vous ne pouvez modifier que les clubs refusés.";
+            } elseif ($club['validation_finale'] == 1) {
+                $error_msg = "Vous ne pouvez pas modifier un club déjà validé.";            
             } else {
+                // Récupérer les membres actuels du club (sauf le Président)
+                $currentMembers = $this->db->prepare("
+                    SELECT u.id, u.nom, u.prenom, mc.fonction 
+                    FROM membres_club mc 
+                    INNER JOIN users u ON mc.membre_id = u.id 
+                    WHERE mc.club_id = ? AND mc.fonction != 'Président'
+                ");
+                $currentMembers->execute([$club_id]);
+                $currentMembers = $currentMembers->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Récupérer tous les utilisateurs disponibles (sauf l'utilisateur actuel)
+                $users = $this->db->query("
+                    SELECT id, nom, prenom, mail, promo 
+                    FROM users 
+                    WHERE id != $user_id
+                    ORDER BY nom ASC, prenom ASC
+                ")->fetchAll(PDO::FETCH_ASSOC);
+                
                 // Traiter la soumission du formulaire
                 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_club'])) {
                     $nom_club = trim($_POST['nom_club'] ?? '');
                     $type_club = trim($_POST['type_club'] ?? '');
                     $description = trim($_POST['description'] ?? '');
                     $campus = trim($_POST['campus'] ?? '');
+                    $members = $_POST['members'] ?? [];
 
                     if (!$nom_club || !$type_club || !$description || !$campus) {
                         $error_msg = "Tous les champs sont obligatoires.";
@@ -377,6 +397,28 @@ class ClubController {
 
                             // Mettre à jour le club et réinitialiser la validation
                             if ($this->clubModel->updateClub($club_id, $data, true)) {
+                                // Tâche 5: Supprimer tous les membres existants pour éviter les doublons
+                                // Ne pas supprimer le Président (créateur)
+                                $deleteStmt = $this->db->prepare("DELETE FROM membres_club WHERE club_id = ? AND fonction != 'Président'");
+                                $deleteStmt->execute([$club_id]);
+                                
+                                // Réinsérer les membres mis à jour
+                                if (!empty($members)) {
+                                    foreach ($members as $member) {
+                                        $memberId = !empty($member['user_id']) ? intval($member['user_id']) : null;
+                                        
+                                        if ($memberId && $memberId != $user_id) {
+                                            // Vérifier que le membre n'existe pas déjà (double sécurité)
+                                            $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
+                                            $checkStmt->execute([$club_id, $memberId]);
+                                            if (!$checkStmt->fetch()) {
+                                                $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
+                                                $insertStmt->execute([$club_id, $memberId, $member['role'] ?? 'Membre']);
+                                            }
+                                        }
+                                    }
+                                }
+                                
                                 redirect('index.php?page=my-clubs&success=1');
                             } else {
                                 $error_msg = "Erreur lors de la modification du club.";
@@ -390,7 +432,9 @@ class ClubController {
         return [
             'club' => $club,
             'error_msg' => $error_msg,
-            'success_msg' => $success_msg
+            'success_msg' => $success_msg,
+            'currentMembers' => $currentMembers ?? [],
+            'users' => $users ?? []
         ];
     }
 

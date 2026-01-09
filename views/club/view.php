@@ -33,6 +33,12 @@
     <main>
         
         <div class="page-container">
+            <?php if (isset($_GET['created']) && $_GET['created'] == 1): ?>
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-check-circle"></i> Club créé avec succès ! Il est maintenant en attente de validation. Les membres apparaissent ci-dessous.
+                </div>
+            <?php endif; ?>
+            
             <?php if (!empty($error_msg)): ?>
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-circle"></i>

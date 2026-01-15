@@ -77,8 +77,11 @@ class ValidationController {
      * Traite les actions POST : approve, reject, delete
      * Requiert permission 3 (membre BDE)
      * 
+     * Le BDE ne valide que validation_bde (pas la validation finale)
+     * La validation finale est geree separement par l'admin
+     * 
      * Actions possibles :
-     * - validate_club : Approuver ou rejeter un club
+     * - validate_club : Approuver ou rejeter un club (validation BDE)
      * - delete_club : Supprimer un club rejete
      * 
      * @return array Donnees pour la vue (clubs en attente, clubs rejetes, messages)
@@ -99,9 +102,22 @@ class ValidationController {
                 $error_msg = "Données manquantes.";
             } else {
                 if ($action === 'approve') {
-                    // Approbation avec remarques optionnelles
-                    if ($this->validationModel->validateClub($club_id, 1, 1, 1, $remarques ?: null)) {
-                        $success_msg = "Club approuvé avec succès.";
+                    // BDE approuve : validation_admin = 1 (pour clubs, BDE = admin de validation)
+                    // Note: Pour les clubs, le workflow est: Tuteur valide -> Admin valide -> validation_finale
+                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 1 WHERE club_id = ?");
+                    if ($stmt->execute([$club_id])) {
+                        // Verifier si le tuteur a deja valide pour appliquer validation_finale
+                        $check = $this->db->prepare("SELECT validation_tuteur FROM fiche_club WHERE club_id = ?");
+                        $check->execute([$club_id]);
+                        $club = $check->fetch(PDO::FETCH_ASSOC);
+                        
+                        if ($club && $club['validation_tuteur'] == 1) {
+                            // Tuteur deja valide, on peut donner la validation finale
+                            $this->db->prepare("UPDATE fiche_club SET validation_finale = 1 WHERE club_id = ?")->execute([$club_id]);
+                            $success_msg = "Club validé définitivement (tuteur avait déjà approuvé).";
+                        } else {
+                            $success_msg = "Club approuvé par l'administration. En attente de validation tuteur.";
+                        }
                     } else {
                         $error_msg = "Erreur lors de la validation.";
                     }
@@ -141,8 +157,11 @@ class ValidationController {
      * Traite les actions POST : approve, reject, delete
      * Requiert permission 3 (membre BDE)
      * 
+     * Le BDE ne valide que validation_bde
+     * La validation finale necessite: validation_bde = 1 ET (validation_tuteur = 1 OU validation_admin = 1)
+     * 
      * Actions possibles :
-     * - validate_event : Approuver ou rejeter un evenement
+     * - validate_event : Approuver ou rejeter un evenement (validation BDE)
      * - delete_event : Supprimer un evenement rejete
      * 
      * @return array Donnees pour la vue (evenements en attente, rejetes, messages)
@@ -163,9 +182,21 @@ class ValidationController {
                 $error_msg = "Données manquantes.";
             } else {
                 if ($action === 'approve') {
-                    // Approbation avec remarques optionnelles
-                    if ($this->validationModel->validateEvent($event_id, 1, 1, 1, $remarques ?: null)) {
-                        $success_msg = "Événement approuvé avec succès.";
+                    // BDE approuve : validation_bde = 1
+                    $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = 1 WHERE event_id = ?");
+                    if ($stmt->execute([$event_id])) {
+                        // Verifier si tuteur OU admin a deja valide pour appliquer validation_finale
+                        $check = $this->db->prepare("SELECT validation_tuteur, validation_admin FROM fiche_event WHERE event_id = ?");
+                        $check->execute([$event_id]);
+                        $event = $check->fetch(PDO::FETCH_ASSOC);
+                        
+                        if ($event && ($event['validation_tuteur'] == 1 || $event['validation_admin'] == 1)) {
+                            // Tuteur ou admin a deja valide, on peut donner la validation finale
+                            $this->db->prepare("UPDATE fiche_event SET validation_finale = 1 WHERE event_id = ?")->execute([$event_id]);
+                            $success_msg = "Événement validé définitivement.";
+                        } else {
+                            $success_msg = "Événement approuvé par le BDE. En attente de validation tuteur ou admin.";
+                        }
                     } else {
                         $error_msg = "Erreur lors de la validation.";
                     }
@@ -312,7 +343,21 @@ class ValidationController {
                     }
                     
                     if ($result && $stmt->rowCount() > 0) {
-                        $success_msg = "Club " . ($validation ? "approuvé" : "rejeté");
+                        // Si approuve, verifier si admin a deja valide pour donner validation finale
+                        if ($validation == 1) {
+                            $check = $this->db->prepare("SELECT validation_admin FROM fiche_club WHERE club_id = ?");
+                            $check->execute([$club_id]);
+                            $club = $check->fetch(PDO::FETCH_ASSOC);
+                            
+                            if ($club && $club['validation_admin'] == 1) {
+                                $this->db->prepare("UPDATE fiche_club SET validation_finale = 1 WHERE club_id = ?")->execute([$club_id]);
+                                $success_msg = "Club validé définitivement.";
+                            } else {
+                                $success_msg = "Club approuvé par le tuteur. En attente de validation administration.";
+                            }
+                        } else {
+                            $success_msg = "Club rejeté.";
+                        }
                         
                         // Rafraichir la liste des clubs en attente apres la modification
                         if ($is_admin) {
@@ -373,7 +418,21 @@ class ValidationController {
                     }
                     
                     if ($result && $stmt->rowCount() > 0) {
-                        $success_msg = "Événement " . ($validation ? "approuvé" : "rejeté");
+                        // Si approuve, verifier si BDE a deja valide pour donner validation finale
+                        if ($validation == 1) {
+                            $check = $this->db->prepare("SELECT validation_bde FROM fiche_event WHERE event_id = ?");
+                            $check->execute([$event_id]);
+                            $event = $check->fetch(PDO::FETCH_ASSOC);
+                            
+                            if ($event && $event['validation_bde'] == 1) {
+                                $this->db->prepare("UPDATE fiche_event SET validation_finale = 1 WHERE event_id = ?")->execute([$event_id]);
+                                $success_msg = "Événement validé définitivement.";
+                            } else {
+                                $success_msg = "Événement approuvé par le tuteur. En attente de validation BDE.";
+                            }
+                        } else {
+                            $success_msg = "Événement rejeté.";
+                        }
                         
                         // Rafraichir la liste des evenements en attente apres la modification
                         if ($is_admin) {

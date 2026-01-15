@@ -42,7 +42,8 @@ if(isset($_SESSION['id'])){
     $req_clubs=$req_0->fetchAll();
 
     // Compteur d'evenements en attente de validation finale
-    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event WHERE validation_finale IS NULL AND validation_bde = 1 AND validation_tuteur = 1");
+    // La validation tuteur est optionnelle si BDE et Admin ont validé
+    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event WHERE validation_finale IS NULL AND validation_bde = 1 AND (validation_tuteur = 1 OR validation_admin = 1)");
     $req->execute();
     $row = $req->fetchAll();
     $nb_events_admin = $row[0]['total'];
@@ -108,7 +109,7 @@ else {
             </a>
         </div>
         <div class="top-bar-right">
-            <?php if(isset($_SESSION["nom"])): ?>
+            <?php if(isset($_SESSION["id"])): ?>
                 <span class="user-welcome">
                     <i class="fas fa-user-circle"></i> 
                     Bonjour, <?= htmlspecialchars($_SESSION['prenom']) ?>
@@ -138,7 +139,7 @@ else {
         
         <!-- Actions Section -->
         <div class="header-actions">
-            <?php if(isset($_SESSION["nom"])): ?>
+            <?php if(isset($_SESSION["id"])): ?>
                 <!-- User Menu -->
                 <div class="user-menu-dropdown">
                     <button class="user-menu-btn" onclick="toggleUserMenu()">
@@ -187,7 +188,7 @@ else {
 </header>
 
 <!-- Quick Actions Bar (for logged-in users) -->
-<?php if(isset($_SESSION["nom"])): ?>
+<?php if(isset($_SESSION["id"])): ?>
 <div class="quick-actions-bar">
     <div class="quick-actions-container">
         <div class="quick-actions-scroll">

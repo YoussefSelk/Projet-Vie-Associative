@@ -30,6 +30,13 @@ define('LOGS_PATH', ROOT_PATH . '/logs');
 define('UPLOADS_PATH', ROOT_PATH . '/uploads');
 
 // =============================================================================
+// DÉMARRAGE DU BUFFER DE SORTIE
+// =============================================================================
+// Permet de nettoyer tout l'output en cas d'erreur pour afficher
+// la page d'erreur complète sans contenu parasite
+ob_start();
+
+// =============================================================================
 // CHARGEMENT DE L'ENVIRONNEMENT
 // =============================================================================
 require_once CONFIG_PATH . '/Environment.php';

@@ -10,11 +10,11 @@
  * - Valeurs par défaut pour le développement
  * 
  * Variables d'environnement supportées :
- * - APP_ENV : 'development' ou 'production'
- * - APP_DEBUG : 'true' ou 'false'
- * - DB_HOST, DB_NAME, DB_USER, DB_PASS : Configuration base de données
- * - MAIL_* : Configuration SMTP
- * - SESSION_*, COOKIE_* : Configuration sécurité
+ *  - APP_ENV : 'development' ou 'production'
+ *  - APP_DEBUG : 'true' ou 'false'
+ *  - DB_HOST, DB_NAME, DB_USER, DB_PASS : Configuration base de données
+ *  - MAIL_* : Configuration SMTP
+ *  - SESSION_*, COOKIE_* : Configuration sécurité
  * 
  * Détection automatique du serveur :
  * - Apache, Nginx, IIS, LiteSpeed

@@ -439,86 +439,114 @@ class AdminController {
      * @return void (sortie directe du fichier CSV)
      */
     public function exportData() {
+        // 1. Sécurité et préparation
         checkPermission(5);
-        
         $type = $_GET['type'] ?? 'users';
-        
+
+        // 2. Vider le tampon de sortie pour éviter tout conflit avec le routeur
+        // NOTE: Do not call ob_end_clean() here — it can discard the output buffer and result in an empty download.
+        // If you need to clear buffers, prefer controlled flushes; leave existing buffers intact to avoid losing data.
+
+        // 3. Logique de sélection des données
         switch ($type) {
             case 'users':
-                // Export de la liste des utilisateurs
-                $stmt = $this->db->query("SELECT id, nom, prenom, mail, promo, permission FROM users ORDER BY id");
+                $stmt = $this->db->prepare("SELECT id, nom, prenom, mail, promo, permission FROM users ORDER BY id ASC");
+                $stmt->execute();
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                $filename = 'users_export_' . date('Y-m-d') . '.csv';
                 $headers = ['ID', 'Nom', 'Prénom', 'Email', 'Promo', 'Permission'];
+                $filename = 'users_export_' . date('Y-m-d') . '.csv';
                 break;
                 
             case 'clubs':
-                // Export de la liste des clubs
-                $stmt = $this->db->query("SELECT club_id, nom_club, type_club, campus, validation_finale FROM fiche_club ORDER BY club_id");
+                $stmt = $this->db->prepare("SELECT club_id, nom_club, type_club, campus, validation_finale FROM fiche_club ORDER BY club_id ASC");
+                $stmt->execute();
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                $filename = 'clubs_export_' . date('Y-m-d') . '.csv';
                 $headers = ['ID', 'Nom du club', 'Type', 'Campus', 'Statut validation'];
+                $filename = 'clubs_export_' . date('Y-m-d') . '.csv';
                 break;
                 
             case 'events':
-                // Export de la liste des evenements
-                $stmt = $this->db->query("SELECT event_id, titre, date_ev, campus, validation_finale FROM fiche_event ORDER BY event_id");
+                $stmt = $this->db->prepare("SELECT event_id, titre, date_ev, campus, validation_finale FROM fiche_event ORDER BY event_id ASC");
+                $stmt->execute();
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                $filename = 'events_export_' . date('Y-m-d') . '.csv';
                 $headers = ['ID', 'Titre', 'Date', 'Campus', 'Statut validation'];
+                $filename = 'events_export_' . date('Y-m-d') . '.csv';
                 break;
-            
+
             case 'subscriptions':
-                // Export des inscriptions aux evenements avec details utilisateur et evenement
-                // Table abonnements: id = user_id, event_id, date_abonnement
-                $stmt = $this->db->query("
+                $stmt = $this->db->prepare("
                     SELECT a.id as user_id, u.nom, u.prenom, u.mail, fe.titre, fe.date_ev, a.date_abonnement
                     FROM abonnements a
                     JOIN users u ON a.id = u.id
                     JOIN fiche_event fe ON a.event_id = fe.event_id
                     ORDER BY a.date_abonnement DESC
                 ");
+                $stmt->execute();
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                $filename = 'subscriptions_export_' . date('Y-m-d') . '.csv';
                 $headers = ['User ID', 'Nom', 'Prénom', 'Email', 'Événement', 'Date événement', 'Date inscription'];
+                $filename = 'subscriptions_export_' . date('Y-m-d') . '.csv';
                 break;
             
-            case 'members':
-                // Export des membres de clubs avec details
-                $stmt = $this->db->query("
-                    SELECT mc.id, u.nom, u.prenom, u.mail, fc.nom_club, mc.valide
-                    FROM membres_club mc
-                    JOIN users u ON mc.membre_id = u.id
-                    JOIN fiche_club fc ON mc.club_id = fc.club_id
-                    ORDER BY mc.id
-                ");
-                $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                $filename = 'club_members_export_' . date('Y-m-d') . '.csv';
-                $headers = ['ID', 'Nom', 'Prénom', 'Email', 'Club', 'Validé'];
-                break;
-                
             default:
-                redirect('index.php?page=admin-settings');
-                return;
+                header('Location: index.php?page=admin-settings');
+                exit;
         }
-        
-        // En-tetes HTTP pour le telechargement CSV
+
+        // 4. En-têtes HTTP (Exactement comme exportMembers)
         header('Content-Type: text/csv; charset=UTF-8');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Pragma: no-cache');
         header('Expires: 0');
         
-        // BOM UTF-8 pour compatibilite Excel
+        // BOM UTF-8 pour Excel
         echo "\xEF\xBB\xBF";
         
         $output = fopen('php://output', 'w');
-        fputcsv($output, $headers, ';');
-        
+
+        // En-tête des colonnes
+        fputcsv($output, $headers, ';', '"', "\\");
+
+        // Lignes de données
         foreach ($data as $row) {
-            fputcsv($output, array_values($row), ';');
+            $cleanRow = [];
+            if ($type === 'users') {
+                $cleanRow = [
+                    $row['id'] ?? '',
+                    $row['nom'] ?? '',
+                    $row['prenom'] ?? '',
+                    $row['mail'] ?? '',
+                    $row['promo'] ?? '',
+                    $row['permission'] ?? ''
+                ];
+            } elseif ($type === 'clubs') {
+                $cleanRow = [
+                    $row['club_id'] ?? '',
+                    $row['nom_club'] ?? '',
+                    $row['type_club'] ?? '',
+                    $row['campus'] ?? '',
+                    $row['validation_finale'] ?? ''
+                ];
+            } elseif ($type === 'events') {
+                $cleanRow = [
+                    $row['event_id'] ?? '',
+                    $row['titre'] ?? '',
+                    $row['date_ev'] ?? '',
+                    $row['campus'] ?? '',
+                    $row['validation_finale'] ?? ''
+                ];
+            } else {
+                $cleanRow = array_values($row);
+            }
+
+            fputcsv($output, $cleanRow, ';', '"', "\\");
         }
-        
+
         fclose($output);
+
+        // 6. TRÈS IMPORTANT : flush et exit
+        if (function_exists('flush')) {
+            flush();
+        }
         exit;
     }
 

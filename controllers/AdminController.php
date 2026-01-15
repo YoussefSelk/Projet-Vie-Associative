@@ -443,10 +443,6 @@ class AdminController {
         checkPermission(5);
         $type = $_GET['type'] ?? 'users';
 
-        // 2. Vider le tampon de sortie pour éviter tout conflit avec le routeur
-        // NOTE: Do not call ob_end_clean() here — it can discard the output buffer and result in an empty download.
-        // If you need to clear buffers, prefer controlled flushes; leave existing buffers intact to avoid losing data.
-
         // 3. Logique de sélection des données
         switch ($type) {
             case 'users':

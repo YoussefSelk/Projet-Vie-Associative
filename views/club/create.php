@@ -383,7 +383,7 @@
                         <div class="form-section">
                             <h4>
                                 <i class="fas fa-project-diagram"></i> Soutenance
-                                <span class="tooltip-trigger" title="Si votre club fait partie d'un projet associatif, vous devez avoir au moins 3 membres au moment de la création. La soutenance est obligatoire pour certains clubs.">
+                                <span class="tooltip-trigger" title="La création d'un club nécessite au moins 3 personnes (vous + 2 autres membres). La soutenance est obligatoire pour certains clubs.">
                                     <i class="fas fa-question-circle"></i>
                                 </span>
                             </h4>
@@ -424,10 +424,10 @@
                             </div>
                             
                             <p class="text-muted" id="memberRequirement" style="display: none;">
-                                <i class="fas fa-exclamation-triangle"></i> <span id="memberRequirementText">Ajoutez au moins 2 autres membres pour un projet associatif.</span>
+                                <i class="fas fa-exclamation-triangle"></i> <span id="memberRequirementText">Ajoutez au moins 2 autres membres fondateurs (vous + 2 autres minimum).</span>
                             </p>
                             <p class="text-success" id="memberRequirementOk" style="display: none;">
-                                <i class="fas fa-check-circle"></i> Nombre de membres suffisant pour un projet associatif.
+                                <i class="fas fa-check-circle"></i> Nombre de membres suffisant.
                             </p>
                             
                             <!-- Liste des membres ajoutés -->
@@ -569,32 +569,34 @@
             }
         }
         
+        function getRequiredOtherMembers() {
+            return 2; // Toujours 2 autres membres minimum (3 personnes au total)
+        }
+
         // Fonction pour mettre à jour le compteur de membres et vérifier les conditions
         function updateMemberCount() {
             var count = membersList.querySelectorAll('.member-form-row').length;
             var totalCount = count + 1; // +1 pour le créateur
             memberCountSpan.textContent = '(' + totalCount + ' membre' + (totalCount > 1 ? 's' : '') + ' au total)';
-            
-            // Vérifier si projet associatif est coché
-            if (projetAssociatifCheck && projetAssociatifCheck.checked) {
-                updateMemberRequirement(count);
-            }
+
+            updateMemberRequirement(count);
         }
         
         // Fonction pour mettre à jour l'affichage du requirement
         function updateMemberRequirement(otherMembersCount) {
             var memberRequirementOk = document.getElementById('memberRequirementOk');
             var memberRequirementText = document.getElementById('memberRequirementText');
-            
-            if (otherMembersCount >= 2) {
+
+            var required = getRequiredOtherMembers();
+            if (otherMembersCount >= required) {
                 // Suffisamment de membres
                 memberRequirement.style.display = 'none';
                 if (memberRequirementOk) memberRequirementOk.style.display = 'block';
             } else {
                 // Pas assez de membres
-                var remaining = 2 - otherMembersCount;
+                var remaining = required - otherMembersCount;
                 if (memberRequirementText) {
-                    memberRequirementText.textContent = 'Ajoutez encore ' + remaining + ' membre' + (remaining > 1 ? 's' : '') + ' pour un projet associatif (vous + 2 autres minimum).';
+                    memberRequirementText.textContent = 'Ajoutez encore ' + remaining + ' membre' + (remaining > 1 ? 's' : '') + ' (vous + 2 autres minimum).';
                 }
                 memberRequirement.style.display = 'block';
                 if (memberRequirementOk) memberRequirementOk.style.display = 'none';
@@ -759,27 +761,26 @@
             projetAssociatifCheck.addEventListener('change', function() {
                 var count = membersList.querySelectorAll('.member-form-row').length;
                 var memberRequirementOk = document.getElementById('memberRequirementOk');
-                
-                if (this.checked) {
-                    updateMemberRequirement(count);
-                } else {
-                    memberRequirement.style.display = 'none';
-                    if (memberRequirementOk) memberRequirementOk.style.display = 'none';
-                }
+
+                // La règle des 3 personnes reste la même, on met juste à jour l'affichage.
+                updateMemberRequirement(count);
             });
         }
         
         // Event: Validation du formulaire
         clubForm.addEventListener('submit', function(e) {
-            var isProjetAssociatif = projetAssociatifCheck && projetAssociatifCheck.checked;
             var currentMemberCount = membersList.querySelectorAll('.member-form-row').length;
-            
-            if (isProjetAssociatif && currentMemberCount < 2) {
+
+            if (currentMemberCount < 2) {
                 e.preventDefault();
-                alert('Un projet associatif nécessite au moins 3 membres fondateurs (vous + 2 autres).');
+                alert("La création d'un club nécessite au moins 3 personnes (vous + 2 autres membres fondateurs). ");
                 return false;
             }
         });
+
+        // Initial UI state
+        updateMemberCount();
+        updateMemberRequirement(0);
         
         // Event: Touche Entrée sur le champ de recherche
         searchInput.addEventListener('keydown', function(e) {

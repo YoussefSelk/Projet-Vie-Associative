@@ -1,11 +1,11 @@
 <?php
 /**
- * Édition d'un club refusé
+ * Édition d'un club en attente ou refusé
  * 
- * Permet à un utilisateur de modifier les informations d'un club refusé
- * et de le resoummettre à validation.
+ * Permet à un membre du bureau (Président ou Secrétaire) de modifier les informations d'un club
+ * et de le (re)soumettre à validation.
  * 
- * Seul le Président (créateur) peut modifier le club.
+ * Le Président et le Secrétaire peuvent modifier le club.
  * Une fois modifié, le club retourne en état de validation.
  * 
  * Variables attendues :

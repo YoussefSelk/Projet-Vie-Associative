@@ -336,38 +336,38 @@ class ValidationController {
             if ($club_id && $action) {
                 if ($is_admin) {
     // --- LOGIQUE ADMINISTRATEUR ---
-                if ($action === 'force_approve') {
-                    // CAS 1 : L'admin FORCE la validation (Urgence/Absence tuteur)
-                    // On active tout immédiatement
-                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 1, validation_finale = 1, motif_refus = NULL WHERE club_id = ?");
-                    $stmt->execute([$club_id]);
-                    $success_msg = "Club validé IMMÉDIATEMENT par l'administration (Validation forcée).";
-                    
-                } elseif ($action === 'approve') {
-                    // CAS 2 : Validation NORMALE
-                    // On met validation_admin à 1
-                    $this->db->prepare("UPDATE fiche_club SET validation_admin = 1 WHERE club_id = ?")->execute([$club_id]);
+                    if ($action === 'force_approve') {
+                        // CAS 1 : L'admin FORCE la validation (Urgence/Absence tuteur)
+                        // On active tout immédiatement
+                        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 1, validation_finale = 1, motif_refus = NULL WHERE club_id = ?");
+                        $stmt->execute([$club_id]);
+                        $success_msg = "Club validé IMMÉDIATEMENT par l'administration (Validation forcée).";
+                        
+                    } elseif ($action === 'approve') {
+                        // CAS 2 : Validation NORMALE
+                        // On met validation_admin à 1
+                        $this->db->prepare("UPDATE fiche_club SET validation_admin = 1 WHERE club_id = ?")->execute([$club_id]);
 
-                    // On vérifie si le tuteur a DÉJÀ validé (pour savoir s'il faut passer à finale = 1)
-                    $check = $this->db->prepare("SELECT validation_tuteur FROM fiche_club WHERE club_id = ?");
-                    $check->execute([$club_id]);
-                    $club_status = $check->fetch();
+                        // On vérifie si le tuteur a DÉJÀ validé (pour savoir s'il faut passer à finale = 1)
+                        $check = $this->db->prepare("SELECT validation_tuteur FROM fiche_club WHERE club_id = ?");
+                        $check->execute([$club_id]);
+                        $club_status = $check->fetch();
 
-                    if ($club_status['validation_tuteur'] == 1) {
-                        // Le tuteur avait déjà validé, donc avec l'admin, c'est fini !
-                        $this->db->prepare("UPDATE fiche_club SET validation_finale = 1, motif_refus = NULL WHERE club_id = ?")->execute([$club_id]);
-                        $success_msg = "Club approuvé. Le tuteur ayant déjà validé, le club est maintenant actif.";
+                        if ($club_status['validation_tuteur'] == 1) {
+                            // Le tuteur avait déjà validé, donc avec l'admin, c'est fini !
+                            $this->db->prepare("UPDATE fiche_club SET validation_finale = 1, motif_refus = NULL WHERE club_id = ?")->execute([$club_id]);
+                            $success_msg = "Club approuvé. Le tuteur ayant déjà validé, le club est maintenant actif.";
+                        } else {
+                            // Le tuteur n'a pas encore validé
+                            $success_msg = "Approbation admin enregistrée. En attente de la signature du tuteur pour activation finale.";
+                        }
+
                     } else {
-                        // Le tuteur n'a pas encore validé
-                        $success_msg = "Approbation admin enregistrée. En attente de la signature du tuteur pour activation finale.";
+                        // CAS 3 : L'admin REJETTE
+                        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE club_id = ?");
+                        $stmt->execute([$motif, $club_id]);
+                        $success_msg = "Club rejeté par l'administration.";
                     }
-
-                } else {
-                    // CAS 3 : L'admin REJETTE
-                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE club_id = ?");
-                    $stmt->execute([$motif, $club_id]);
-                    $success_msg = "Club rejeté par l'administration.";
-                }
             } else {
                     // --- LOGIQUE TUTEUR ---
                     $val = ($action === 'approve') ? 1 : 0;
@@ -399,27 +399,50 @@ class ValidationController {
         }
             
             // Validation d'un evenement par l'administrateur
+            // Validation d'un evenement par l'administrateur
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
+    // =========================================================================
+    // 1. VALIDATION D'UN ÉVÉNEMENT PAR L'ADMINISTRATEUR
+    // =========================================================================
             if (isset($_POST['validate_event_admin'])) {
                 $event_id = $_POST['event_id'] ?? null;
                 $action = $_POST['action'] ?? null;
                 $motif = trim($_POST['motif'] ?? '');
 
                 if ($event_id && $action && $is_admin) {
-                    if ($action === 'approve') {
-                        // L'admin approuve : validation_admin = 1 ET validation_finale = 1
-                        // Décision immédiate et définitive, peu importe l'état du tuteur/BDE
+                    if ($action === 'force_approve') {
+                        // CAS 1 : L'admin FORCE la validation (Urgence ou absence des autres)
                         $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_finale = 1, motif_refus = NULL WHERE event_id = ?");
                         $result = $stmt->execute([$event_id]);
-                        $success_msg = "Événement validé définitivement par l'administration.";
+                        $success_msg = "Événement validé IMMÉDIATEMENT par l'administration (Validation forcée).";
+
+                    } elseif ($action === 'approve') {
+                        // CAS 2 : Validation NORMALE
+                        $this->db->prepare("UPDATE fiche_event SET validation_admin = 1 WHERE event_id = ?")->execute([$event_id]);
+
+                        // Vérifier si le tuteur ET le BDE ont déjà validé
+                        $check = $this->db->prepare("SELECT validation_tuteur, validation_bde FROM fiche_event WHERE event_id = ?");
+                        $check->execute([$event_id]);
+                        $status = $check->fetch();
+
+                        if ($status['validation_tuteur'] == 1 && $status['validation_bde'] == 1) {
+                            // Les 3 validations sont réunies
+                            $this->db->prepare("UPDATE fiche_event SET validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
+                            $success_msg = "Événement approuvé. Toutes les validations (BDE/Tuteur/Admin) sont complètes.";
+                        } else {
+                            $success_msg = "Approbation admin enregistrée. En attente des validations restantes (BDE ou Tuteur).";
+                        }
+                        $result = true;
+
                     } else {
-                        // L'admin rejette : validation_admin = 0 ET validation_finale = 0
-                        // Permet à l'étudiant de voir sa fiche comme "rejetée" et de l'éditer
+                        // CAS 3 : REJET PAR L'ADMIN
                         $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?");
                         $result = $stmt->execute([$motif, $event_id]);
                         $success_msg = "Événement rejeté par l'administration.";
                     }
 
-                    // Rafraichir la liste des evenements en attente
+                    // Rafraîchissement de la liste admin
                     if ($result) {
                         $pending_events = $this->db->prepare("
                             SELECT fe.*, fc.nom_club, u.nom as tuteur_nom, u.prenom as tuteur_prenom
@@ -434,7 +457,9 @@ class ValidationController {
                 }
             }
 
-            // Validation d'un evenement par le tuteur
+            // =========================================================================
+            // 2. VALIDATION D'UN ÉVÉNEMENT PAR LE TUTEUR
+            // =========================================================================
             if (isset($_POST['validate_event_tutor'])) {
                 $event_id = $_POST['event_id'] ?? null;
                 $action = $_POST['action'] ?? null;
@@ -443,7 +468,7 @@ class ValidationController {
                 if ($event_id && $action && !$is_admin) {
                     $val = ($action === 'approve') ? 1 : 0;
                     
-                    // Le tuteur ne modifie que validation_tuteur, pas validation_finale
+                    // Le tuteur ne modifie que sa colonne via une jointure pour vérifier son affectation
                     $stmt = $this->db->prepare("
                         UPDATE fiche_event fe
                         INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
@@ -452,14 +477,24 @@ class ValidationController {
                     ");
                     $result = $stmt->execute([$val, $motif, $event_id, $_SESSION['id']]);
                     
-                    if ($result && $stmt->rowCount() > 0) {
-                        if ($val == 1) {
-                            $success_msg = "Avis du tuteur enregistré. En attente de la décision de l'administration.";
+                    if ($result && $val == 1) {
+                        // Vérifier si l'Admin ET le BDE ont déjà validé
+                        $check = $this->db->prepare("SELECT validation_admin, validation_bde FROM fiche_event WHERE event_id = ?");
+                        $check->execute([$event_id]);
+                        $status = $check->fetch();
+
+                        if ($status['validation_admin'] == 1 && $status['validation_bde'] == 1) {
+                            $this->db->prepare("UPDATE fiche_event SET validation_finale = 1 WHERE event_id = ?")->execute([$event_id]);
+                            $success_msg = "Événement activé. Les validations BDE, Admin et Tuteur sont complètes.";
                         } else {
-                            $success_msg = "Événement rejeté par le tuteur.";
+                            $success_msg = "Avis du tuteur enregistré. En attente des autres décisions.";
                         }
-                        
-                        // Rafraichir la liste des evenements en attente
+                    } elseif ($result && $val == 0) {
+                        $success_msg = "Événement rejeté par le tuteur.";
+                    }
+                    
+                    // Rafraîchissement de la liste tuteur
+                    if ($result) {
                         $pending_events = $this->db->prepare("
                             SELECT fe.*, fc.nom_club 
                             FROM fiche_event fe
@@ -471,7 +506,53 @@ class ValidationController {
                     }
                 }
             }
+
+            // =========================================================================
+            // 3. VALIDATION D'UN ÉVÉNEMENT PAR LE BDE
+            // =========================================================================
+            if (isset($_POST['validate_event_bde'])) {
+                $event_id = $_POST['event_id'] ?? null;
+                $action = $_POST['action'] ?? null;
+                $motif = trim($_POST['motif'] ?? '');
+                
+                // Rôle BDE (niveau de permission 2)
+                if ($event_id && $action && $user_permission == 2) {
+                    $val = ($action === 'approve') ? 1 : 0;
+                    
+                    $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = ?, motif_refus = ? WHERE event_id = ?");
+                    $result = $stmt->execute([$val, $motif, $event_id]);
+                    
+                    if ($result && $val == 1) {
+                        // Vérifier si l'Admin ET le Tuteur ont déjà validé
+                        $check = $this->db->prepare("SELECT validation_admin, validation_tuteur FROM fiche_event WHERE event_id = ?");
+                        $check->execute([$event_id]);
+                        $status = $check->fetch();
+
+                        if ($status['validation_admin'] == 1 && $status['validation_tuteur'] == 1) {
+                            $this->db->prepare("UPDATE fiche_event SET validation_finale = 1 WHERE event_id = ?")->execute([$event_id]);
+                            $success_msg = "Événement activé. Le BDE était la dernière validation manquante.";
+                        } else {
+                            $success_msg = "Pré-approbation BDE enregistrée. En attente du Tuteur ou de l'Admin.";
+                        }
+                    } elseif ($result && $val == 0) {
+                        $success_msg = "Événement refusé par le BDE.";
+                    }
+                    
+                    // Rafraîchissement de la liste BDE
+                    if ($result) {
+                        $pending_events = $this->db->prepare("
+                            SELECT fe.*, fc.nom_club 
+                            FROM fiche_event fe
+                            INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                            WHERE fe.validation_bde IS NULL
+                        ");
+                        $pending_events->execute();
+                        $pending_events = $pending_events->fetchAll(PDO::FETCH_ASSOC);
+                    }
+                }
+            }
         }
+    }
         
         return [
             'is_admin' => $is_admin,

@@ -348,6 +348,7 @@
             font-size: 0.9rem;
             line-height: 1.6;
             display: -webkit-box;
+            line-clamp: 2;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
@@ -1006,7 +1007,7 @@
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                                         <input type="hidden" name="action" value="approve">
-                                        <button type="submit" name="validate_event_admin" class="btn-approve">
+                                        <button type="submit" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" class="btn-approve">
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
@@ -1212,7 +1213,7 @@
                     <input type="hidden" name="event_id" id="modalEventIdReject" value="">
                     <input type="hidden" name="action" value="reject">
                     <input type="hidden" name="motif" id="eventMotifInput" value="">
-                    <button type="submit" name="validate_event_admin" class="btn-reject">
+                    <button type="submit" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" class="btn-reject">
                         <i class="fas fa-times"></i> Confirmer le rejet
                     </button>
                 </form>
@@ -1230,7 +1231,7 @@
                     <?= Security::csrfField() ?>
                     <input type="hidden" name="event_id" id="modalEventIdApprove" value="">
                     <input type="hidden" name="action" value="approve">
-                    <button type="submit" name="validate_event_tutor" class="btn-approve">
+                    <button type="submit" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" class="btn-approve">
                         <i class="fas fa-check"></i> Approuver cet événement
                     </button>
                 </form>
@@ -1301,6 +1302,7 @@
         // Modal functions - exposed globally
         window.openClubModal = function(club, el) {
             document.getElementById('modalClubName').textContent = club.nom_club || '-';
+            document.getElementById('modalClubIdForce').value = club.club_id;
             document.getElementById('modalClubType').textContent = club.type_club || '-';
             document.getElementById('modalClubCampus').textContent = club.campus || '-';
             document.getElementById('modalClubEmail').textContent = club.mail || 'Non renseigné';
@@ -1357,6 +1359,9 @@
         window.openEventModal = function(event) {
             document.getElementById('modalEventName').textContent = event.titre || '-';
             document.getElementById('modalEventClub').textContent = event.nom_club || '-';
+            if (document.getElementById('modalEventIdForce')) {
+                document.getElementById('modalEventIdForce').value = event.event_id;
+            }
             document.getElementById('modalEventCampus').textContent = event.campus || '-';
             document.getElementById('modalEventLieu').textContent = event.lieu || 'Non renseigné';
             document.getElementById('modalEventDescription').textContent = event.description || 'Aucune description fournie.';

@@ -52,7 +52,8 @@
                             </p>
                             <ul class="text-muted" style="font-size: 0.85em; text-align: left; max-width: 400px; margin: 10px auto;">
                                 <li>Être membre validé d'un club</li>
-                                <li>Le club doit avoir un événement validé</li>
+                                <li>Le club doit être validé (par le tuteur et l'administration)</li>
+                                <li>L'événement doit être validé (par le tuteur et l'administration)</li>
                                 <li>L'événement ne doit pas déjà avoir de rapport</li>
                             </ul>
                             <a href="?page=home" class="btn btn-primary"><i class="fas fa-home"></i> Retour</a>

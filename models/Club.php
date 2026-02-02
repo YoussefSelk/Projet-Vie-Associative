@@ -98,13 +98,13 @@ class Club {
      * Jointe avec la table membres_club pour récupérer les clubs où l'utilisateur est Président
      * 
      * @param int $user_id Identifiant de l'utilisateur
-     * @return array Liste des clubs créés par l'utilisateur
+     * @return array Liste des clubs où l'utilisateur est Président ou Secrétaire
      */
     public function getClubsByUser($user_id) {
         $stmt = $this->db->prepare("
-            SELECT fc.* FROM fiche_club fc
+            SELECT fc.*, mc.fonction as user_role FROM fiche_club fc
             INNER JOIN membres_club mc ON fc.club_id = mc.club_id
-            WHERE mc.membre_id = ? AND mc.fonction = 'Président' AND mc.valide = 1
+            WHERE mc.membre_id = ? AND mc.fonction IN ('Président', 'Secrétaire') AND mc.valide = 1
             ORDER BY fc.nom_club ASC
         ");
         $stmt->execute([$user_id]);

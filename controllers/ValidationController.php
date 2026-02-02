@@ -471,7 +471,9 @@ class ValidationController {
                     }
                 }
             }
-        }
+        }   
+
+
         
         return [
             'is_admin' => $is_admin,

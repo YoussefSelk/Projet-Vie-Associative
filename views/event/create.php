@@ -136,7 +136,18 @@
                                     <option value="">Sélectionnez un club...</option>
                                     <?php
                                     global $db;
-                                    $clubs = $db->query("SELECT club_id, nom_club FROM fiche_club WHERE validation_finale = 1 ORDER BY nom_club ASC")->fetchAll(PDO::FETCH_ASSOC);
+                                    // Récupérer uniquement les clubs dont l'utilisateur est membre validé
+                                    $stmt = $db->prepare("
+                                        SELECT fc.club_id, fc.nom_club 
+                                        FROM fiche_club fc 
+                                        INNER JOIN membres_club mc ON fc.club_id = mc.club_id 
+                                        WHERE fc.validation_finale = 1 
+                                        AND mc.membre_id = ? 
+                                        AND mc.valide = 1 
+                                        ORDER BY fc.nom_club ASC
+                                    ");
+                                    $stmt->execute([$_SESSION['id']]);
+                                    $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     foreach ($clubs as $club):
                                     ?>
                                         <option value="<?= $club['club_id'] ?>"><?= htmlspecialchars($club['nom_club']) ?></option>

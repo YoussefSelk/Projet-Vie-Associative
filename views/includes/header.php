@@ -214,7 +214,7 @@ else {
                 <span>Mes Clubs</span>
             </a>
             
-            <?php if($is_membre_club == 1 && $user_permission >= 2): ?>
+            <?php if($is_membre_club == 1 && ($user_permission == 1 || $user_permission >= 3)): ?>
                 <a href="?page=event-create" class="quick-action-item">
                     <i class="fas fa-calendar-plus"></i>
                     <span>Créer un événement</span>

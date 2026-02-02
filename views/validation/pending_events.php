@@ -86,6 +86,16 @@
                                         <i class="fas fa-check"></i> Approuver
                                     </button>
                                 </form>
+                                <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
+                                <form method="POST" style="display:inline;">
+                                    <?= Security::csrfField() ?>
+                                    <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
+                                    <input type="hidden" name="action" value="force_approve">
+                                    <button type="submit" name="validate_event" class="btn btn-warning btn-sm" title="Valider immédiatement sans attendre">
+                                        <i class="fas fa-bolt"></i> Forcer
+                                    </button>
+                                </form>
+                                <?php endif; ?>
                                 <form method="POST" style="display:inline;">
                                     <?= Security::csrfField() ?>
                                     <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">

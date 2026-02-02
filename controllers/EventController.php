@@ -70,7 +70,7 @@ class EventController {
 
     /**
      * Création d'un nouvel événement
-     * Nécessite permission >= 2 (membre de bureau)
+     * Nécessite permission 1, 3, 4 ou 5 (exclut permission 2)
      * 
      * Structure BD fiche_event: event_id, date_depot, validation_admin, validation_bde, 
      * validation_tuteur, validation_soutenance, titre, club_orga, campus, date_ev, 
@@ -80,7 +80,11 @@ class EventController {
      * @return array Données pour la vue [error_msg, success_msg]
      */
     public function createEvent() {
-        checkPermission(2);
+        validateSession();
+        $user_permission = (int)($_SESSION['permission'] ?? 0);
+        if (!in_array($user_permission, [1, 3, 4, 5], true)) {
+            ErrorHandler::renderHttpError(403, "Vous n'avez pas les permissions nécessaires pour créer un événement.");
+        }
         
         $error_msg = '';
         $success_msg = '';

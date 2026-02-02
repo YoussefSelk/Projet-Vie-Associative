@@ -287,29 +287,153 @@
   border-top: 2px solid #eee;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
   .profile-info-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
 
   .profile-header {
-    padding: 30px 20px;
+    padding: 35px 25px;
   }
 
   .profile-header h1 {
-    font-size: 1.4rem;
+    font-size: 1.5rem;
   }
 
   .profile-body {
-    padding: 20px;
+    padding: 25px;
+  }
+
+  .profile-avatar {
+    width: 100px;
+    height: 100px;
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .profile-header {
+    padding: 25px 15px;
+  }
+
+  .profile-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .profile-body {
+    padding: 20px 15px;
   }
 
   .profile-actions {
     flex-direction: column;
+    gap: 10px;
   }
 
   .profile-actions .btn {
     width: 100%;
     justify-content: center;
   }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+  }
+
+  .profile-info-item label {
+    font-size: 0.8rem;
+  }
+
+  .profile-info-item span {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .profile-header {
+    padding: 20px 12px;
+  }
+
+  .profile-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .profile-body {
+    padding: 15px 12px;
+  }
+
+  .profile-avatar {
+    width: 70px;
+    height: 70px;
+    font-size: 1.8rem;
+  }
+}
+
+/* =====================================================
+   USER LIST PAGE STYLES
+   ===================================================== */
+
+.permission-select {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s;
+}
+
+.permission-select:hover {
+  border-color: #0066cc;
+}
+
+.permission-select:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inline-form {
+  display: inline-block;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  color: #6c757d;
+  background: #f8f9fa;
+}
+
+.btn-icon:hover {
+  background: #e9ecef;
+}
+
+.btn-icon.danger:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.badge-purple {
+  background: #6f42c1;
+  color: white;
 }

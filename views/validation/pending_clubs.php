@@ -21,9 +21,7 @@
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -106,7 +104,7 @@
     </main>
     
     <!-- Comment Modal -->
-    <div id="commentModal" class="modal" style="display:none;">
+    <div id="commentModal" class="simple-modal" style="display:none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Ajouter un commentaire</h3>
@@ -168,62 +166,6 @@
             if (e.target === this) closeCommentModal();
         });
     </script>
-    
-    <style>
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        
-        .modal-content {
-            background: #fff;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        }
-        
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .modal-header h3 {
-            margin: 0;
-            color: #0066cc;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #666;
-        }
-        
-        .modal-body {
-            padding: 20px;
-        }
-        
-        .modal-footer {
-            padding: 15px 20px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-        }
-    </style>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

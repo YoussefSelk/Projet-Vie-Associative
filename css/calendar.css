@@ -10,6 +10,8 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
   margin: 20px auto;
   max-width: 1200px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Calendar Title */
@@ -263,7 +265,7 @@ td.today .day-number {
   background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
   border: 2px solid #f59e0b !important;
   padding: 20px 25px !important;
-  z-index: 10000 !important;
+  z-index: var(--z-notification, 1400) !important;
   border-radius: 16px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
   max-width: 350px !important;

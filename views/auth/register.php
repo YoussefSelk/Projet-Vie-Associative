@@ -27,10 +27,8 @@ if (isset($_SESSION['id'])) {
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-    <title>Inscription - EILCO</title>
-</head>
+<?php $pageTitle = 'Inscription - EILCO'; ?>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <?php include VIEWS_PATH . '/includes/header.php'; ?>
     <?php include VIEWS_PATH . '/includes/barre_nav.php'; ?>

@@ -13,6 +13,7 @@
  * 
  * @package Views/Subscription
  */
+$pageCss = ['shared', 'buttons', 'search', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

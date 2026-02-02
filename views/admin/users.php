@@ -18,6 +18,7 @@
  * 
  * @package Views/Admin
  */
+$pageCss = ['shared', 'buttons', 'tables', 'search', 'admin', 'profiles'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

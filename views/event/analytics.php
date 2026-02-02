@@ -19,6 +19,7 @@
  * 
  * @package Views/Event
  */
+$pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

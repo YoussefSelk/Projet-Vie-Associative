@@ -14,6 +14,7 @@
  * 
  * @package Views/Club
  */
+$pageCss = ['shared', 'buttons', 'tables', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

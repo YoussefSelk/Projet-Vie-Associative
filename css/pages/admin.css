@@ -2365,7 +2365,7 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
-  z-index: var(--z-modal, 1100);
+  z-index: var(--z-modal, 1200);
   display: none;
   align-items: center;
   justify-content: center;
@@ -3134,7 +3134,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: var(--z-modal, 1100);
+  z-index: var(--z-modal, 1200);
 }
 
 .simple-modal .modal-content {

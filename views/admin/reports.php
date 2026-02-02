@@ -54,6 +54,8 @@ function formatMonthFr($yearMonth) {
     }
     return $yearMonth;
 }
+
+$pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

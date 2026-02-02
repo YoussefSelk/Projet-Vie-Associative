@@ -2,13 +2,13 @@
 /**
  * Mes Demandes de Clubs
  * 
- * Affiche la liste de tous les clubs créés par l'utilisateur connecté avec :
+ * Affiche la liste de tous les clubs où l'utilisateur connecté est Président ou Secrétaire :
  * - Statut de validation (En attente, Validé, Refusé)
  * - Motif de refus si applicable
- * - Actions : Modifier (si refusé), Supprimer (si refusé)
+ * - Actions : Modifier (si non validé), Supprimer (si refusé)
  * 
  * Variables attendues :
- * - $clubs : Liste des clubs créés par l'utilisateur
+ * - $clubs : Liste des clubs de l'utilisateur (avec son rôle)
  * - $error_msg : Message d'erreur éventuel
  * - $success_msg : Message de succès éventuel
  * 

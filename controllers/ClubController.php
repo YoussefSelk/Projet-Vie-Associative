@@ -143,16 +143,62 @@ class ClubController {
             $creator_role = trim($_POST['creator_role'] ?? 'Président');
             $members = $_POST['members'] ?? [];
 
+            // Validation serveur: minimum 3 fondateurs (vous + 2 autres)
+            // + normalisation (IDs uniques, rôles autorisés) pour éviter les contournements.
+            $creatorId = $_SESSION['id'] ?? null;
+            $allowedRoles = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', 'Membre'];
+            if (!in_array($creator_role, $allowedRoles, true)) {
+                $creator_role = 'Président';
+            }
+
+            $memberIds = [];
+            $normalizedMembers = [];
+            if (is_array($members)) {
+                foreach ($members as $member) {
+                    $memberId = !empty($member['user_id']) ? intval($member['user_id']) : 0;
+                    if ($memberId <= 0) continue;
+                    if ($creatorId && $memberId === intval($creatorId)) continue;
+                    if (isset($memberIds[$memberId])) continue;
+
+                    $memberIds[$memberId] = true;
+                    $role = trim($member['role'] ?? 'Membre');
+                    if (!in_array($role, $allowedRoles, true)) {
+                        $role = 'Membre';
+                    }
+
+                    $normalizedMembers[] = [
+                        'user_id' => $memberId,
+                        'role' => $role
+                    ];
+                }
+            }
+
+            $uniqueMemberIds = array_keys($memberIds);
+            if ($creatorId && count($uniqueMemberIds) < 2) {
+                $error_msg = "La création d'un club nécessite au moins 3 personnes (vous + 2 autres membres fondateurs).";
+            }
+
+            // Vérifier que les IDs existent réellement en base
+            if (empty($error_msg) && !empty($uniqueMemberIds)) {
+                $placeholders = implode(',', array_fill(0, count($uniqueMemberIds), '?'));
+                $checkUsersStmt = $this->db->prepare("SELECT id FROM users WHERE id IN ($placeholders)");
+                $checkUsersStmt->execute($uniqueMemberIds);
+                $existingIds = $checkUsersStmt->fetchAll(PDO::FETCH_COLUMN, 0);
+                $existingIds = array_map('intval', $existingIds);
+                sort($existingIds);
+                $submittedIds = array_map('intval', $uniqueMemberIds);
+                sort($submittedIds);
+                if ($existingIds !== $submittedIds) {
+                    $error_msg = "Un ou plusieurs membres sélectionnés sont invalides. Veuillez les re-sélectionner depuis la liste.";
+                }
+            }
+
             if (!$nom_club || !$type_club || !$description || !$campus) {
                 $error_msg = "Tous les champs sont obligatoires.";
             } 
             // Check for duplicate club name
             elseif ($this->clubModel->getClubByName($nom_club)) {
                 $error_msg = "Un club avec ce nom existe déjà. Veuillez choisir un autre nom.";
-            }
-            // Check member count for projet associatif (creator + 2 others = 3 minimum)
-            elseif ($projet_associatif && count(array_filter($members, function($m) { return !empty($m['user_id']); })) < 2) {
-                $error_msg = "Un projet associatif nécessite au moins 3 membres fondateurs (vous + 2 autres).";
             }
             else {
                 try {
@@ -208,26 +254,23 @@ class ClubController {
                         $club_id = $this->db->lastInsertId();
                         
                         // Add the creator as a member with their chosen role
-                        $creatorId = $_SESSION['id'] ?? null;
                         if ($creatorId) {
                             $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
                             $insertStmt->execute([$club_id, $creatorId, $creator_role]);
                         }
                         
                         // Add selected members
-                        if (!empty($members)) {
-                            foreach ($members as $member) {
-                                $memberId = !empty($member['user_id']) ? intval($member['user_id']) : null;
-                                
-                                if ($memberId && $memberId != $creatorId) {
-                                    // Check if member already exists
-                                    $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
-                                    $checkStmt->execute([$club_id, $memberId]);
-                                    if (!$checkStmt->fetch()) {
-                                        // Add member with fonction
-                                        $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
-                                        $insertStmt->execute([$club_id, $memberId, $member['role'] ?? 'Membre']);
-                                    }
+                        if (!empty($normalizedMembers)) {
+                            foreach ($normalizedMembers as $member) {
+                                $memberId = intval($member['user_id']);
+                                if (!$memberId || ($creatorId && $memberId === intval($creatorId))) continue;
+
+                                // Check if member already exists
+                                $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
+                                $checkStmt->execute([$club_id, $memberId]);
+                                if (!$checkStmt->fetch()) {
+                                    $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
+                                    $insertStmt->execute([$club_id, $memberId, $member['role']]);
                                 }
                             }
                         }
@@ -341,15 +384,15 @@ class ClubController {
         if (!$club) {
             $error_msg = "Club non trouvé.";
         } else {
-            // Vérifier que l'utilisateur est bien le créateur (Président)
+            // Vérifier que l'utilisateur est bien un membre du bureau (Président ou Secrétaire)
             $stmt = $this->db->prepare("
                 SELECT mc.fonction FROM membres_club mc
-                WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.fonction = 'Président'
+                WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.fonction IN ('Président', 'Secrétaire')
             ");
             $stmt->execute([$club_id, $user_id]);
             
             if (!$stmt->fetch()) {
-                $error_msg = "Vous n'avez pas la permission de modifier ce club.";
+                $error_msg = "Vous n'avez pas la permission de modifier ce club. Seuls le Président et le Secrétaire peuvent modifier le club.";
             } elseif ($club['validation_finale'] == 1) {
                 $error_msg = "Vous ne pouvez pas modifier un club déjà validé.";            
             } else {

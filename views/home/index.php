@@ -20,6 +20,7 @@
  * 
  * @package Views/Home
  */
+$pageCss = ['shared', 'buttons', 'calendar', 'home'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

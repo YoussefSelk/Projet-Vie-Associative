@@ -1,0 +1,30 @@
+/* ================================================
+   Main CSS - Import All Stylesheets
+   ================================================
+   This file imports all CSS in the correct order.
+   Use this for a single import or load files individually.
+   ================================================ */
+
+/* 1. Core - Variables, Reset, Base */
+@import url("./core/variables.css");
+@import url("./core/base.css");
+@import url("./core/compatibility.css");
+
+/* 2. Components - Shared UI elements */
+@import url("./components/shared.css");
+@import url("./components/buttons.css");
+@import url("./components/forms.css");
+@import url("./components/tables.css");
+@import url("./components/search.css");
+@import url("./components/calendar.css");
+
+/* 3. Layout - Header, Nav, Footer */
+@import url("./layout/header.css");
+@import url("./layout/navbar.css");
+@import url("./layout/footer.css");
+
+/* 4. Pages - Page-specific styles (loaded conditionally via $pageCss) */
+/* These are loaded individually by each page */
+
+/* 5. Responsive - Must be last */
+@import url("./responsive.css");

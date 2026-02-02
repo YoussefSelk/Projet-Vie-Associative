@@ -23,6 +23,7 @@
  * 
  * @package Views/User
  */
+$pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

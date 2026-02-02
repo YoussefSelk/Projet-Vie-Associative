@@ -37,7 +37,15 @@ class Security {
         header('Referrer-Policy: strict-origin-when-cross-origin');
         
         // Politique de sécurité du contenu (CSP)
-        header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';");
+        // Autorise Chart.js depuis cdn.jsdelivr.net et les fonts Google
+        $csp = "default-src 'self'; " .
+               "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " .
+               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " .
+               "img-src 'self' data: blob:; " .
+               "font-src 'self' https://fonts.gstatic.com; " .
+               "connect-src 'self' https://cdn.jsdelivr.net; " .
+               "frame-ancestors 'self';";
+        header("Content-Security-Policy: " . $csp);
         
         // Politique des permissions
         header('Permissions-Policy: geolocation=(), microphone=(), camera=()');

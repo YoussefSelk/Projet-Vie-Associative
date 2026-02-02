@@ -248,7 +248,7 @@ input[type="checkbox"] {
   font-size: 0.8rem;
   width: 250px;
   white-space: normal;
-  z-index: 100;
+  z-index: var(--z-tooltip, 1400);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 

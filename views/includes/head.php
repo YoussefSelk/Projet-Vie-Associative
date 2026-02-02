@@ -96,43 +96,61 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="<?= $baseUrl ?>/css/base.css" as="style">
+    <link rel="preload" href="<?= $baseUrl ?>/css/core/base.css" as="style">
     <link rel="preload" href="<?= $baseUrl ?>/assets/lib/fontawesome/css/all.min.css" as="style">
     
     <!-- ========================================
-         CSS STYLESHEETS (Absolute Paths)
-         Loading order matters for cascade!
+         CSS STYLESHEETS (Optimized Loading)
+         Only essential CSS loads automatically.
+         Other CSS loaded via $pageCss array.
          ======================================== -->
-    <!-- Core styles - must load first -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/base.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/compatibility.css">
     
-    <!-- Layout components -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/header.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/navbar.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/footer.css">
+    <!-- 1. CORE - Always required -->
+    <link rel="stylesheet" href="<?= $baseUrl ?>/css/core/variables.css">
+    <link rel="stylesheet" href="<?= $baseUrl ?>/css/core/base.css">
     
-    <!-- UI components -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/buttons.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/forms.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/tables.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/search.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/calendar.css">
+    <!-- 2. LAYOUT - Always required (header, nav, footer on every page) -->
+    <link rel="stylesheet" href="<?= $baseUrl ?>/css/layout/header.css">
+    <link rel="stylesheet" href="<?= $baseUrl ?>/css/layout/navbar.css">
+    <link rel="stylesheet" href="<?= $baseUrl ?>/css/layout/footer.css">
     
-    <!-- Page-specific styles -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/login.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/clubs.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/events.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/profiles.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/dashboard.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/home.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/validation.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/errors.css">
+    <!-- 3. PAGE-SPECIFIC CSS (defined via $pageCss array) -->
+    <?php 
+    // Map CSS names to their folder paths
+    $cssMap = [
+        // Core
+        'compatibility' => 'core/compatibility',
+        // Components
+        'shared' => 'components/shared',
+        'buttons' => 'components/buttons',
+        'forms' => 'components/forms',
+        'tables' => 'components/tables',
+        'search' => 'components/search',
+        'calendar' => 'components/calendar',
+        // Pages
+        'home' => 'pages/home',
+        'auth' => 'pages/auth',
+        'login' => 'pages/auth',  // legacy alias
+        'clubs' => 'pages/clubs',
+        'events' => 'pages/events',
+        'profiles' => 'pages/profiles',
+        'dashboard' => 'pages/dashboard',
+        'admin' => 'pages/admin',
+        'validation' => 'pages/validation',
+        'errors' => 'pages/errors',
+    ];
     
-    <!-- Admin styles - load last to override if needed -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/admin.css">
+    if (!empty($pageCss) && is_array($pageCss)): 
+        foreach ($pageCss as $css):
+            $path = $cssMap[$css] ?? "pages/$css";
+    ?>
+    <link rel="stylesheet" href="<?= $baseUrl ?>/css/<?= htmlspecialchars($path) ?>.css">
+    <?php 
+        endforeach;
+    endif; 
+    ?>
     
-    <!-- Responsive - must be last CSS -->
+    <!-- 5. RESPONSIVE - Media queries (must be last) -->
     <link rel="stylesheet" href="<?= $baseUrl ?>/css/responsive.css">
     
     <!-- ========================================

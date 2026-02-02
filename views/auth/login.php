@@ -14,6 +14,7 @@
  * 
  * @package Views/Auth
  */
+$pageCss = ['shared', 'buttons', 'forms', 'auth'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

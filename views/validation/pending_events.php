@@ -17,6 +17,7 @@
  * 
  * @package Views/Validation
  */
+$pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

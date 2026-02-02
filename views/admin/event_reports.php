@@ -49,6 +49,8 @@ function reportFileExists($rapportPath) {
     $fullPath = 'uploads/rapports/' . $filename;
     return file_exists($fullPath);
 }
+
+$pageCss = ['shared', 'buttons', 'tables', 'admin', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">

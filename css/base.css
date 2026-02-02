@@ -3,6 +3,36 @@
    Compatible: Chrome, Firefox, Safari, Edge, IE11
    ================================================ */
 
+/* ================================================
+   Z-INDEX SYSTEM
+   Centralized z-index values for consistent layering
+   ================================================ */
+:root {
+  /* Base layers */
+  --z-below: -1;
+  --z-base: 0;
+  --z-above: 1;
+
+  /* Component layers */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+
+  /* Navigation layers */
+  --z-header: 900;
+  --z-navbar: 950;
+
+  /* Overlay layers */
+  --z-overlay: 1000;
+  --z-modal: 1100;
+  --z-popover: 1200;
+  --z-tooltip: 1300;
+
+  /* Top priority layers */
+  --z-notification: 1400;
+  --z-toast: 1500;
+}
+
 /* Box-sizing reset avec prefixes pour compatibilite */
 *,
 *::before,

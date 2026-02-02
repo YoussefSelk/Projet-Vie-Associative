@@ -37,7 +37,7 @@ if(isset($_SESSION['id'])){
 
     // Recuperer les clubs dont l'utilisateur est tuteur
     $req_0 = $db->prepare("SELECT club_id, nom_club FROM fiche_club
-    WHERE validation_finale = 1 AND tuteur = ?");
+    WHERE tuteur = ?");
     $req_0->execute([$_SESSION['id']]);
     $req_clubs=$req_0->fetchAll();
 
@@ -200,114 +200,33 @@ else {
             <?php 
             $stmt = $db->query("SELECT creation_club_active FROM config LIMIT 1");
             $club_creation_active = $stmt->fetchColumn();
-            $user_permission = $_SESSION['permission'] ?? 0;
-            
-            if ($club_creation_active): ?>
-                <a href="?page=club-create" class="quick-action-item">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Créer un club</span>
+            $user_permission = (int)($_SESSION['permission'] ?? 0);
+            ?>
+
+            <?php if ($user_permission == 1): ?>
+                <?php if ($club_creation_active): ?>
+                    <a href="?page=club-create" class="quick-action-item">
+                        <i class="fas fa-plus-circle"></i> <span>Créer un club</span>
+                    </a>
+                <?php endif; ?>
+                <a href="?page=my-clubs" class="quick-action-item">
+                    <i class="fas fa-folder-open"></i> <span>Mes Clubs</span>
                 </a>
+                <?php if($is_membre_club == 1): ?>
+                    <a href="?page=event-create" class="quick-action-item">
+                        <i class="fas fa-calendar-plus"></i> <span>Créer un événement</span>
+                    </a>
+                    <a href="?page=event-report" class="quick-action-item">
+                        <i class="fas fa-file-alt"></i> <span>Déposer un rapport</span>
+                    </a>
+                <?php endif; ?>
+                <a href="?page=event-list" class="quick-action-item">
+                    <i class="fas fa-calendar"></i> <span>Événements</span>
+                </a>
+                
             <?php endif; ?>
 
-            <a href="?page=my-clubs" class="quick-action-item">
-                <i class="fas fa-folder-open"></i>
-                <span>Mes Clubs</span>
-            </a>
-            
-            <?php if($is_membre_club == 1 && ($user_permission == 1 || $user_permission >= 3)): ?>
-                <a href="?page=event-create" class="quick-action-item">
-                    <i class="fas fa-calendar-plus"></i>
-                    <span>Créer un événement</span>
-                </a>
-            <?php endif; ?>
-            
-            <?php if($is_membre_club == 1): ?>
-                <a href="?page=event-report" class="quick-action-item">
-                    <i class="fas fa-file-alt"></i>
-                    <span>Déposer un rapport</span>
-                </a>
-            <?php endif; ?>
-            
-            <a href="?page=event-list" class="quick-action-item">
-                <i class="fas fa-calendar"></i>
-                <span>Événements</span>
-            </a>
-            
-            <?php if ($user_permission >= 3): ?>
-                <?php // Club management requires permission 3+ ?>
-                <a href="?page=club-list" class="quick-action-item">
-                    <i class="fas fa-th-large"></i>
-                    <span>Gérer les clubs</span>
-                </a>
-            <?php endif; ?>
-            
-            <?php if ($user_permission >= 3): ?>
-                <!-- Administration Dropdown -->
-                <div class="quick-action-dropdown">
-                    <button class="quick-action-item highlight" onclick="toggleQuickDropdown(this)">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Administration</span>
-                        <?php if ($nb_badge_admin > 0): ?>
-                            <span class="action-badge"><?= $nb_badge_admin ?></span>
-                        <?php endif; ?>
-                        <i class="fas fa-chevron-down dropdown-arrow"></i>
-                    </button>
-                    <div class="quick-dropdown-menu">
-                        <a href="?page=admin" class="quick-dropdown-item">
-                            <i class="fas fa-tachometer-alt"></i>
-                            Dashboard
-                        </a>
-                        <a href="?page=pending-clubs" class="quick-dropdown-item">
-                            <i class="fas fa-building"></i>
-                            Clubs en attente
-                            <?php if ($nb_clubs_admin > 0): ?>
-                                <span class="dropdown-badge"><?= $nb_clubs_admin ?></span>
-                            <?php endif; ?>
-                        </a>
-                        <a href="?page=pending-events" class="quick-dropdown-item">
-                            <i class="fas fa-calendar-check"></i>
-                            Événements en attente
-                            <?php if ($nb_events_admin > 0): ?>
-                                <span class="dropdown-badge"><?= $nb_events_admin ?></span>
-                            <?php endif; ?>
-                        </a>
-                        <a href="?page=event-analytics" class="quick-dropdown-item">
-                            <i class="fas fa-chart-bar"></i>
-                            Analytics
-                        </a>
-                        <a href="?page=admin-reports" class="quick-dropdown-item">
-                            <i class="fas fa-chart-line"></i>
-                            Rapports
-                        </a>
-                        <a href="?page=club-list" class="quick-dropdown-item">
-                            <i class="fas fa-users"></i>
-                            Gérer les clubs
-                        </a>
-                        <?php if ($user_permission >= 5): ?>
-                            <div class="dropdown-divider"></div>
-                            <a href="?page=admin-users" class="quick-dropdown-item">
-                                <i class="fas fa-users-cog"></i>
-                                Utilisateurs
-                            </a>
-                            <a href="?page=admin-audit" class="quick-dropdown-item">
-                                <i class="fas fa-history"></i>
-                                Audit & Sécurité
-                            </a>
-                            <a href="?page=admin-database" class="quick-dropdown-item">
-                                <i class="fas fa-database"></i>
-                                Base de données
-                            </a>
-                            <a href="?page=admin-settings" class="quick-dropdown-item">
-                                <i class="fas fa-cog"></i>
-                                Paramètres
-                            </a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-            
-            <?php if(!empty($req_clubs) || $user_permission >= 2): ?>
-                <!-- Tutorat Dropdown -->
+            <?php if($user_permission == 2): ?>
                 <div class="quick-action-dropdown">
                     <button class="quick-action-item" onclick="toggleQuickDropdown(this)">
                         <i class="fas fa-user-graduate"></i>
@@ -319,25 +238,91 @@ else {
                     </button>
                     <div class="quick-dropdown-menu">
                         <a href="?page=tutoring" class="quick-dropdown-item">
-                            <i class="fas fa-tasks"></i>
-                            Validations
-                            <?php if ($nb_badge_tuteur > 0): ?>
-                                <span class="dropdown-badge"><?= $nb_badge_tuteur ?></span>
-                            <?php endif; ?>
+                            <i class="fas fa-check-circle"></i> Valider Clubs & Events
                         </a>
+                        <div class="dropdown-divider"></div>
+                        <span class="dropdown-header">Mes clubs associés</span>
                         <?php if(!empty($req_clubs)): ?>
-                            <div class="dropdown-divider"></div>
-                            <span class="dropdown-header">Mes clubs tutorés</span>
                             <?php foreach($req_clubs as $c): ?>
                                 <a href="?page=club-view&id=<?= $c['club_id'] ?>" class="quick-dropdown-item">
-                                    <i class="fas fa-building"></i>
-                                    <?= htmlspecialchars($c['nom_club']) ?>
+                                    <i class="fas fa-building"></i> <?= htmlspecialchars($c['nom_club']) ?>
                                 </a>
                             <?php endforeach; ?>
+                        <?php else: ?>
+                            <span class="quick-dropdown-item text-muted">Aucun club associé</span>
                         <?php endif; ?>
                     </div>
                 </div>
+                <a href="?page=event-list" class="quick-action-item">
+                    <i class="fas fa-calendar"></i> <span>Événements</span>
+                </a>
             <?php endif; ?>
+
+            <?php if($user_permission == 3): ?>
+                <?php if ($club_creation_active): ?>
+                    <a href="?page=club-create" class="quick-action-item">
+                        <i class="fas fa-plus-circle"></i> <span>Créer un club</span>
+                    </a>
+                <?php endif; ?>
+                <a href="?page=my-clubs" class="quick-action-item">
+                    <i class="fas fa-folder-open"></i> <span>Mes Clubs</span>
+                </a>
+                <?php if($is_membre_club == 1): ?>
+                    <a href="?page=event-create" class="quick-action-item">
+                        <i class="fas fa-calendar-plus"></i> <span>Créer un événement</span>
+                    </a>
+                    <a href="?page=event-report" class="quick-action-item">
+                        <i class="fas fa-file-alt"></i> <span>Déposer un rapport</span>
+                    </a>
+                <?php endif; ?>
+                <div class="quick-action-dropdown">
+                    <button class="quick-action-item highlight" onclick="toggleQuickDropdown(this)">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span>Validation BDE</span>
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    </button>
+                    <div class="quick-dropdown-menu">
+                        <a href="?page=tutoring" class="quick-dropdown-item">
+                            <i class="fas fa-calendar-check"></i> Valider les événements
+                        </a>
+                    </div>
+                </div>
+                <a href="?page=event-list" class="quick-action-item">
+                    <i class="fas fa-calendar"></i> <span>Événements</span>
+                </a>
+                <a href="?page=club-list" class="quick-action-item">
+                    <i class="fas fa-users"></i> <span>Clubs</span>
+                </a>
+            <?php endif; ?>
+
+            <?php if ($user_permission >= 4): ?>
+                <a href="?page=club-list" class="quick-action-item">
+                    <i class="fas fa-th-large"></i> <span>Gérer les clubs</span>
+                </a>
+                <div class="quick-action-dropdown">
+                    <button class="quick-action-item highlight" onclick="toggleQuickDropdown(this)">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Administration</span>
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    </button>
+                    <div class="quick-dropdown-menu">
+                        <a href="?page=admin" class="quick-dropdown-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                        <a href="?page=pending-clubs" class="quick-dropdown-item"><i class="fas fa-building"></i> Clubs en attente</a>
+                        <a href="?page=pending-events" class="quick-dropdown-item"><i class="fas fa-calendar-check"></i> Events en attente</a>
+                        <a href="?page=tutoring" class="quick-dropdown-item"><i class="fas fa-tasks"></i> Validations</a>
+                        <?php if ($user_permission == 5): ?>
+                            <div class="dropdown-divider"></div>
+                            <a href="?page=admin-users" class="quick-dropdown-item"><i class="fas fa-users-cog"></i> Utilisateurs</a>
+                            <a href="?page=admin-audit" class="quick-dropdown-item"><i class="fas fa-history"></i> Audit & Sécurité</a>
+                            <a href="?page=admin-settings" class="quick-dropdown-item"><i class="fas fa-cog"></i> Paramètres Système</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <a href="?page=event-list" class="quick-action-item">
+                    <i class="fas fa-calendar"></i> <span>Événements</span>
+                </a>
+            <?php endif; ?>
+
         </div>
     </div>
 </div>

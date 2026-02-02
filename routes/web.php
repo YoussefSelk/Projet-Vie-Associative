@@ -115,7 +115,7 @@ return [
     ],
     
     'event-create' => [
-        'permission' => 2,
+        'permission' => [1,3,4,5],
         'auth' => true,
         'controller' => 'EventController',
         'method' => 'createEvent',
@@ -223,7 +223,7 @@ return [
     // ==========================================
     
     'pending-clubs' => [
-        'permission' => 3,
+        'permission' => 4,
         'auth' => true,
         'controller' => 'ValidationController',
         'method' => 'validateClub',
@@ -239,12 +239,14 @@ return [
     ],
     
     'tutoring' => [
-        'permission' => 2,
+        'permission' => [2, 3, 4, 5],
         'auth' => true,
         'controller' => 'ValidationController',
         'method' => 'tutoring',
         'view' => '/validation/tutoring.php'
     ],
+
+    
     
     // ==========================================
     // ROUTES ADMINISTRATION (BDE et plus)

@@ -157,6 +157,22 @@ function validateSession() {
 function checkPermission($required_level) {
     validateSession();
     $userPermission = $_SESSION['permission'] ?? 0;
+
+    // Supporte un tableau de permissions autorisées
+    if (is_array($required_level)) {
+        if (!in_array((int)$userPermission, $required_level, true)) {
+            $userId = $_SESSION['id'] ?? 'unknown';
+            $requestedPage = $_GET['page'] ?? 'unknown';
+            ErrorHandler::logSecurity(
+                "Tentative d'accès non autorisé: Utilisateur ID $userId a tenté d'accéder à '$requestedPage'",
+                'WARN',
+                ['permission' => $userPermission, 'required' => $required_level, 'page' => $requestedPage]
+            );
+            ErrorHandler::renderHttpError(403, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.");
+        }
+        return;
+    }
+
     if ($userPermission < $required_level) {
         // Journalisation de la tentative d'accès non autorisé
         $userId = $_SESSION['id'] ?? 'unknown';

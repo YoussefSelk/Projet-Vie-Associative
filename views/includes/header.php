@@ -256,6 +256,10 @@ else {
                 <a href="?page=event-list" class="quick-action-item">
                     <i class="fas fa-calendar"></i> <span>Événements</span>
                 </a>
+                <a href="?page=club-list" class="quick-action-item">
+                    <i class="fas fa-users"></i> <span>Clubs</span>
+                </a>
+                
             <?php endif; ?>
 
             <?php if($user_permission == 3): ?>

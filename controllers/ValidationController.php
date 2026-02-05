@@ -171,6 +171,7 @@ class ValidationController {
      * @return array Donnees pour la vue (evenements en attente, rejetes, messages)
      */
     public function validateEvent() {
+    // Vérifie que l'utilisateur a au moins le niveau BDE (3)
     checkPermission(3);
     
     $error_msg = '';
@@ -195,32 +196,41 @@ class ValidationController {
                     $error_msg = "Erreur lors de la validation forcée.";
                 }
 
-            // --- CAS 2 : APPROVE (Validation BDE + Vérification croisée) ---
+            // --- CAS 2 : APPROVE (Validation selon le rôle + Vérification croisée) ---
             } elseif ($action === 'approve') {
-                // 1. On marque la validation BDE (car checkPermission 3 est requis pour cette page)
-                $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = 1 WHERE event_id = ?");
+                $stmt = null;
                 
-                if ($stmt->execute([$event_id])) {
-                    // 2. On vérifie si le tuteur OU l'admin a déjà validé
-                    $check = $this->db->prepare("SELECT validation_tuteur, validation_admin FROM fiche_event WHERE event_id = ?");
+                // On détermine quelle colonne impacter selon le rôle de celui qui clique
+                if ($user_permission == 3) {
+                    $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = 1 WHERE event_id = ?");
+                } elseif ($user_permission >= 4) {
+                    $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 1 WHERE event_id = ?");
+                }
+
+                if ($stmt && $stmt->execute([$event_id])) {
+                    // 2. On vérifie les conditions pour la validation finale
+                    $check = $this->db->prepare("SELECT validation_tuteur, validation_admin, validation_bde FROM fiche_event WHERE event_id = ?");
                     $check->execute([$event_id]);
                     $event = $check->fetch(PDO::FETCH_ASSOC);
 
-                    if ($event && ($event['validation_tuteur'] == 1 || $event['validation_admin'] == 1)) {
-                        // BDE OK + (Tuteur ou Admin OK) = Validation finale
+                    // RÈGLE : Validation finale si (BDE a validé) ET (Tuteur OU Admin a validé)
+                    $bde_ok = ($event['validation_bde'] == 1);
+                    $admin_or_tutor_ok = ($event['validation_admin'] == 1 || $event['validation_tuteur'] == 1);
+
+                    if ($event && $bde_ok && $admin_or_tutor_ok) {
                         $this->db->prepare("UPDATE fiche_event SET validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
-                        $success_msg = "Événement validé définitivement (BDE + Tuteur/Admin OK).";
+                        $success_msg = "Événement validé définitivement (Circuit de signatures complet).";
                     } else {
-                        $success_msg = "Approbation BDE enregistrée. En attente de la validation du tuteur ou de l'admin pour activation.";
+                        $success_msg = "Votre approbation a été enregistrée. En attente des autres signatures requises.";
                     }
                 } else {
-                    $error_msg = "Erreur lors de la validation.";
+                    $error_msg = "Erreur lors de la validation ou permission insuffisante.";
                 }
 
             // --- CAS 3 : REJET (Validation finale = 0) ---
             } elseif ($action === 'reject') {
-                // On remet toutes les validations à 0 et on enregistre le motif
-                $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?");
+                // On remet tout à 0 pour bloquer l'événement
+                $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = 0, validation_admin = 0, validation_tuteur = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?");
                 if ($stmt->execute([$remarques, $event_id])) {
                     $success_msg = "Événement rejeté.";
                 } else {
@@ -230,22 +240,23 @@ class ValidationController {
         }
     }
 
-    // Traitement de la suppression d'un evenement rejete
+    // Traitement de la suppression
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_event'])) {
         $event_id = $_POST['event_id'] ?? null;
         if ($event_id && $this->validationModel->deleteRejectedEvent($event_id)) {
-            $success_msg = "Événement supprimé.";
+            $success_msg = "Événement supprimé avec succès.";
         }
     }
     
-    // Récupération des listes pour l'affichage
-    $events = $this->validationModel->getPendingEvents();
-    $rejected_events = $this->validationModel->getRejectedEvents();
+    // Récupération sécurisée des listes (on force un tableau vide si null)
+    $events = $this->validationModel->getPendingEvents() ?: [];
+    $rejected_events = $this->validationModel->getRejectedEvents() ?: [];
 
     return [
         'events' => $events,
         'rejected_events' => $rejected_events,
         'is_admin' => $is_admin,
+        'is_bde' => ($user_permission == 3),
         'error_msg' => $error_msg,
         'success_msg' => $success_msg
     ];

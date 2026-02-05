@@ -171,7 +171,7 @@ return [
     // ==========================================
     
     'club-list' => [
-        'permission' => 3,
+        'permission' => 2,
         'auth' => true,
         'controller' => 'ClubController',
         'method' => 'listClubs',

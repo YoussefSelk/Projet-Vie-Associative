@@ -111,9 +111,6 @@
                         <?php endif; ?>
                         
                         <div class="event-actions">
-                            <a href="?page=subscribe&event_id=<?= $event['event_id'] ?>" class="btn btn-success btn-lg">
-                                <i class="fas fa-plus-circle"></i> S'inscrire à cet événement
-                            </a>
                             <a href="?page=event-list" class="btn btn-outline">
                                 <i class="fas fa-calendar-alt"></i> Voir tous les événements
                             </a>

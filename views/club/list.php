@@ -180,7 +180,7 @@
         .clubs-table .type-badge {
             display: inline-block;
             padding: 6px 12px;
-            background: linear-gradient(135deg, #4361ee 0%, #3a56d4 100%);
+            background: #6366f1;
             color: white;
             border-radius: 20px;
             font-size: 0.75rem;
@@ -350,9 +350,6 @@
     <main>
         <div class="page-container">
             <div class="page-header">
-                <div class="header-left">
-                    <a href="?page=admin" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
-                </div>
                 <div class="header-center">
                     <h1><i class="fas fa-building"></i> Gestion des clubs</h1>
                     <p class="subtitle">Modifier et gérer les clubs de l'EILCO</p>
@@ -430,64 +427,58 @@
                     <h3><i class="fas fa-list"></i> Tous les clubs (<span id="clubCount"><?= count($clubs) ?></span>)</h3>
                 </div>
                 <div class="card-body">
-                    <!-- Filters Bar - Improved Design -->
-                    <div class="clubs-filters">
-                        <div class="filters-row">
-                            <!-- Search Filter -->
-                            <div class="filter-item">
-                                <label><i class="fas fa-search"></i> Recherche</label>
-                                <input type="text" id="clubTableFilter" class="filter-input" 
-                                       placeholder="Nom du club..." 
-                                       autocomplete="off">
-                            </div>
-                            
-                            <!-- Campus Filter -->
-                            <div class="filter-item">
-                                <label><i class="fas fa-map-marker-alt"></i> Campus</label>
-                                <select id="campusFilter" class="filter-select">
-                                    <option value="">Tous</option>
-                                    <option value="calais">Calais</option>
-                                    <option value="longuenesse">Longuenesse</option>
-                                    <option value="dunkerque">Dunkerque</option>
-                                    <option value="boulogne">Boulogne</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Type Filter -->
-                            <div class="filter-item">
-                                <label><i class="fas fa-tag"></i> Type</label>
-                                <select id="typeFilter" class="filter-select">
-                                    <option value="">Tous les types</option>
-                                    <?php 
-                                    $types = array_unique(array_filter(array_column($clubs, 'type_club')));
-                                    sort($types);
-                                    foreach ($types as $type): ?>
-                                        <option value="<?= htmlspecialchars(strtolower($type)) ?>"><?= htmlspecialchars($type) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            
-                            <!-- Sort Options -->
-                            <div class="filter-item">
-                                <label><i class="fas fa-sort"></i> Trier par</label>
-                                <select id="sortFilter" class="filter-select">
-                                    <option value="name-asc">Nom (A → Z)</option>
-                                    <option value="name-desc">Nom (Z → A)</option>
-                                    <option value="type-asc">Type (A → Z)</option>
-                                    <option value="campus-asc">Campus (A → Z)</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Reset Button -->
-                            <button type="button" id="resetFilters" class="filter-reset-btn" title="Réinitialiser">
-                                <i class="fas fa-undo"></i> Reset
-                            </button>
+                    <div class="filters-row" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; border: none; background: transparent; padding: 0;">
+                        
+                        <div class="filter-item" style="flex: 2; min-width: 200px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-search"></i> Recherche</label>
+                            <input type="text" id="clubTableFilter" class="filter-input" 
+                                placeholder="Nom du club..." 
+                                style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;"
+                                autocomplete="off">
                         </div>
                         
-                        <div class="filters-summary">
-                            <span class="result-count"><strong id="clubCount"><?= count($clubs) ?></strong> club(s) trouvé(s)</span>
+                        <div class="filter-item" style="flex: 1; min-width: 150px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-map-marker-alt"></i> Campus</label>
+                            <select id="campusFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                                <option value="">Tous</option>
+                                <option value="calais">Calais</option>
+                                <option value="longuenesse">Longuenesse</option>
+                                <option value="dunkerque">Dunkerque</option>
+                                <option value="boulogne">Boulogne</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item" style="flex: 1; min-width: 150px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-tag"></i> Type</label>
+                            <select id="typeFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                                <option value="">Tous les types</option>
+                                <?php 
+                                $types = array_unique(array_filter(array_column($clubs, 'type_club')));
+                                sort($types);
+                                foreach ($types as $type): ?>
+                                    <option value="<?= htmlspecialchars(strtolower($type)) ?>"><?= htmlspecialchars($type) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item" style="flex: 1; min-width: 150px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-sort"></i> Trier par</label>
+                            <select id="sortFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                                <option value="name-asc">Nom (A → Z)</option>
+                                <option value="name-desc">Nom (Z → A)</option>
+                                <option value="type-asc">Type (A → Z)</option>
+                                <option value="campus-asc">Campus (A → Z)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item" style="flex: 0 0 auto;">
+                            <button type="button" id="resetFilters" class="filter-reset-btn" 
+                                    style="border: none; background: #f1f5f9; color: #64748b; font-weight: 600; height: 42px; padding: 0 20px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-undo"></i> Réinitialiser
+                            </button>
                         </div>
                     </div>
+                </div>
                     
                     <?php if (empty($clubs)): ?>
                         <div class="no-results">

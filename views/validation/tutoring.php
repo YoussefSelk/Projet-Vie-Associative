@@ -1256,7 +1256,7 @@
                             ?>" 
                             class="btn-reject">
                             <i class="fas fa-times"></i> Confirmer le rejet
-                        </button>                        <i class="fas fa-times"></i> Confirmer le rejet
+                        </button>                       
                     </button>
                 </form>
                 <?php if ($is_admin): ?>

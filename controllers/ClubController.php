@@ -42,7 +42,7 @@ class ClubController {
      * @return array Données pour la vue
      */
     public function listClubs() {
-        checkPermission(3);
+        checkPermission(2); // Tuteurs (2), BDE (3) et admins (4+) peuvent voir tous les clubs
         
         $clubs = $this->clubModel->getAllValidatedClubs();
         $req_club = null;

@@ -94,6 +94,22 @@
                         </div>
                         <?php endif; ?>
                         
+                        <?php 
+                        // Afficher le rapport uniquement pour les utilisateurs avec permission >= 2
+                        // (Membre bureau, Responsable asso, Admin, Super Admin)
+                        $user_permission = (int)($_SESSION['permission'] ?? 0);
+                        if ($user_permission >= 2 && !empty($event['rapport_event'])): 
+                        ?>
+                        <div class="event-section">
+                            <h3><i class="fas fa-file-alt"></i> Rapport de l'événement</h3>
+                            <p>
+                                <a href="<?= htmlspecialchars($event['rapport_event']) ?>"                                   class="btn btn-primary btn-sm" target="_blank">
+                                    <i class="fas fa-download"></i> Télécharger le rapport
+                                </a>
+                            </p>
+                        </div>
+                        <?php endif; ?>
+                        
                         <div class="event-actions">
                             <a href="?page=subscribe&event_id=<?= $event['event_id'] ?>" class="btn btn-success btn-lg">
                                 <i class="fas fa-plus-circle"></i> S'inscrire à cet événement

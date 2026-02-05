@@ -250,6 +250,48 @@ class EventController {
         ];
     }
 
+
+
+    /**
+     * Gère spécifiquement l'upload des images souvenirs
+     * @param array $files Le tableau $_FILES['event_photos']
+     * @param int $event_id
+     * @return string|null Liste des images ou null
+     */
+    private function uploadEventImages($files, $event_id, $club_name, $event_title) {
+        if (empty($files['name'][0])) return null;
+
+        $dest_path = ROOT_PATH . '/uploads/images_events/';
+        if (!is_dir($dest_path)) mkdir($dest_path, 0775, true);
+
+        $uploaded_paths = [];
+        $max_size = 512000; // 500 Ko
+        $allowed_exts = ['jpg', 'jpeg', 'png', 'webp'];
+
+        // Nettoyage des noms pour les fichiers
+        $clean_club = preg_replace('/[^A-Za-z0-9]/', '', $club_name);
+        $clean_event = preg_replace('/[^A-Za-z0-9]/', '', $event_title);
+
+        for ($i = 0; $i < count($files['name']); $i++) {
+            if ($i >= 5) break;
+
+            $ext = strtolower(pathinfo($files['name'][$i], PATHINFO_EXTENSION));
+            
+            if ($files['error'][$i] === UPLOAD_ERR_OK && $files['size'][$i] <= $max_size && in_array($ext, $allowed_exts)) {
+                
+                // Format : NomClub_TitreEvent_timestamp_index.ext
+                $new_name = $clean_club . '_' . $clean_event . '_' . time() . '_' . $i . '.' . $ext;
+                
+                if (move_uploaded_file($files['tmp_name'][$i], $dest_path . $new_name)) {
+                    $uploaded_paths[] = '../uploads/images_events/' . $new_name;
+                }
+            }
+        }
+        return !empty($uploaded_paths) ? implode(',', $uploaded_paths) : null;
+}
+
+
+
     /**
      * Dépôt de rapport post-événement
      * Permet aux membres de club de déposer un rapport après un événement
@@ -270,18 +312,17 @@ class EventController {
         $error_msg = '';
         $success_msg = '';
         
-        // Récupérer tous les événements validés des clubs de l'utilisateur qui n'ont pas encore de rapport
-        // Important: On vérifie que l'utilisateur est membre VALIDE du club (mc.valide = 1)
+        // Récupérer les événements éligibles
         $stmt = $this->db->prepare("
             SELECT fe.*, fc.nom_club 
             FROM fiche_event fe
             INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
             INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
             WHERE mc.membre_id = ? 
-              AND mc.valide = 1
-              AND fc.validation_finale = 1
-              AND fe.validation_finale = 1
-              AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
+            AND mc.valide = 1
+            AND fc.validation_finale = 1
+            AND fe.validation_finale = 1
+            AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
             ORDER BY fe.date_ev DESC
         ");
         $stmt->execute([$_SESSION['id']]);
@@ -295,52 +336,61 @@ class EventController {
             } elseif (!isset($_FILES['rapport_file']) || $_FILES['rapport_file']['error'] != 0) {
                 $error_msg = "Veuillez télécharger un fichier de rapport (PDF).";
             } else {
-                // Gestion de l'upload de fichier rapport
-                $allowed = ['pdf'];
-                $filename = $_FILES['rapport_file']['name'];
-                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                $ext = strtolower(pathinfo($_FILES['rapport_file']['name'], PATHINFO_EXTENSION));
                 
-                if (!in_array($ext, $allowed)) {
+                if ($ext !== 'pdf') {
                     $error_msg = "Seuls les fichiers PDF sont acceptés.";
                 } else {
-                    // Récupérer les infos de l'événement pour le nom du fichier
+                    // Récupération des infos pour le nommage
                     $stmtEvent = $this->db->prepare("SELECT fe.titre, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fe.event_id = ?");
                     $stmtEvent->execute([$event_id]);
                     $eventInfo = $stmtEvent->fetch(PDO::FETCH_ASSOC);
                     
-                    // Générer le nom du fichier: NomClub_TitreEvent_timestamp.pdf
-                    $club_name = preg_replace('/[^A-Za-z0-9]/', '', $eventInfo['nom_club'] ?? 'Club');
-                    $event_title = preg_replace('/[^A-Za-z0-9]/', '', $eventInfo['titre'] ?? 'Event');
-                    $new_filename = $club_name . '_' . $event_title . '_' . time() . '.' . $ext;
-                    $upload_path = ROOT_PATH . '/uploads/rapports/' . $new_filename;
-                    $db_path = '../uploads/rapports/' . $new_filename;
+                    $club_name = $eventInfo['nom_club'] ?? 'Club';
+                    $event_title = $eventInfo['titre'] ?? 'Event';
+
+                    // 1. Préparation du dossier et nom du rapport PDF
+                    $clean_club = preg_replace('/[^A-Za-z0-9]/', '', $club_name);
+                    $clean_event = preg_replace('/[^A-Za-z0-9]/', '', $event_title);
                     
-                    if (move_uploaded_file($_FILES['rapport_file']['tmp_name'], $upload_path)) {
-                        // Mettre à jour la colonne rapport_event dans fiche_event
-                        $stmt = $this->db->prepare("UPDATE fiche_event SET rapport_event = ? WHERE event_id = ?");
-                        if ($stmt->execute([$db_path, $event_id])) {
-                            $success_msg = "Rapport déposé avec succès.";
+                    $pdf_dir = ROOT_PATH . '/uploads/rapports/';
+                    if (!is_dir($pdf_dir)) mkdir($pdf_dir, 0775, true);
+
+                    $pdf_filename = $clean_club . '_' . $clean_event . '_' . time() . '.pdf';
+                    $full_pdf_path = $pdf_dir . $pdf_filename;
+                    $db_pdf_path = '../uploads/rapports/' . $pdf_filename;
+                    
+                    if (move_uploaded_file($_FILES['rapport_file']['tmp_name'], $full_pdf_path)) {
+                        
+                        // 2. Gestion des images (Dossier uploads/images_events/)
+                        $images_list = $this->uploadEventImages($_FILES['event_photos'] ?? [], $event_id, $club_name, $event_title);
+
+                        // 3. Mise à jour BDD
+                        $stmt = $this->db->prepare("UPDATE fiche_event SET rapport_event = ?, images_event = ? WHERE event_id = ?");
+                        
+                        if ($stmt->execute([$db_pdf_path, $images_list, $event_id])) {
+                            $success_msg = "Le rapport et les photos ont été déposés avec succès.";
                             
-                            // Rafraîchir la liste des événements (avec les mêmes conditions)
+                            // Rafraîchir la liste (Logique identique à l'initiale)
                             $stmt = $this->db->prepare("
                                 SELECT fe.*, fc.nom_club 
                                 FROM fiche_event fe
                                 INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
                                 INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
                                 WHERE mc.membre_id = ? 
-                                  AND mc.valide = 1
-                                  AND fc.validation_finale = 1
-                                  AND fe.validation_finale = 1
-                                  AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
+                                AND mc.valide = 1
+                                AND fc.validation_finale = 1
+                                AND fe.validation_finale = 1
+                                AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
                                 ORDER BY fe.date_ev DESC
                             ");
                             $stmt->execute([$_SESSION['id']]);
                             $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         } else {
-                            $error_msg = "Erreur lors de l'enregistrement du rapport.";
+                            $error_msg = "Erreur lors de l'enregistrement en base de données.";
                         }
                     } else {
-                        $error_msg = "Erreur lors de l'upload du fichier.";
+                        $error_msg = "Erreur lors de l'upload du rapport PDF.";
                     }
                 }
             }

@@ -18,269 +18,11 @@
  * 
  * @package Views/Admin
  */
+$pageCss = ['shared', 'buttons', 'tables', 'admin'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-    <style>
-.admin-database {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.page-header h1 {
-    font-size: 1.8rem;
-    color: #2c3e50;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.page-header h1 i {
-    color: #27ae60;
-}
-
-/* Alert Messages */
-.alert {
-    padding: 15px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.alert-success {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.alert-danger {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-/* Database Stats Grid */
-.db-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.db-stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    text-align: center;
-}
-
-.db-stat-card .icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3498db, #2980b9);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 15px;
-    font-size: 1.3rem;
-}
-
-.db-stat-card .table-name {
-    font-size: 0.9rem;
-    color: #7f8c8d;
-    margin-bottom: 5px;
-}
-
-.db-stat-card .count {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #2c3e50;
-}
-
-/* Issues Section */
-.issues-section {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    margin-bottom: 30px;
-    overflow: hidden;
-}
-
-.issues-header {
-    padding: 18px 25px;
-    background: #f39c12;
-    color: white;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.issues-body {
-    padding: 20px 25px;
-}
-
-.issue-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 15px;
-    background: #fff3cd;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    border-left: 4px solid #f39c12;
-}
-
-.issue-item:last-child {
-    margin-bottom: 0;
-}
-
-.issue-item i {
-    color: #f39c12;
-}
-
-.no-issues {
-    text-align: center;
-    padding: 30px;
-    color: #27ae60;
-}
-
-.no-issues i {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-    display: block;
-}
-
-/* Actions Section */
-.actions-section {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    overflow: hidden;
-}
-
-.actions-header {
-    padding: 18px 25px;
-    background: #2c3e50;
-    color: white;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.actions-body {
-    padding: 25px;
-}
-
-.action-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.action-card {
-    border: 2px solid #e9ecef;
-    border-radius: 12px;
-    padding: 25px;
-    transition: all 0.3s;
-}
-
-.action-card:hover {
-    border-color: #3498db;
-    box-shadow: 0 5px 20px rgba(52, 152, 219, 0.15);
-}
-
-.action-card h4 {
-    font-size: 1.1rem;
-    color: #2c3e50;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.action-card h4 i {
-    color: #3498db;
-}
-
-.action-card p {
-    color: #7f8c8d;
-    font-size: 0.9rem;
-    margin-bottom: 15px;
-    line-height: 1.5;
-}
-
-.action-card .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.action-card .btn-warning {
-    background: #f39c12;
-    color: white;
-}
-
-.action-card .btn-danger {
-    background: #e74c3c;
-    color: white;
-}
-
-.action-card .btn-primary {
-    background: #3498db;
-    color: white;
-}
-
-.action-card .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-/* Warning Box */
-.warning-box {
-    background: linear-gradient(135deg, #fff3cd, #fef9e7);
-    border-left: 4px solid #f39c12;
-    padding: 20px 25px;
-    border-radius: 0 12px 12px 0;
-    margin-bottom: 25px;
-}
-
-.warning-box h4 {
-    margin-bottom: 10px;
-    color: #856404;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.warning-box p {
-    color: #856404;
-    margin: 0;
-}
-    </style>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -378,9 +120,10 @@
                 <div class="action-card">
                     <h4><i class="fas fa-broom"></i> Nettoyer les orphelins</h4>
                     <p>Supprime les enregistrements orphelins : membres de clubs inexistants, inscriptions à des événements supprimés, etc.</p>
-                    <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir nettoyer les enregistrements orphelins ?');">
+                    <form method="POST" class="form-cleanup-orphans">
                         <input type="hidden" name="csrf_token" value="<?php echo Security::generateCsrfToken(); ?>">
-                        <button type="submit" name="cleanup_orphans" class="btn btn-warning">
+                        <input type="hidden" name="cleanup_orphans" value="1">
+                        <button type="submit" class="btn btn-warning">
                             <i class="fas fa-broom"></i> Nettoyer
                         </button>
                     </form>
@@ -390,9 +133,10 @@
                 <div class="action-card">
                     <h4><i class="fas fa-archive"></i> Archiver anciens événements</h4>
                     <p>Archive les événements de plus d'un an. Les événements archivés ne seront plus affichés dans les listes publiques.</p>
-                    <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir archiver les anciens événements ?');">
+                    <form method="POST" class="form-archive-events">
                         <input type="hidden" name="csrf_token" value="<?php echo Security::generateCsrfToken(); ?>">
-                        <button type="submit" name="archive_old_events" class="btn btn-primary">
+                        <input type="hidden" name="archive_old_events" value="1">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-archive"></i> Archiver
                         </button>
                     </form>
@@ -419,6 +163,46 @@
     </div>
 </div>
     </main>
+
+    <script>
+    // Cleanup orphans confirmation
+    const cleanupForm = document.querySelector('.form-cleanup-orphans');
+    if (cleanupForm) {
+        cleanupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            SwalHelper.confirm(
+                'Nettoyer les orphelins ?',
+                'Cette action va supprimer les enregistrements orphelins',
+                'Nettoyer',
+                'Annuler'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    cleanupForm.submit();
+                }
+            });
+        });
+    }
+    
+    // Archive events confirmation
+    const archiveForm = document.querySelector('.form-archive-events');
+    if (archiveForm) {
+        archiveForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            SwalHelper.confirm(
+                'Archiver les anciens événements ?',
+                'Les événements de plus d\'un an seront archivés',
+                'Archiver',
+                'Annuler'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    archiveForm.submit();
+                }
+            });
+        });
+    }
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

@@ -12,12 +12,11 @@
  * 
  * @package Views/Event
  */
+$pageCss = ['shared', 'buttons', 'search', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -106,10 +105,11 @@
                                         <i class="fas fa-eye"></i> Voir détails
                                     </a>
                                     <?php if ($isRejected): ?>
-                                        <form method="POST" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet événement ?');">
+                                        <form method="POST" style="display: inline;" class="form-delete-event" data-event-title="<?= htmlspecialchars($event['titre'] ?? '') ?>">
                                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                             <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
-                                            <button type="submit" name="delete_event" class="btn btn-danger btn-sm">
+                                            <input type="hidden" name="delete_event" value="1">
+                                            <button type="submit" class="btn btn-danger btn-sm">
                                                 <i class="fas fa-trash"></i> Supprimer
                                             </button>
                                         </form>
@@ -122,6 +122,23 @@
             <?php endif; ?>
         </div>
     </main>
+
+    <script>
+    // Delete event confirmation with SweetAlert2
+    document.querySelectorAll('.form-delete-event').forEach(form => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const eventTitle = form.dataset.eventTitle;
+            
+            SwalHelper.confirmDelete('l\'événement "' + eventTitle + '"')
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+        });
+    });
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

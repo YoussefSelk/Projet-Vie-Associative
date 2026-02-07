@@ -128,17 +128,29 @@ input[type="checkbox"] {
 
 @media (max-width: 480px) {
   .form-section {
-    padding: 10px;
+    padding: 12px;
     margin-bottom: 10px;
   }
 
   .valid-container {
     flex-direction: column;
+    gap: 10px;
   }
 
   .valid-container input[type="text"] {
     flex: none;
     width: 100%;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    padding: 10px;
+    font-size: 16px; /* Prevents zoom on iOS */
   }
 }
 
@@ -236,7 +248,7 @@ input[type="checkbox"] {
   font-size: 0.8rem;
   width: 250px;
   white-space: normal;
-  z-index: 100;
+  z-index: var(--z-tooltip, 1400);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 

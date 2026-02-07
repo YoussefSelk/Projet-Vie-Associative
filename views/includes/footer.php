@@ -16,7 +16,7 @@
         <div class="footer-container">
             <!-- Section marque avec logo et reseaux sociaux -->
             <div class="footer-brand">
-                <img src="images/EILCO-LOGO-2022.png" alt="EILCO" class="footer-logo">
+                <img src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/images/EILCO-LOGO-2022.png" alt="EILCO" class="footer-logo">
                 <p>Vie Étudiante EILCO - La plateforme des clubs et événements de l'École d'Ingénieurs du Littoral Côte d'Opale</p>
                 <div class="footer-social">
                     <a href="https://www.facebook.com/EILCO.Officiel" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>

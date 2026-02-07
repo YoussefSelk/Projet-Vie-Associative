@@ -16,12 +16,11 @@
  * 
  * @package Views/Event
  */
+$pageCss = ['shared', 'buttons', 'forms', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -210,98 +209,5 @@
             });
         }
     </script>
-    
-    <style>
-        .type-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .type-option {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-        }
-        
-        .type-option:hover {
-            border-color: #0066cc;
-            background: #f0f7ff;
-        }
-        
-        .type-option.selected {
-            border-color: #0066cc;
-            background: #e8f4fc;
-        }
-        
-        .type-option input {
-            display: none;
-        }
-        
-        .type-option i {
-            font-size: 2rem;
-            color: #0066cc;
-            margin-bottom: 10px;
-        }
-        
-        .type-option span {
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .type-option small {
-            color: #666;
-            font-size: 0.8rem;
-            margin-top: 5px;
-        }
-        
-        .info-box {
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid;
-        }
-        
-        .info-box-primary {
-            background: #e8f4fc;
-            border-color: #0066cc;
-        }
-        
-        .info-box h4 {
-            margin: 0 0 15px 0;
-            color: #0066cc;
-        }
-        
-        .info-box p {
-            margin: 5px 0;
-        }
-        
-        .info-box details {
-            margin-top: 15px;
-        }
-        
-        .info-box summary {
-            cursor: pointer;
-            font-weight: 500;
-            color: #0066cc;
-        }
-        
-        .required, .event-required {
-            color: #dc3545;
-        }
-        
-        @media (max-width: 600px) {
-            .type-selector {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </body>
 </html>

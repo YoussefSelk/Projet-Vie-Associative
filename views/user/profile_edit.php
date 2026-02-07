@@ -16,12 +16,11 @@
  * 
  * @package Views/User
  */
+$pageCss = ['shared', 'buttons', 'forms', 'profiles'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>

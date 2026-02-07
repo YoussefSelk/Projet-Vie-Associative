@@ -14,176 +14,11 @@
  * 
  * @package Views/Club
  */
+$pageCss = ['shared', 'buttons', 'tables', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-    <style>
-        .club-status-badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .status-approved {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .status-rejected {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .club-card {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-        }
-
-        .club-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .club-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 15px;
-        }
-
-        .club-title {
-            flex: 1;
-        }
-
-        .club-title h3 {
-            margin: 0 0 5px 0;
-            color: #333;
-            font-size: 18px;
-        }
-
-        .club-type {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .club-meta {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        .meta-icon {
-            color: #007bff;
-        }
-
-        .club-description {
-            color: #555;
-            line-height: 1.6;
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-left: 3px solid #007bff;
-            border-radius: 4px;
-        }
-
-        .club-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .refusal-reason {
-            background-color: #ffe6e6;
-            border-left: 4px solid #dc3545;
-            padding: 12px;
-            border-radius: 4px;
-            margin-bottom: 15px;
-        }
-
-        .refusal-reason h5 {
-            margin: 0 0 8px 0;
-            color: #721c24;
-            font-size: 14px;
-        }
-
-        .refusal-reason p {
-            margin: 0;
-            color: #721c24;
-            font-size: 14px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 8px;
-        }
-
-        .empty-state i {
-            font-size: 48px;
-            color: #ccc;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        .empty-state h3 {
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .empty-state p {
-            color: #999;
-            margin-bottom: 20px;
-        }
-
-        .btn-group-vertical {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        @media (max-width: 768px) {
-            .club-header {
-                flex-direction: column;
-            }
-
-            .club-meta {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .club-actions {
-                flex-direction: column;
-            }
-
-            .club-actions .btn {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -288,10 +123,11 @@
                                     <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-primary btn-sm">
                                         <i class="fas fa-edit"></i> Modifier
                                     </a>
-                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce club ?');">
+                                    <form method="POST" style="display: inline;" class="form-delete-club" data-club-name="<?= htmlspecialchars($club['nom_club'] ?? '') ?>">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                         <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
-                                        <button type="submit" name="delete_club" class="btn btn-danger btn-sm">
+                                        <input type="hidden" name="delete_club" value="1">
+                                        <button type="submit" class="btn btn-danger btn-sm">
                                             <i class="fas fa-trash"></i> Supprimer
                                         </button>
                                     </form>
@@ -312,6 +148,23 @@
             <?php endif; ?>
         </div>
     </main>
+
+    <script>
+    // Delete club confirmation with SweetAlert2
+    document.querySelectorAll('.form-delete-club').forEach(form => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const clubName = form.dataset.clubName;
+            
+            SwalHelper.confirmDelete('le club "' + clubName + '"')
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+        });
+    });
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

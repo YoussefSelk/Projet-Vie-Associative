@@ -370,7 +370,7 @@ class ValidationController {
         if ($is_admin) {
             $pending_clubs = $this->db->query("SELECT fc.*, u.nom as tuteur_nom FROM fiche_club fc LEFT JOIN users u ON fc.tuteur = u.id WHERE fc.validation_finale IS NULL")->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($is_tutor) {
-            $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE tuteur = ? AND (validation_tuteur IS NULL OR validation_tuteur = 0)");
+            $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE tuteur = ? AND validation_tuteur IS NULL");
             $stmt->execute([$user_id]);
             $pending_clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else { $pending_clubs = []; }
@@ -379,9 +379,9 @@ class ValidationController {
         if ($is_admin) {
             $pending_events = $this->db->query("SELECT fe.*, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fe.validation_finale IS NULL")->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($is_bde) {
-            $pending_events = $this->db->query("SELECT fe.*, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fe.validation_bde IS NULL OR fe.validation_bde = 0")->fetchAll(PDO::FETCH_ASSOC);
+            $pending_events = $this->db->query("SELECT fe.*, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fe.validation_bde IS NULL")->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($is_tutor) {
-            $stmt = $this->db->prepare("SELECT fe.*, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fc.tuteur = ? AND (fe.validation_tuteur IS NULL OR fe.validation_tuteur = 0)");
+            $stmt = $this->db->prepare("SELECT fe.*, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fc.tuteur = ? AND fe.validation_tuteur IS NULL ");
             $stmt->execute([$user_id]);
             $pending_events = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else { $pending_events = []; }

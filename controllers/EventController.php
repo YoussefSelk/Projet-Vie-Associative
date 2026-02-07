@@ -54,14 +54,21 @@ class EventController {
      */
     public function viewEvent() {
         $event_id = $_GET['id'] ?? null;
-        if (!$event_id) {
-            redirect('index.php');
-        }
+        if (!$event_id) { redirect('index.php'); }
 
+        // 1. On garde votre fonction habituelle (pas de casse)
         $event = $this->eventModel->getEventById($event_id);
-        if (!$event) {
-            redirect('index.php');
-        }
+        
+        if (!$event) { redirect('index.php'); }
+
+        // 2. On cherche qui est le tuteur du club organisateur de cet event
+        // club_orga est bien dans $event
+        $stmt = $this->db->prepare("SELECT tuteur FROM fiche_club WHERE club_id = ?");
+        $stmt->execute([$event['club_orga']]);
+        $clubInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // 3. On ajoute l'ID du tuteur au tableau $event pour la vue
+        $event['tuteur_id'] = $clubInfo['tuteur'] ?? 0;
 
         return [
             'event' => $event

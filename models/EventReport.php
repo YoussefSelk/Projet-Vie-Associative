@@ -35,7 +35,7 @@ class EventReport {
      */
     public function getEventWithReport($event_id) {
         $stmt = $this->db->prepare("
-            SELECT fe.*, fc.nom_club 
+            SELECT fe.*, fc.nom_club, fc.tuteur
             FROM fiche_event fe
             LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
             WHERE fe.event_id = ?
@@ -51,7 +51,7 @@ class EventReport {
      */
     public function getEventsWithReports() {
         $stmt = $this->db->prepare("
-            SELECT fe.*, fc.nom_club 
+            SELECT fe.*, fc.nom_club, fc.tuteur
             FROM fiche_event fe
             LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
             WHERE fe.validation_finale = 1 
@@ -88,10 +88,15 @@ class EventReport {
      * @param int $event_id Identifiant de l'événement
      * @param string $rapport_path Chemin du fichier rapport
      * @return bool Succès de la mise à jour
+     * (Adapté pour votre nouvelle colonne images_event)
      */
-    public function updateReport($event_id, $rapport_path) {
-        $stmt = $this->db->prepare("UPDATE fiche_event SET rapport_event = ? WHERE event_id = ?");
-        return $stmt->execute([$rapport_path, $event_id]);
+    public function updateReportWithImages($event_id, $rapport_path, $images_path) {
+        $stmt = $this->db->prepare("
+            UPDATE fiche_event 
+            SET rapport_event = ?, images_event = ? 
+            WHERE event_id = ?
+        ");
+        return $stmt->execute([$rapport_path, $images_path, $event_id]);
     }
 
     /**

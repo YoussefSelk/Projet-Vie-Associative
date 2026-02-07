@@ -35,7 +35,7 @@ $pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
         <div class="analytics-container">
             <!-- Header -->
             <div class="analytics-header">
-                <div class="header-title">
+                <div class="event-header-title">
                     <h1><i class="fas fa-chart-line"></i> Analytiques des Événements</h1>
                 </div>
                 <a href="?page=admin" class="back-btn">

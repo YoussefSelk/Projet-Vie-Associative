@@ -89,7 +89,9 @@ $pageCss = ['shared', 'buttons', 'search', 'events'];
                                     <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
                                         <i class="fas fa-eye"></i> Voir
                                     </a>
-                                    <a href="?page=unsubscribe&event_id=<?= $event['event_id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Voulez-vous vraiment vous désinscrire ?');">
+                                    <a href="?page=unsubscribe&event_id=<?= $event['event_id'] ?>" 
+                                       class="btn btn-danger btn-sm btn-unsubscribe" 
+                                       data-event-title="<?= htmlspecialchars($event['event_title']) ?>">
                                         <i class="fas fa-times"></i> Se désinscrire
                                     </a>
                                 </div>
@@ -100,6 +102,28 @@ $pageCss = ['shared', 'buttons', 'search', 'events'];
             <?php endif; ?>
         </div>
     </main>
+
+    <script>
+    // Unsubscribe confirmation with SweetAlert2
+    document.querySelectorAll('.btn-unsubscribe').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const eventTitle = btn.dataset.eventTitle;
+            const unsubscribeUrl = btn.href;
+            
+            SwalHelper.confirm(
+                'Se désinscrire ?',
+                'Voulez-vous vraiment vous désinscrire de "' + eventTitle + '" ?',
+                'Oui, me désinscrire',
+                'Annuler'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = unsubscribeUrl;
+                }
+            });
+        });
+    });
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

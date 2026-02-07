@@ -120,9 +120,10 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
                 <div class="action-card">
                     <h4><i class="fas fa-broom"></i> Nettoyer les orphelins</h4>
                     <p>Supprime les enregistrements orphelins : membres de clubs inexistants, inscriptions à des événements supprimés, etc.</p>
-                    <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir nettoyer les enregistrements orphelins ?');">
+                    <form method="POST" class="form-cleanup-orphans">
                         <input type="hidden" name="csrf_token" value="<?php echo Security::generateCsrfToken(); ?>">
-                        <button type="submit" name="cleanup_orphans" class="btn btn-warning">
+                        <input type="hidden" name="cleanup_orphans" value="1">
+                        <button type="submit" class="btn btn-warning">
                             <i class="fas fa-broom"></i> Nettoyer
                         </button>
                     </form>
@@ -132,9 +133,10 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
                 <div class="action-card">
                     <h4><i class="fas fa-archive"></i> Archiver anciens événements</h4>
                     <p>Archive les événements de plus d'un an. Les événements archivés ne seront plus affichés dans les listes publiques.</p>
-                    <form method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir archiver les anciens événements ?');">
+                    <form method="POST" class="form-archive-events">
                         <input type="hidden" name="csrf_token" value="<?php echo Security::generateCsrfToken(); ?>">
-                        <button type="submit" name="archive_old_events" class="btn btn-primary">
+                        <input type="hidden" name="archive_old_events" value="1">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-archive"></i> Archiver
                         </button>
                     </form>
@@ -161,6 +163,46 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
     </div>
 </div>
     </main>
+
+    <script>
+    // Cleanup orphans confirmation
+    const cleanupForm = document.querySelector('.form-cleanup-orphans');
+    if (cleanupForm) {
+        cleanupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            SwalHelper.confirm(
+                'Nettoyer les orphelins ?',
+                'Cette action va supprimer les enregistrements orphelins',
+                'Nettoyer',
+                'Annuler'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    cleanupForm.submit();
+                }
+            });
+        });
+    }
+    
+    // Archive events confirmation
+    const archiveForm = document.querySelector('.form-archive-events');
+    if (archiveForm) {
+        archiveForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            SwalHelper.confirm(
+                'Archiver les anciens événements ?',
+                'Les événements de plus d\'un an seront archivés',
+                'Archiver',
+                'Annuler'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    archiveForm.submit();
+                }
+            });
+        });
+    }
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

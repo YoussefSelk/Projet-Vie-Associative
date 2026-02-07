@@ -123,10 +123,11 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
                                     <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-primary btn-sm">
                                         <i class="fas fa-edit"></i> Modifier
                                     </a>
-                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce club ?');">
+                                    <form method="POST" style="display: inline;" class="form-delete-club" data-club-name="<?= htmlspecialchars($club['nom_club'] ?? '') ?>">
                                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
                                         <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
-                                        <button type="submit" name="delete_club" class="btn btn-danger btn-sm">
+                                        <input type="hidden" name="delete_club" value="1">
+                                        <button type="submit" class="btn btn-danger btn-sm">
                                             <i class="fas fa-trash"></i> Supprimer
                                         </button>
                                     </form>
@@ -147,6 +148,23 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
             <?php endif; ?>
         </div>
     </main>
+
+    <script>
+    // Delete club confirmation with SweetAlert2
+    document.querySelectorAll('.form-delete-club').forEach(form => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const clubName = form.dataset.clubName;
+            
+            SwalHelper.confirmDelete('le club "' + clubName + '"')
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+        });
+    });
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

@@ -161,6 +161,12 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
     <!-- ========================================
          JAVASCRIPT
          ======================================== -->
+    <!-- SweetAlert2 for beautiful alerts and confirmations -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- SweetAlert2 Helper Functions -->
+    <script src="<?= $baseUrl ?>/assets/js/sweetalert-helpers.js"></script>
+    
     <!-- Chart.js for admin dashboards (deferred) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
     

@@ -98,8 +98,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'admin', 'profiles'];
             <div class="profile-actions">
                 <?php if ($user['id'] != $_SESSION['id']): ?>
                     <a href="?page=delete-user&id=<?php echo $user['id']; ?>" 
-                       class="btn btn-danger"
-                       onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement cet utilisateur ?');">
+                       class="btn btn-danger btn-delete-this-user"
+                       data-user-name="<?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>">
                         <i class="fas fa-trash"></i> Supprimer l'utilisateur
                     </a>
                 <?php endif; ?>
@@ -185,6 +185,25 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'admin', 'profiles'];
     </div>
 </div>
     </main>
+
+    <script>
+    // Delete user confirmation with SweetAlert2
+    const deleteBtn = document.querySelector('.btn-delete-this-user');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const userName = deleteBtn.dataset.userName;
+            const deleteUrl = deleteBtn.href;
+            
+            SwalHelper.confirmDelete('l\'utilisateur "' + userName + '"')
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = deleteUrl;
+                    }
+                });
+        });
+    }
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

@@ -130,6 +130,16 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
                                 <option value="boulogne">Boulogne</option>
                             </select>
                         </div>
+
+                        <div class="filter-item" style="flex: 1; min-width: 150px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-user-shield"></i> Tuteur</label>
+                            <select id="tuteurFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                                <option value="">Tous les tuteurs</option>
+                                <?php foreach ($tuteurs as $t): ?>
+                                    <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nom'] . ' ' . $t['prenom']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
                         
                         <div class="filter-item" style="flex: 1; min-width: 150px;">
                             <label style="margin-bottom: 8px; display: block;"><i class="fas fa-tag"></i> Type</label>
@@ -186,7 +196,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
                                     <tr data-search="<?= htmlspecialchars($searchData) ?>" 
                                         data-name="<?= htmlspecialchars(strtolower($c['nom_club'])) ?>"
                                         data-type="<?= htmlspecialchars(strtolower($c['type_club'] ?? '')) ?>"
-                                        data-campus="<?= htmlspecialchars(strtolower($c['campus'] ?? '')) ?>">
+                                        data-campus="<?= htmlspecialchars(strtolower($c['campus'] ?? '')) ?>"
+                                        data-tuteur="<?= $c['tuteur'] ?? '' ?>">
                                         <td data-label="Nom">
                                             <span class="club-name"><?= htmlspecialchars($c['nom_club']) ?></span>
                                         </td>
@@ -237,6 +248,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
         const tbody = document.getElementById('clubsTableBody');
         const searchInput = document.getElementById('clubTableFilter');
         const campusFilter = document.getElementById('campusFilter');
+        const tuteurFilter = document.getElementById('tuteurFilter');
         const typeFilter = document.getElementById('typeFilter');
         const sortFilter = document.getElementById('sortFilter');
         const resetBtn = document.getElementById('resetFilters');
@@ -250,6 +262,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
         function applyFilters() {
             const searchTerm = searchInput.value.toLowerCase().trim();
             const campusValue = campusFilter.value.toLowerCase();
+            const tuteurValue = tuteurFilter.value;
             const typeValue = typeFilter.value.toLowerCase();
             
             let visibleCount = 0;
@@ -258,14 +271,16 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
                 const name = row.dataset.name || '';
                 const type = row.dataset.type || '';
                 const campus = row.dataset.campus || '';
+                const tuteur = row.dataset.tuteur || '';
                 const searchData = row.dataset.search || '';
                 
                 // Check all filters
                 const matchesSearch = !searchTerm || searchData.includes(searchTerm);
                 const matchesCampus = !campusValue || campus === campusValue;
+                const matchesTuteur = !tuteurValue || tuteur === tuteurValue;
                 const matchesType = !typeValue || type === typeValue;
                 
-                if (matchesSearch && matchesCampus && matchesType) {
+                if (matchesSearch && matchesCampus && matchesTuteur && matchesType) {
                     row.style.display = '';
                     visibleCount++;
                 } else {
@@ -315,6 +330,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
         function resetAllFilters() {
             searchInput.value = '';
             campusFilter.value = '';
+            tuteurFilter.value = '';
             typeFilter.value = '';
             sortFilter.value = 'name-asc';
             applySort();
@@ -323,6 +339,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
         // Event listeners
         searchInput.addEventListener('input', applyFilters);
         campusFilter.addEventListener('change', applyFilters);
+        tuteurFilter.addEventListener('change', applyFilters);
         typeFilter.addEventListener('change', applyFilters);
         sortFilter.addEventListener('change', applySort);
         resetBtn.addEventListener('click', resetAllFilters);

@@ -502,9 +502,9 @@ input[type="reset"] {
 
 @media (prefers-contrast: high) {
   :root {
-    --primary-color: #0000cc;
-    --text-color: #000000;
-    --bg-color: #ffffff;
+    --color-primary: #0000cc;
+    --color-gray-900: #000000;
+    --color-white: #ffffff;
   }
 
   a {

@@ -18,12 +18,11 @@
  * 
  * @package Views/Validation
  */
+$pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -117,7 +116,7 @@
     </main>
     
     <!-- Comment Modal -->
-    <div id="commentModal" class="modal" style="display:none;">
+    <div id="commentModal" class="simple-modal" style="display:none;">
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Ajouter un commentaire</h3>

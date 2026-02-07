@@ -4,9 +4,11 @@
  * * Permet aux organisateurs de deposer un bilan avec PDF et photos (Max 5, 500Ko/unité).
  * * @package Views/Event
  */
+$pageCss = ['shared', 'buttons', 'forms', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
+<<<<<<< HEAD
 <head>
     <?php include VIEWS_PATH . '/includes/head.php'; ?>
     <style>
@@ -68,6 +70,9 @@
         }
     </style>
 </head>
+=======
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
+>>>>>>> origin/main
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>

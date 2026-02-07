@@ -18,64 +18,11 @@
  * 
  * @package Views/User
  */
+$pageCss = ['shared', 'buttons', 'tables', 'search', 'profiles'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-    <style>
-        .permission-select {
-            padding: 0.35rem 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            background: white;
-            cursor: pointer;
-            transition: border-color 0.3s;
-        }
-        .permission-select:hover {
-            border-color: #0066cc;
-        }
-        .permission-select:focus {
-            outline: none;
-            border-color: #0066cc;
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-        }
-        .action-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .inline-form {
-            display: inline-block;
-        }
-        .btn-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            color: #6c757d;
-            background: #f8f9fa;
-        }
-        .btn-icon:hover {
-            background: #e9ecef;
-        }
-        .btn-icon.danger:hover {
-            background: #dc3545;
-            color: white;
-        }
-        .badge-purple {
-            background: #6f42c1;
-            color: white;
-        }
-    </style>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>

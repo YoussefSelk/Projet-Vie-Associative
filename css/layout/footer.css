@@ -266,4 +266,21 @@
   .footer-column ul li a:hover {
     transform: none;
   }
+
+  .footer-brand {
+    margin-bottom: 1rem;
+  }
+
+  .footer-logo {
+    height: 50px;
+  }
+
+  .footer-social {
+    gap: 10px;
+  }
+
+  .footer-social a {
+    width: 38px;
+    height: 38px;
+  }
 }

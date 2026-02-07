@@ -17,12 +17,11 @@
  * 
  * @package Views/Club
  */
+$pageCss = ['shared', 'buttons', 'tables', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -95,7 +94,7 @@
                     <div class="club-header" style="background: linear-gradient(135deg, <?= $campusColor ?> 0%, <?= $campusColor ?>aa 100%);">
                         <div class="club-icon-large">
                             <?php if (!empty($club['logo']) && file_exists(ROOT_PATH . '/uploads/logos/' . $club['logo'])): ?>
-                                <img src="/uploads/logos/<?= htmlspecialchars($club['logo']) ?>" alt="Logo <?= htmlspecialchars($club['nom_club']) ?>">
+                                <img src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/uploads/logos/<?= htmlspecialchars($club['logo']) ?>" alt="Logo <?= htmlspecialchars($club['nom_club']) ?>">
                             <?php else: ?>
                                 <i class="fas <?= $clubIcon ?>"></i>
                             <?php endif; ?>

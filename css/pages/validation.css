@@ -1,0 +1,805 @@
+/* =====================================================
+   VALIDATION / TUTORING PAGE STYLES
+   Admin dashboard for validating clubs and events
+   ===================================================== */
+
+/* Admin Dashboard Layout */
+.admin-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Stats Cards */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #fff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.stat-card.approved {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card.clubs {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stat-card.pending .stat-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.stat-card.approved .stat-icon {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.stat-card.clubs .stat-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.stat-content h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.stat-content p {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Search Section */
+.search-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.search-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input-wrapper {
+  flex: 1;
+  min-width: 250px;
+  position: relative;
+}
+
+.search-input-wrapper i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 1rem;
+}
+
+.search-input-wrapper input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: all 0.3s;
+  background: #f8fafc;
+}
+
+.search-input-wrapper input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-tab {
+  padding: 10px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-tab:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.filter-tab.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: #fff;
+}
+
+.filter-tab .count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.filter-tab.active .count {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Validation Cards Grid */
+.validation-cards-container {
+  display: grid;
+  gap: 20px;
+}
+
+.validation-card-advanced {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s;
+}
+
+.validation-card-advanced:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.validation-card-advanced.club-card {
+  border-left: 4px solid #8b5cf6;
+}
+
+.validation-card-advanced.event-card {
+  border-left: 4px solid #06b6d4;
+}
+
+.card-main {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: start;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.card-type-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.club-card .card-type-icon {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: #fff;
+}
+
+.club-card .card-type-icon.has-logo {
+  background: #f8fafc;
+  padding: 0;
+  overflow: hidden;
+}
+
+.club-card .card-type-icon.has-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.event-card .card-type-icon {
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  color: #fff;
+}
+
+/* Modal club logo */
+.modal-club-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border: 2px solid #e2e8f0;
+}
+
+.modal-club-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-club-logo .no-logo {
+  font-size: 2rem;
+  color: #94a3b8;
+}
+
+.modal-header-with-logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.card-title-info h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.card-title-info .card-subtitle {
+  color: #64748b;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.meta-item i {
+  color: #94a3b8;
+  width: 18px;
+}
+
+.card-description {
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.btn-view-details {
+  padding: 12px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-view-details:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #f0f7ff;
+}
+
+.btn-approve,
+.btn-reject {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.btn-approve {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+}
+
+.btn-approve:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+}
+
+.btn-reject {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+}
+
+.btn-reject:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+}
+
+/* Bouton Forcer la validation - Réservé Admin */
+.btn-force {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+}
+
+.btn-force:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-1px);
+}
+
+.btn-force i {
+  font-size: 0.9rem;
+}
+
+/* Modal Styles for Validation */
+.validation-page .modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: var(--z-modal, 1200);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.validation-page .modal-overlay.active {
+  display: flex;
+}
+
+.validation-page .modal-content {
+  background: #fff;
+  border-radius: 20px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  animation: modalSlideIn 0.3s ease;
+}
+
+.validation-page .modal-header {
+  padding: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fff;
+}
+
+.validation-page .modal-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.validation-page .modal-close {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.validation-page .modal-close:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.validation-page .modal-body {
+  padding: 24px;
+  background: #fff;
+}
+
+.validation-page .modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  background: #fff;
+}
+
+.validation-page .modal-footer .btn-approve,
+.validation-page .modal-footer .btn-reject {
+  padding: 14px 28px;
+  font-size: 1rem;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Detail sections inside modal */
+.validation-page .detail-section {
+  margin-bottom: 20px;
+}
+
+.validation-page .detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.validation-page .detail-section h4 {
+  color: #64748b;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+.validation-page .detail-section p,
+.validation-page .detail-section .detail-value {
+  color: #1e293b;
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.validation-page .detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* Rejection reason section */
+.modal-reject-section {
+  padding: 0 24px 20px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Members list in club modal */
+.members-list {
+  display: grid;
+  gap: 8px;
+}
+
+.member-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.95rem;
+}
+
+.member-name {
+  font-weight: 600;
+}
+
+.member-role {
+  background: #eef2ff;
+  color: #3730a3;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+}
+
+.member-email {
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.member-promo {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.reject-reason-box {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.reject-reason-box h4 {
+  color: #dc2626;
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reject-hint {
+  color: #7f1d1d;
+  font-size: 0.85rem;
+  margin: 0 0 12px 0;
+}
+
+.reject-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #fecaca;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.3s;
+  background: #fff;
+}
+
+.reject-textarea:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+}
+
+.reject-textarea::placeholder {
+  color: #9ca3af;
+}
+
+.btn-reject-init {
+  padding: 14px 28px;
+  border: 2px solid #ef4444;
+  border-radius: 10px;
+  background: #fff;
+  color: #ef4444;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.btn-reject-init:hover {
+  background: #fef2f2;
+}
+
+.btn-cancel {
+  padding: 14px 28px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #64748b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.btn-cancel:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* Empty State */
+.empty-state-advanced {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-state-advanced .empty-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 2rem;
+  color: #059669;
+}
+
+.empty-state-advanced h3 {
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.empty-state-advanced p {
+  color: #64748b;
+  margin: 0;
+}
+
+/* Tutored Clubs Enhanced */
+.tutored-clubs-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.tutored-club-enhanced {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-decoration: none;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+}
+
+.tutored-club-enhanced:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+  transform: translateX(4px);
+}
+
+.tutored-club-enhanced .club-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.tutored-club-enhanced .club-details h4 {
+  margin: 0 0 4px 0;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.tutored-club-enhanced .club-details span {
+  font-size: 0.85rem;
+}
+
+.tutored-club-enhanced .arrow {
+  margin-left: auto;
+  color: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .card-main {
+    grid-template-columns: 1fr;
+  }
+
+  .card-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .search-row {
+    flex-direction: column;
+  }
+
+  .search-input-wrapper {
+    width: 100%;
+  }
+}

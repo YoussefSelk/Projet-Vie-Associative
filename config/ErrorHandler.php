@@ -122,7 +122,7 @@ class ErrorHandler
         $logPath = self::$securityLogPath ?: (defined('ROOT_PATH') ? ROOT_PATH . '/logs/security.log' : __DIR__ . '/../logs/security.log');
         @file_put_contents($logPath, $logMessage, FILE_APPEND | LOCK_EX);
     }
-    
+     
     /**
      * Génère un code de référence unique pour l'erreur
      * Utilisé pour le suivi par l'équipe de support

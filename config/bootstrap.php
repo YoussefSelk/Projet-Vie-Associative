@@ -30,6 +30,13 @@ define('LOGS_PATH', ROOT_PATH . '/logs');
 define('UPLOADS_PATH', ROOT_PATH . '/uploads');
 
 // =============================================================================
+// DÉFINITION DE L'URL DE BASE
+// =============================================================================
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+define('BASE_URL', $protocol . '://' . $host);
+
+// =============================================================================
 // DÉMARRAGE DU BUFFER DE SORTIE
 // =============================================================================
 // Permet de nettoyer tout l'output en cas d'erreur pour afficher

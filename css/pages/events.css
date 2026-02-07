@@ -144,6 +144,7 @@
   font-size: 2.2rem;
   margin-bottom: 20px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  color: white;
 }
 
 .event-badges {
@@ -279,13 +280,13 @@
   gap: 1rem;
 }
 
-.header-title {
+.event-header-title {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.header-title h1 {
+.event-header-title h1 {
   font-size: 1.75rem;
   color: #1a1a2e;
   margin: 0;
@@ -294,7 +295,7 @@
   gap: 0.75rem;
 }
 
-.header-title h1 i {
+.event-header-title h1 i {
   color: #0066cc;
 }
 

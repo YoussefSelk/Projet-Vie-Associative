@@ -123,6 +123,7 @@
 }
 
 .hero-content h1 {
+  color: white !important;
   font-size: 1.75rem;
   margin: 0 0 0.5rem;
   font-weight: 700;
@@ -409,14 +410,14 @@
   align-items: center;
   justify-content: center;
   background: var(--dash-primary);
-  color: white;
+  color: white !important;
   border-radius: 8px;
   font-size: 0.9rem;
   flex-shrink: 0;
 }
 
 .card-badge {
-  background: var(--dash-primary);
+  background: rgb(219, 0, 0);
   color: white;
   padding: 0.35rem 0.85rem;
   border-radius: 20px;
@@ -445,6 +446,8 @@
 
 .card-body {
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 576px) {
@@ -801,6 +804,9 @@
    Empty States
    ========================================== */
 .empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   padding: 2.5rem 1.5rem;
   color: var(--dash-gray-500);
@@ -839,7 +845,6 @@
 
 .empty-state .btn:hover {
   background: var(--dash-primary-dark);
-  transform: translateY(-2px);
 }
 
 /* ==========================================

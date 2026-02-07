@@ -365,10 +365,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                             <span style="color: #6c757d;">
                                 <i class="fas fa-info-circle"></i> Dernières 50 entrées
                             </span>
-                            <form method="POST" style="display: inline;">
+                            <form method="POST" style="display: inline;" class="form-clear-logs">
                                 <input type="hidden" name="csrf_token" value="<?= Security::generateCsrfToken() ?>">
-                                <button type="submit" name="clear_logs" class="export-btn danger" 
-                                        onclick="return confirm('Êtes-vous sûr de vouloir effacer tous les logs ?');">
+                                <input type="hidden" name="clear_logs" value="1">
+                                <button type="submit" class="export-btn danger">
                                     <i class="fas fa-trash"></i> Effacer les logs
                                 </button>
                             </form>
@@ -398,6 +398,55 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
             </div>
         </div>
     </main>
+
+    <script>
+    // Bulk actions confirmation
+    document.querySelectorAll('.btn-bulk-action').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const form = btn.closest('form');
+            const action = btn.dataset.action;
+            let title, text;
+            
+            if (action === 'validate-clubs') {
+                const count = btn.dataset.count;
+                title = 'Valider tous les clubs ?';
+                text = `Voulez-vous valider les ${count} club(s) en attente ?`;
+            } else if (action === 'validate-events') {
+                const count = btn.dataset.count;
+                title = 'Valider tous les événements ?';
+                text = `Voulez-vous valider les ${count} événement(s) en attente ?`;
+            } else if (action === 'clean-events') {
+                title = 'Analyser les anciens événements ?';
+                text = 'Cette action va analyser et archiver les événements de plus d\'un an';
+            }
+            
+            SwalHelper.confirm(title, text, 'Oui, continuer', 'Annuler')
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+        });
+    });
+    
+    // Clear logs confirmation
+    const clearLogsForm = document.querySelector('.form-clear-logs');
+    if (clearLogsForm) {
+        clearLogsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            SwalHelper.warning(
+                'Êtes-vous sûr ?',
+                'Tous les logs seront définitivement effacés'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    clearLogsForm.submit();
+                }
+            });
+        });
+    }
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

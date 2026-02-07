@@ -335,6 +335,10 @@
    Empty States
    ================================================ */
 .empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
   text-align: center;
   padding: 48px 24px;
   color: var(--color-gray-500, #64748b);
@@ -386,7 +390,7 @@
 
 .divider-text::before,
 .divider-text::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: var(--color-gray-200, #e2e8f0);
@@ -404,7 +408,11 @@
   justify-content: center;
   font-weight: var(--font-weight-semibold, 600);
   font-size: var(--font-size-sm, 0.875rem);
-  background: linear-gradient(135deg, var(--color-primary, #0066cc), var(--color-secondary, #4cc9f0));
+  background: linear-gradient(
+    135deg,
+    var(--color-primary, #0066cc),
+    var(--color-secondary, #4cc9f0)
+  );
   color: var(--color-white, #fff);
   flex-shrink: 0;
 }
@@ -447,7 +455,11 @@
 
 .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-primary, #0066cc), var(--color-secondary, #4cc9f0));
+  background: linear-gradient(
+    90deg,
+    var(--color-primary, #0066cc),
+    var(--color-secondary, #4cc9f0)
+  );
   border-radius: var(--radius-full, 9999px);
   transition: width var(--transition-slow, 0.3s ease);
 }
@@ -493,7 +505,7 @@
 }
 
 .tab.active::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -2px;
   left: 0;

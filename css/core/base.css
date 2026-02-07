@@ -109,9 +109,11 @@ a {
 
 a:hover {
   color: var(--color-primary-dark, #004999);
-  text-decoration: underline;
+  text-decoration: none;
 }
-
+li {
+  list-style: none;
+}
 /* ================================================
    Main Content Area
    ================================================ */

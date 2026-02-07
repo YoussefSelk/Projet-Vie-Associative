@@ -23,9 +23,10 @@ input[type="submit"],
   font-size: 1rem;
   font-weight: 500;
   text-decoration: none;
-  transition: background-color var(--transition-base, 200ms ease), 
-              transform var(--transition-fast, 150ms ease),
-              box-shadow var(--transition-base, 200ms ease);
+  transition:
+    background-color var(--transition-base, 200ms ease),
+    transform var(--transition-fast, 150ms ease),
+    box-shadow var(--transition-base, 200ms ease);
 }
 
 .btn:hover,
@@ -33,6 +34,7 @@ button:hover,
 input[type="submit"]:hover,
 .formbutton:hover {
   background-color: var(--color-primary-hover, #0052a3);
+  color: #ffffff;
   transform: translateY(-2px);
 }
 

@@ -20,7 +20,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<?php include VIEWS_PATH . '/includes/head.php'; ?>
+<head>
+    <?php include VIEWS_PATH . '/includes/head.php'; ?>
+</head>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -31,9 +33,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
     <main>
         <div class="page-container">
             <div class="page-header">
-                <div class="header-left">
-                    <a href="?page=admin" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
-                </div>
                 <div class="header-center">
                     <h1><i class="fas fa-building"></i> Gestion des clubs</h1>
                     <p class="subtitle">Modifier et gérer les clubs de l'EILCO</p>
@@ -47,7 +46,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
                 <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?></div>
             <?php endif; ?>
 
-            <div class="card">
+
+            <!-- <div class="card">
                 <div class="card-header">
                     <h3><i class="fas fa-search"></i> Rechercher un club</h3>
                 </div>
@@ -68,49 +68,38 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
                         <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Rechercher</button>
                     </form>
                 </div>
-            </div>
+            </div> -->
 
             <?php if ($req_club): ?>
             <div class="card mt-20">
                 <div class="card-header">
-                    <h3><i class="fas fa-edit"></i> Modifier le club: <?= htmlspecialchars($req_club['nom_club']) ?></h3>
+                    <h3><i class="fas fa-info-circle"></i> Détails du club: <?= htmlspecialchars($req_club['nom_club']) ?></h3>
                 </div>
                 <div class="card-body">
-                    <form method="POST" class="form-modern">
-                        <?= Security::csrfField() ?>
-                        <input type="hidden" name="club_id" value="<?= htmlspecialchars($req_club['club_id']) ?>">
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label><i class="fas fa-building"></i> Nom du club</label>
-                                <input type="text" name="nom_club" class="form-control" value="<?= htmlspecialchars($req_club['nom_club']) ?>" required>
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-tag"></i> Type de club</label>
-                                <input type="text" name="type_club" class="form-control" value="<?= htmlspecialchars($req_club['type_club']) ?>" required>
-                            </div>
+                    <div class="club-details-grid">
+                        <div class="detail-item">
+                            <label><i class="fas fa-building"></i> Nom du club</label>
+                            <p><?= htmlspecialchars($req_club['nom_club']) ?></p>
                         </div>
-
-                        <div class="form-group">
-                            <label><i class="fas fa-align-left"></i> Description</label>
-                            <textarea name="description" class="form-control" rows="4" required><?= htmlspecialchars($req_club['description']) ?></textarea>
+                        <div class="detail-item">
+                            <label><i class="fas fa-tag"></i> Type de club</label>
+                            <p><span class="badge badge-info"><?= htmlspecialchars($req_club['type_club']) ?></span></p>
                         </div>
-
-                        <div class="form-group">
+                        <div class="detail-item">
                             <label><i class="fas fa-map-marker-alt"></i> Campus</label>
-                            <select name="campus" class="form-control" required>
-                                <option value="Calais" <?= ($req_club['campus'] ?? '') == "Calais" ? 'selected' : '' ?>>Calais</option>
-                                <option value="Longuenesse" <?= ($req_club['campus'] ?? '') == "Longuenesse" ? 'selected' : '' ?>>Longuenesse</option>
-                                <option value="Dunkerque" <?= ($req_club['campus'] ?? '') == "Dunkerque" ? 'selected' : '' ?>>Dunkerque</option>
-                                <option value="Boulogne" <?= ($req_club['campus'] ?? '') == "Boulogne" ? 'selected' : '' ?>>Boulogne</option>
-                            </select>
+                            <p><span class="campus-badge <?= strtolower($req_club['campus'] ?? 'calais') ?>"><?= htmlspecialchars($req_club['campus'] ?? 'N/A') ?></span></p>
                         </div>
-
-                        <div class="form-actions">
-                            <button type="submit" name="update_club" class="btn btn-success"><i class="fas fa-save"></i> Mettre à jour</button>
-                            <a href="?page=club-view&id=<?= $req_club['club_id'] ?>" class="btn btn-outline"><i class="fa fa-eye"></i> Voir le club</a>
+                        <div class="detail-item full-width">
+                            <label><i class="fas fa-align-left"></i> Description</label>
+                            <p><?= nl2br(htmlspecialchars($req_club['description'])) ?></p>
                         </div>
-                    </form>
+                    </div>
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <a href="?page=club-view&id=<?= $req_club['club_id'] ?>" class="btn btn-primary"><i class="fa fa-eye"></i> Voir la page du club</a>
+                        <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
+                            <a href="?page=club-edit&id=<?= $req_club['club_id'] ?>" class="btn btn-outline"><i class="fas fa-edit"></i> Modifier</a>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
             <?php endif; ?>
@@ -118,54 +107,128 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
             <!-- All Clubs Table -->
             <div class="card mt-20">
                 <div class="card-header">
-                    <h3><i class="fas fa-list"></i> Tous les clubs (<?= count($clubs) ?>)</h3>
+                    <h3><i class="fas fa-list"></i> Tous les clubs (<span id="clubCount"><?= count($clubs) ?></span>)</h3>
                 </div>
                 <div class="card-body">
-                    <!-- Quick Filter -->
-                    <div class="search-container" style="margin-bottom: 16px;">
-                        <div class="search-box">
-                            <i class="fas fa-filter search-icon"></i>
-                            <input type="text" id="clubTableFilter" class="search-input" 
-                                   placeholder="Filtrer la liste..." 
-                                   autocomplete="off">
-                            <button type="button" class="search-clear" aria-label="Effacer">
-                                <i class="fas fa-times"></i>
+                    <div class="filters-row" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; border: none; background: transparent; padding: 0;">
+                        
+                        <div class="filter-item" style="flex: 2; min-width: 200px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-search"></i> Recherche</label>
+                            <input type="text" id="clubTableFilter" class="filter-input" 
+                                placeholder="Nom du club..." 
+                                style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;"
+                                autocomplete="off">
+                        </div>
+                        
+                        <div class="filter-item" style="flex: 1; min-width: 150px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-map-marker-alt"></i> Campus</label>
+                            <select id="campusFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                                <option value="">Tous</option>
+                                <option value="calais">Calais</option>
+                                <option value="longuenesse">Longuenesse</option>
+                                <option value="dunkerque">Dunkerque</option>
+                                <option value="boulogne">Boulogne</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-item" style="flex: 1; min-width: 150px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-user-shield"></i> Tuteur</label>
+                            <select id="tuteurFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                                <option value="">Tous les tuteurs</option>
+                                <?php foreach ($tuteurs as $t): ?>
+                                    <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nom'] . ' ' . $t['prenom']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item" style="flex: 1; min-width: 150px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-tag"></i> Type</label>
+                            <select id="typeFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                                <option value="">Tous les types</option>
+                                <?php 
+                                $types = array_unique(array_filter(array_column($clubs, 'type_club')));
+                                sort($types);
+                                foreach ($types as $type): ?>
+                                    <option value="<?= htmlspecialchars(strtolower($type)) ?>"><?= htmlspecialchars($type) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item" style="flex: 1; min-width: 150px;">
+                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-sort"></i> Trier par</label>
+                            <select id="sortFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                                <option value="name-asc">Nom (A → Z)</option>
+                                <option value="name-desc">Nom (Z → A)</option>
+                                <option value="type-asc">Type (A → Z)</option>
+                                <option value="campus-asc">Campus (A → Z)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-item" style="flex: 0 0 auto;">
+                            <button type="button" id="resetFilters" class="filter-reset-btn" 
+                                    style="border: none; background: #f1f5f9; color: #64748b; font-weight: 600; height: 42px; padding: 0 20px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                                <i class="fas fa-undo"></i> Réinitialiser
                             </button>
                         </div>
                     </div>
+                </div>
                     
                     <?php if (empty($clubs)): ?>
-                        <div class="empty-state-small">
+                        <div class="no-results">
                             <i class="fas fa-building"></i>
                             <p>Aucun club trouvé</p>
                         </div>
                     <?php else: ?>
                         <div class="table-responsive">
-                            <table class="data-table">
+                            <table class="clubs-table">
                                 <thead>
                                     <tr>
-                                        <th>Nom</th>
-                                        <th>Type</th>
-                                        <th>Campus</th>
-                                        <th>Actions</th>
+                                        <th style="width: 35%;">Nom</th>
+                                        <th style="width: 25%;">Type</th>
+                                        <th style="width: 15%;">Campus</th>
+                                        <th style="width: 25%;">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="clubsTableBody">
                                     <?php foreach ($clubs as $c): 
                                         $searchData = strtolower($c['nom_club'] . ' ' . ($c['type_club'] ?? '') . ' ' . ($c['campus'] ?? ''));
                                     ?>
-                                    <tr data-search="<?= htmlspecialchars($searchData) ?>">
-                                        <td data-label="Nom"><strong><?= htmlspecialchars($c['nom_club']) ?></strong></td>
-                                        <td data-label="Type"><span class="badge badge-info"><?= htmlspecialchars($c['type_club'] ?? 'N/A') ?></span></td>
-                                        <td data-label="Campus"><span class="campus-badge <?= strtolower($c['campus'] ?? 'calais') ?>"><?= htmlspecialchars($c['campus'] ?? 'N/A') ?></span></td>
-                                        <td data-label="Actions" class="actions">
-                                            <a href="?page=club-view&id=<?= $c['club_id'] ?>" class="btn btn-sm btn-primary" title="Voir"><i class="fa-regular fa-eye"></i></a>
-                                            <form method="POST" style="display: inline;">
+                                    <tr data-search="<?= htmlspecialchars($searchData) ?>" 
+                                        data-name="<?= htmlspecialchars(strtolower($c['nom_club'])) ?>"
+                                        data-type="<?= htmlspecialchars(strtolower($c['type_club'] ?? '')) ?>"
+                                        data-campus="<?= htmlspecialchars(strtolower($c['campus'] ?? '')) ?>"
+                                        data-tuteur="<?= $c['tuteur'] ?? '' ?>">
+                                        <td data-label="Nom">
+                                            <span class="club-name"><?= htmlspecialchars($c['nom_club']) ?></span>
+                                        </td>
+                                        <td data-label="Type">
+                                            <span class="type-badge" title="<?= htmlspecialchars($c['type_club'] ?? 'N/A') ?>">
+                                                <?= htmlspecialchars($c['type_club'] ?? 'N/A') ?>
+                                            </span>
+                                        </td>
+                                        <td data-label="Campus">
+                                            <span class="campus-tag <?= strtolower($c['campus'] ?? 'calais') ?>">
+                                                <?= htmlspecialchars($c['campus'] ?? 'N/A') ?>
+                                            </span>
+                                        </td>
+                                        <td data-label="Actions" class="actions-cell">
+                                            <a href="?page=club-view&id=<?= $c['club_id'] ?>" class="action-btn view" title="Voir">
+                                                <i class="fa-regular fa-eye"></i>
+                                            </a>
+                                            
+                                            <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
+                                            <form method="POST" style="margin: 0; display: inline-flex;">
                                                 <?= Security::csrfField() ?>
                                                 <input type="hidden" name="club" value="<?= htmlspecialchars($c['nom_club']) ?>">
-                                                <button type="submit" class="btn btn-sm btn-outline" title="Modifier"><i class="fas fa-edit"></i></button>
+                                                <button type="submit" class="action-btn edit" title="Modifier">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
                                             </form>
-                                            <a href="?page=export-members&club_id=<?= $c['club_id'] ?>" class="btn btn-sm btn-success" title="Exporter membres"><i class="fas fa-file-csv"></i></a>
+                                            <?php endif; ?>
+                                            
+                                            <a href="?page=export-members&club_id=<?= $c['club_id'] ?>" class="action-btn export" title="Exporter membres">
+                                                <i class="fas fa-file-csv"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>
@@ -181,17 +244,108 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
     
     <script>
-    // Initialize club table filter
     document.addEventListener('DOMContentLoaded', function() {
-        const filterInput = document.getElementById('clubTableFilter');
-        if (filterInput) {
-            new SearchComponent({
-                input: '#clubTableFilter',
-                items: '.data-table tbody',
-                fields: ['data-search'],
-                noResultsMessage: 'Aucun club trouvé'
+        const tbody = document.getElementById('clubsTableBody');
+        const searchInput = document.getElementById('clubTableFilter');
+        const campusFilter = document.getElementById('campusFilter');
+        const tuteurFilter = document.getElementById('tuteurFilter');
+        const typeFilter = document.getElementById('typeFilter');
+        const sortFilter = document.getElementById('sortFilter');
+        const resetBtn = document.getElementById('resetFilters');
+        const clubCount = document.getElementById('clubCount');
+        
+        if (!tbody) return;
+        
+        // Get all rows
+        const allRows = Array.from(tbody.querySelectorAll('tr'));
+        
+        function applyFilters() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const campusValue = campusFilter.value.toLowerCase();
+            const tuteurValue = tuteurFilter.value;
+            const typeValue = typeFilter.value.toLowerCase();
+            
+            let visibleCount = 0;
+            
+            allRows.forEach(row => {
+                const name = row.dataset.name || '';
+                const type = row.dataset.type || '';
+                const campus = row.dataset.campus || '';
+                const tuteur = row.dataset.tuteur || '';
+                const searchData = row.dataset.search || '';
+                
+                // Check all filters
+                const matchesSearch = !searchTerm || searchData.includes(searchTerm);
+                const matchesCampus = !campusValue || campus === campusValue;
+                const matchesTuteur = !tuteurValue || tuteur === tuteurValue;
+                const matchesType = !typeValue || type === typeValue;
+                
+                if (matchesSearch && matchesCampus && matchesTuteur && matchesType) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
             });
+            
+            clubCount.textContent = visibleCount;
         }
+        
+        function applySort() {
+            const sortValue = sortFilter.value;
+            const [field, direction] = sortValue.split('-');
+            
+            const sortedRows = [...allRows].sort((a, b) => {
+                let aVal, bVal;
+                
+                switch(field) {
+                    case 'name':
+                        aVal = a.dataset.name || '';
+                        bVal = b.dataset.name || '';
+                        break;
+                    case 'type':
+                        aVal = a.dataset.type || '';
+                        bVal = b.dataset.type || '';
+                        break;
+                    case 'campus':
+                        aVal = a.dataset.campus || '';
+                        bVal = b.dataset.campus || '';
+                        break;
+                    default:
+                        aVal = a.dataset.name || '';
+                        bVal = b.dataset.name || '';
+                }
+                
+                const comparison = aVal.localeCompare(bVal, 'fr', {sensitivity: 'base'});
+                return direction === 'desc' ? -comparison : comparison;
+            });
+            
+            // Re-append sorted rows
+            sortedRows.forEach(row => tbody.appendChild(row));
+            
+            // Re-apply filters after sort
+            applyFilters();
+        }
+        
+        function resetAllFilters() {
+            searchInput.value = '';
+            campusFilter.value = '';
+            tuteurFilter.value = '';
+            typeFilter.value = '';
+            sortFilter.value = 'name-asc';
+            applySort();
+        }
+        
+        // Event listeners
+        searchInput.addEventListener('input', applyFilters);
+        campusFilter.addEventListener('change', applyFilters);
+        tuteurFilter.addEventListener('change', applyFilters);
+        typeFilter.addEventListener('change', applyFilters);
+        sortFilter.addEventListener('change', applySort);
+        resetBtn.addEventListener('click', resetAllFilters);
+        
+        // Initial sort
+        applySort();
     });
     </script>
 </body>

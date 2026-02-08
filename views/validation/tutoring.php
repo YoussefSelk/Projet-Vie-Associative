@@ -35,7 +35,24 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
     <main>
         <div class="page-container admin-dashboard">
             <div class="page-header">
-               <p class="subtitle">Supervisez et validez tous les clubs et événements du système</p>
+               <h1>
+                   <?php if ($is_admin): ?>
+                       Administration - Validations
+                   <?php elseif ($is_bde): ?>
+                       BDE - Validation des Événements
+                   <?php else: ?>
+                       Tutorat - Validations
+                   <?php endif; ?>
+               </h1>
+               <p class="subtitle">
+                   <?php if ($is_admin): ?>
+                       Supervisez et validez tous les clubs et événements du système
+                   <?php elseif ($is_bde): ?>
+                       Confirmez ou rejetez les événements proposés par les clubs
+                   <?php else: ?>
+                       Validez les clubs et événements sous votre tutelle
+                   <?php endif; ?>
+               </p>
             </div>
 
             <?php if(!empty($error_msg)): ?>
@@ -87,10 +104,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                             <i class="fas fa-layer-group"></i> Tout
                             <span class="count"><?= count($pending_clubs ?? []) + count($pending_events ?? []) ?></span>
                         </button>
+                        <?php if (!$is_bde): ?>
                         <button class="filter-tab" data-filter="clubs">
                             <i class="fas fa-building"></i> Clubs
                             <span class="count"><?= count($pending_clubs ?? []) ?></span>
                         </button>
+                        <?php endif; ?>
                         <button class="filter-tab" data-filter="events">
                             <i class="fas fa-calendar-alt"></i> Événements
                             <span class="count"><?= count($pending_events ?? []) ?></span>
@@ -168,6 +187,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                     <button type="button" class="btn-view-details" onclick="openClubModal(<?= htmlspecialchars(json_encode($club)) ?>, this)">
                                         <i class="fas fa-eye"></i> Voir détails
                                     </button>
+                                    <?php if ($is_admin || $is_tutor): ?>
                                     <form method="POST">
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
@@ -176,6 +196,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
+                                    <?php endif; ?>
                                     <?php if ($is_admin): ?>
                                     <form method="POST">
                                         <?= Security::csrfField() ?>
@@ -186,9 +207,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                         </button>
                                     </form>
                                     <?php endif; ?>
+                                    <?php if ($is_admin || $is_tutor): ?>
                                     <button type="button" class="btn-reject" onclick="openClubModalReject(<?= htmlspecialchars(json_encode($club)) ?>, this)">
                                         <i class="fas fa-times"></i> Rejeter
                                     </button>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -241,7 +264,17 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                                         <input type="hidden" name="action" value="approve">
-                                        <button type="submit" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" class="btn-approve">
+                                        <?php 
+                                        // Déterminer le nom du bouton selon le rôle
+                                        if ($is_admin) {
+                                            $btn_name = 'validate_event_admin';
+                                        } elseif ($is_bde) {
+                                            $btn_name = 'validate_event_bde';
+                                        } else {
+                                            $btn_name = 'validate_event_tutor';
+                                        }
+                                        ?>
+                                        <button type="submit" name="<?= $btn_name ?>" class="btn-approve">
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
@@ -274,6 +307,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
             <?php endif; ?>
 
             <!-- All Clubs Section -->
+            <?php if (!$is_bde): ?>
             <div class="card mt-20">
                 <div class="card-header">
                     <h3><i class="fas fa-building"></i> Tous les clubs du système (<?= count($tutored_clubs ?? []) ?>)</h3>
@@ -305,6 +339,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                     <?php endif; ?>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
     </main>
 
@@ -447,8 +482,15 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                     <input type="hidden" name="event_id" id="modalEventIdReject" value="">
                     <input type="hidden" name="action" value="reject">
                     <input type="hidden" name="motif" id="eventMotifInput" value="">
-                    <button type="submit" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" class="btn-reject">
-                        <i class="fas fa-times"></i> Confirmer le rejet
+                        <button type="submit" 
+                            name="<?php 
+                                if($is_admin) echo 'validate_event_admin'; 
+                                elseif($is_bde) echo 'validate_event_bde'; 
+                                else echo 'validate_event_tutor'; 
+                            ?>" 
+                            class="btn-reject">
+                            <i class="fas fa-times"></i> Confirmer le rejet
+                        </button>                       
                     </button>
                 </form>
                 <?php if ($is_admin): ?>
@@ -476,256 +518,240 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 
     <script>
-    (function() {
-        'use strict';
-        function esc(str) {
-            return String(str || '').replace(/[&<>"']/g, function(c){
-                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]);
-            });
-        }
-        
-        // Search and Filter functionality
-        var searchInput = document.getElementById('searchInput');
-        var filterTabs = document.querySelectorAll('.filter-tab');
-        var cards = document.querySelectorAll('.validation-card-advanced');
-        var noResults = document.getElementById('noResults');
-        var cardsContainer = document.getElementById('validationCards');
-        
-        var currentFilter = 'all';
-        
-        function filterCards() {
-            var searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
-            var visibleCount = 0;
-            
-            cards.forEach(function(card) {
-                var matchesSearch = card.dataset.search.includes(searchTerm);
-                var matchesFilter = currentFilter === 'all' || card.dataset.type === currentFilter;
-                
-                if (matchesSearch && matchesFilter) {
-                    card.style.display = '';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-            
-            if (noResults && cardsContainer) {
-                if (visibleCount === 0 && cards.length > 0) {
-                    noResults.style.display = '';
-                    cardsContainer.style.display = 'none';
-                } else {
-                    noResults.style.display = 'none';
-                    cardsContainer.style.display = '';
-                }
-            }
-        }
-        
-        if (searchInput) {
-            searchInput.addEventListener('input', filterCards);
-        }
-        
-        filterTabs.forEach(function(tab) {
-            tab.addEventListener('click', function() {
-                filterTabs.forEach(function(t) { t.classList.remove('active'); });
-                this.classList.add('active');
-                currentFilter = this.dataset.filter;
-                filterCards();
-            });
-        });
-        
-        // Modal functions - exposed globally
-        window.openClubModal = function(club, el) {
-            document.getElementById('modalClubName').textContent = club.nom_club || '-';
-            document.getElementById('modalClubIdForce').value = club.club_id;
-            document.getElementById('modalClubType').textContent = club.type_club || '-';
-            document.getElementById('modalClubCampus').textContent = club.campus || '-';
-            document.getElementById('modalClubEmail').textContent = club.mail || 'Non renseigné';
-            document.getElementById('modalClubDescription').textContent = club.description || 'Aucune description fournie.';
-            document.getElementById('modalClubIdApprove').value = club.club_id;
-            document.getElementById('modalClubIdReject').value = club.club_id;
-            // Force validation (admin only)
-            if (document.getElementById('modalClubIdForce')) {
-                document.getElementById('modalClubIdForce').value = club.club_id;
-            }
-            
-            // Display club logo if available
-            var logoContainer = document.getElementById('modalClubLogo');
-            if (club.logo_club) {
-                logoContainer.innerHTML = '<img src="' + club.logo_club + '" alt="Logo du club">';
-            } else {
-                logoContainer.innerHTML = '<i class="fas fa-building no-logo"></i>';
+        (function() {
+            'use strict';
+
+            // --- UTILITAIRES ---
+            function esc(str) {
+                if (!str) return '';
+                return String(str).replace(/[&<>"']/g, function(c) {
+                    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]);
+                });
             }
 
-            // Render club members
-            var membersContainer = document.getElementById('modalClubMembers');
-            if (membersContainer) {
-                membersContainer.innerHTML = '';
-                var members = [];
+            // Aide pour remplir le texte ou la valeur d'un élément s'il existe
+            const setContent = (id, value, isInput = false) => {
+                const el = document.getElementById(id);
                 if (el) {
-                    var card = el.closest('.validation-card-advanced');
-                    if (card) {
-                        try { members = JSON.parse(card.getAttribute('data-members') || '[]'); } catch (e) { members = []; }
+                    if (isInput) el.value = value;
+                    else el.textContent = value;
+                }
+            };
+
+            // --- FILTRAGE ET RECHERCHE ---
+            const searchInput = document.getElementById('searchInput');
+            const filterTabs = document.querySelectorAll('.filter-tab');
+            const cards = document.querySelectorAll('.validation-card-advanced');
+            const noResults = document.getElementById('noResults');
+            const cardsContainer = document.getElementById('validationCards');
+            let currentFilter = 'all';
+
+            function filterCards() {
+                const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    const matchesSearch = card.dataset.search ? card.dataset.search.includes(searchTerm) : true;
+                    const matchesFilter = currentFilter === 'all' || card.dataset.type === currentFilter;
+
+                    if (matchesSearch && matchesFilter) {
+                        card.style.display = '';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                if (noResults && cardsContainer) {
+                    const isEmpty = visibleCount === 0 && cards.length > 0;
+                    noResults.style.display = isEmpty ? 'block' : 'none';
+                    cardsContainer.style.display = isEmpty ? 'none' : 'grid';
+                }
+            }
+
+            if (searchInput) searchInput.addEventListener('input', filterCards);
+
+            filterTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    filterTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    filterCards();
+                });
+            });
+
+            // --- FONCTIONS DE MODALE (CLUBS) ---
+            window.openClubModal = function(club, el) {
+                if (!club) return;
+
+                setContent('modalClubName', club.nom_club || 'Club sans nom');
+                setContent('modalClubType', club.type_club || '-');
+                setContent('modalClubCampus', club.campus || '-');
+                setContent('modalClubEmail', club.mail || 'Non renseigné');
+                setContent('modalClubDescription', club.description || 'Aucune description fournie.');
+                
+                // IDs pour les formulaires
+                setContent('modalClubIdApprove', club.club_id, true);
+                setContent('modalClubIdReject', club.club_id, true);
+                setContent('modalClubIdForce', club.club_id, true);
+
+                // Logo
+                const logoContainer = document.getElementById('modalClubLogo');
+                if (logoContainer) {
+                    logoContainer.innerHTML = club.logo_club 
+                        ? `<img src="${esc(club.logo_club)}" alt="Logo">` 
+                        : '<i class="fas fa-building no-logo"></i>';
+                }
+
+                // Membres (Récupération via data-attribute de la carte)
+                const membersContainer = document.getElementById('modalClubMembers');
+                if (membersContainer) {
+                    membersContainer.innerHTML = '';
+                    let members = [];
+                    if (el) {
+                        const card = el.closest('.validation-card-advanced');
+                        if (card && card.dataset.members) {
+                            try { members = JSON.parse(card.dataset.members); } catch (e) { console.error("Erreur JSON membres", e); }
+                        }
+                    }
+
+                    if (members.length > 0) {
+                        members.forEach(m => {
+                            const row = document.createElement('div');
+                            row.className = 'member-row';
+                            row.innerHTML = `
+                                <span class="member-name">${esc(m.prenom)} ${esc(m.nom)}</span>
+                                <span class="member-role">${esc(m.fonction)}</span>
+                                ${m.promo ? `<span class="member-promo">${esc(m.promo)}</span>` : ''}
+                            `;
+                            membersContainer.appendChild(row);
+                        });
+                    } else {
+                        membersContainer.innerHTML = '<div class="text-muted">Aucun membre renseigné.</div>';
                     }
                 }
-                if (members && members.length) {
-                    members.forEach(function(m) {
-                        var row = document.createElement('div');
-                        row.className = 'member-row';
-                        var name = esc((m.prenom || '') + ' ' + (m.nom || ''));
-                        var role = esc(m.fonction || '-');
-                        var email = esc(m.mail || '');
-                        var promo = esc(m.promo || '');
-                        row.innerHTML = '<span class="member-name">' + name + '</span>'+
-                                        '<span class="member-role">' + role + '</span>'+
-                                        (promo ? '<span class="member-promo">' + promo + '</span>' : '')+
-                                        (email ? '<span class="member-email"><i class="fas fa-envelope"></i> ' + email + '</span>' : '');
-                        membersContainer.appendChild(row);
+
+                document.getElementById('clubModal').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            };
+
+            // --- FONCTIONS DE MODALE (EVENTS) ---
+            window.openEventModal = function(event) {
+                if (!event) return;
+
+                setContent('modalEventName', event.titre || 'Événement sans titre');
+                setContent('modalEventClub', event.nom_club || '-');
+                setContent('modalEventCampus', event.campus || '-');
+                setContent('modalEventLieu', event.lieu || 'Non renseigné');
+                setContent('modalEventDescription', event.description || 'Aucune description fournie.');
+                
+                setContent('modalEventIdApprove', event.event_id, true);
+                setContent('modalEventIdReject', event.event_id, true);
+                setContent('modalEventIdForce', event.event_id, true);
+
+                const dateEl = document.getElementById('modalEventDate');
+                if (dateEl && event.date_ev) {
+                    const d = new Date(event.date_ev);
+                    dateEl.textContent = d.toLocaleDateString('fr-FR', {
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     });
-                } else {
-                    membersContainer.innerHTML = '<div class="text-muted">Aucun membre renseigné.</div>';
                 }
-            }
-            
-            document.getElementById('clubModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        };
-        
-        window.openEventModal = function(event) {
-            document.getElementById('modalEventName').textContent = event.titre || '-';
-            document.getElementById('modalEventClub').textContent = event.nom_club || '-';
-            if (document.getElementById('modalEventIdForce')) {
-                document.getElementById('modalEventIdForce').value = event.event_id;
-            }
-            document.getElementById('modalEventCampus').textContent = event.campus || '-';
-            document.getElementById('modalEventLieu').textContent = event.lieu || 'Non renseigné';
-            document.getElementById('modalEventDescription').textContent = event.description || 'Aucune description fournie.';
-            
-            if (event.date_ev) {
-                var date = new Date(event.date_ev);
-                document.getElementById('modalEventDate').textContent = date.toLocaleDateString('fr-FR', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } else {
-                document.getElementById('modalEventDate').textContent = '-';
-            }
-            
-            document.getElementById('modalEventIdApprove').value = event.event_id;
-            document.getElementById('modalEventIdReject').value = event.event_id;
-            // Force validation (admin only)
-            if (document.getElementById('modalEventIdForce')) {
-                document.getElementById('modalEventIdForce').value = event.event_id;
-            }
-            document.getElementById('eventModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-        };
-        
-        // Open club modal directly in reject mode
-        window.openClubModalReject = function(club, el) {
-            openClubModal(club, el);
-            // Delay to ensure modal is open first
-            setTimeout(function() {
-                showClubRejectForm();
-            }, 100);
-        };
-        
-        // Open event modal directly in reject mode
-        window.openEventModalReject = function(event) {
-            openEventModal(event);
-            // Delay to ensure modal is open first
-            setTimeout(function() {
-                showEventRejectForm();
-            }, 100);
-        };
-        
-        window.closeModal = function(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-            document.body.style.overflow = '';
-            // Reset rejection forms when closing
-            if (modalId === 'clubModal') {
-                cancelClubReject();
-            } else if (modalId === 'eventModal') {
-                cancelEventReject();
-            }
-        };
-        
-        // Club rejection functions
-        window.showClubRejectForm = function() {
-            document.getElementById('clubRejectSection').style.display = 'block';
-            document.getElementById('clubRejectInit').style.display = 'none';
-            document.getElementById('clubCancelReject').style.display = 'flex';
-            document.getElementById('modalClubRejectForm').style.display = 'inline';
-            document.getElementById('modalClubApproveForm').style.display = 'none';
-            document.getElementById('clubRejectMotif').focus();
-        };
-        
-        window.cancelClubReject = function() {
-            document.getElementById('clubRejectSection').style.display = 'none';
-            document.getElementById('clubRejectInit').style.display = 'flex';
-            document.getElementById('clubCancelReject').style.display = 'none';
-            document.getElementById('modalClubRejectForm').style.display = 'none';
-            document.getElementById('modalClubApproveForm').style.display = 'inline';
-            document.getElementById('clubRejectMotif').value = '';
-        };
-        
-        // Event rejection functions
-        window.showEventRejectForm = function() {
-            document.getElementById('eventRejectSection').style.display = 'block';
-            document.getElementById('eventRejectInit').style.display = 'none';
-            document.getElementById('eventCancelReject').style.display = 'flex';
-            document.getElementById('modalEventRejectForm').style.display = 'inline';
-            document.getElementById('modalEventApproveForm').style.display = 'none';
-            document.getElementById('eventRejectMotif').focus();
-        };
-        
-        window.cancelEventReject = function() {
-            document.getElementById('eventRejectSection').style.display = 'none';
-            document.getElementById('eventRejectInit').style.display = 'flex';
-            document.getElementById('eventCancelReject').style.display = 'none';
-            document.getElementById('modalEventRejectForm').style.display = 'none';
-            document.getElementById('modalEventApproveForm').style.display = 'inline';
-            document.getElementById('eventRejectMotif').value = '';
-        };
-        
-        // Copy motif to hidden input before submit
-        document.getElementById('modalClubRejectForm').addEventListener('submit', function() {
-            document.getElementById('clubMotifInput').value = document.getElementById('clubRejectMotif').value;
-        });
-        
-        document.getElementById('modalEventRejectForm').addEventListener('submit', function() {
-            document.getElementById('eventMotifInput').value = document.getElementById('eventRejectMotif').value;
-        });
-        
-        // Close modal on overlay click
-        document.querySelectorAll('.modal-overlay').forEach(function(modal) {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('active');
+
+                document.getElementById('eventModal').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            };
+
+            // --- GESTION DU REJET ---
+            window.showClubRejectForm = function() {
+                document.getElementById('clubRejectSection').style.display = 'block';
+                document.getElementById('clubRejectInit').style.display = 'none';
+                document.getElementById('clubCancelReject').style.display = 'flex';
+                document.getElementById('modalClubRejectForm').style.display = 'inline';
+                document.getElementById('modalClubApproveForm').style.display = 'none';
+            };
+
+            window.cancelClubReject = function() {
+                document.getElementById('clubRejectSection').style.display = 'none';
+                document.getElementById('clubRejectInit').style.display = 'flex';
+                document.getElementById('clubCancelReject').style.display = 'none';
+                document.getElementById('modalClubRejectForm').style.display = 'none';
+                document.getElementById('modalClubApproveForm').style.display = 'inline';
+                const textarea = document.getElementById('clubRejectMotif');
+                if (textarea) textarea.value = '';
+            };
+
+            window.showEventRejectForm = function() {
+                document.getElementById('eventRejectSection').style.display = 'block';
+                document.getElementById('eventRejectInit').style.display = 'none';
+                document.getElementById('eventCancelReject').style.display = 'flex';
+                document.getElementById('modalEventRejectForm').style.display = 'inline';
+                document.getElementById('modalEventApproveForm').style.display = 'none';
+            };
+
+            window.cancelEventReject = function() {
+                document.getElementById('eventRejectSection').style.display = 'none';
+                document.getElementById('eventRejectInit').style.display = 'flex';
+                document.getElementById('eventCancelReject').style.display = 'none';
+                document.getElementById('modalEventRejectForm').style.display = 'none';
+                document.getElementById('modalEventApproveForm').style.display = 'inline';
+                const textarea = document.getElementById('eventRejectMotif');
+                if (textarea) textarea.value = '';
+            };
+
+            // Fonctions spécifiques pour ouvrir directement en mode rejet
+            window.openClubModalReject = function(club, el) {
+                window.openClubModal(club, el);
+                setTimeout(window.showClubRejectForm, 50);
+            };
+
+            window.openEventModalReject = function(event) {
+                window.openEventModal(event);
+                setTimeout(window.showEventRejectForm, 50);
+            };
+
+            // --- FERMETURE ET EVENTS ---
+            window.closeModal = function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('active');
                     document.body.style.overflow = '';
-                    // Reset rejection forms
-                    cancelClubReject();
-                    cancelEventReject();
+                    if (modalId === 'clubModal') window.cancelClubReject();
+                    if (modalId === 'eventModal') window.cancelEventReject();
+                }
+            };
+
+            // Transfert du motif vers l'input caché avant envoi
+            const setupSubmit = (formId, textareaId, hiddenId) => {
+                const form = document.getElementById(formId);
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        const text = document.getElementById(textareaId).value.trim();
+                        if (!text) {
+                            alert("Veuillez saisir un motif de rejet.");
+                            e.preventDefault();
+                            return;
+                        }
+                        document.getElementById(hiddenId).value = text;
+                    });
+                }
+            };
+
+            setupSubmit('modalClubRejectForm', 'clubRejectMotif', 'clubMotifInput');
+            setupSubmit('modalEventRejectForm', 'eventRejectMotif', 'eventMotifInput');
+
+            // Fermeture clic extérieur et Echap
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-overlay')) window.closeModal(e.target.id);
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    const activeModal = document.querySelector('.modal-overlay.active');
+                    if (activeModal) window.closeModal(activeModal.id);
                 }
             });
-        });
-        
-        // Close modal on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
-                    modal.classList.remove('active');
-                });
-                document.body.style.overflow = '';
-                // Reset rejection forms
-                cancelClubReject();
-                cancelEventReject();
-            }
-        });
-    })();
-    </script>
+
+        })();
+</script>
 </body>
 </html>

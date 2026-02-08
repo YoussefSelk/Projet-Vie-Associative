@@ -93,10 +93,73 @@ $pageCss = ['shared', 'buttons', 'events'];
                         </div>
                         <?php endif; ?>
                         
+                        <?php 
+                            // On récupère les informations nécessaires
+                            $user_id_session = (int)($_SESSION['id'] ?? 0);
+                            $user_permission = (int)($_SESSION['permission'] ?? 0);
+                            
+                            // On récupère l'ID du tuteur que vous avez injecté dans le contrôleur
+                            $id_tuteur_responsable = (int)($event['tuteur_id'] ?? 0);
+
+                            /**
+                             * Accès autorisé si :
+                             * - Admin ou SuperAdmin (perm > 2)
+                             * - OU Tuteur spécifique (perm == 2) ET son ID match avec celui du club organisateur
+                             */
+                            $est_autorise = ($user_permission > 2) || ($user_permission === 2 && $user_id_session === $id_tuteur_responsable);
+
+                            if ($est_autorise): 
+                        ?>
+                            <div class="event-section" style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                    <h3 style="color: #1e293b; margin: 0; font-size: 1.25rem;">
+                                        <i class="fas fa-file-signature" style="color: #64748b;"></i> Documentation & Photos
+                                    </h3>
+                                    <?php if ($user_permission === 2): ?>
+                                        <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
+                                            <i class="fas fa-user-shield"></i> Espace Tuteur
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if (!empty($event['rapport_event'])): ?>
+                                    <div style="margin-bottom: 25px;">
+                                        <a href="<?= htmlspecialchars($event['rapport_event']) ?>" class="btn btn-primary" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;">
+                                            <i class="fas fa-file-pdf" style="font-size: 1.2rem;"></i> 
+                                            Consulter le rapport d'événement
+                                        </a>
+                                    </div>
+                                <?php else: ?>
+                                    <p style="color: #94a3b8; font-style: italic; margin-bottom: 20px;">Le rapport n'a pas encore été déposé.</p>
+                                <?php endif; ?>
+
+                                <?php 
+                                $photos = !empty($event['images_event']) ? explode(',', $event['images_event']) : [];
+                                if (!empty($photos)): 
+                                ?>
+                                    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                                        <h4 style="font-size: 0.95rem; color: #475569; margin-bottom: 15px;">
+                                            <i class="fas fa-camera"></i> Photos souvenirs
+                                        </h4>
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">
+                                            <?php foreach ($photos as $url): ?>
+                                                <div class="photo-item" style="aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                                    <a href="<?= htmlspecialchars(trim($url)) ?>" target="_blank">
+                                                        <img src="<?= htmlspecialchars(trim($url)) ?>" 
+                                                            alt="Souvenir" 
+                                                            style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
+                                                            onmouseover="this.style.transform='scale(1.1)'"
+                                                            onmouseout="this.style.transform='scale(1)'">
+                                                    </a>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                        
                         <div class="event-actions">
-                            <a href="?page=subscribe&event_id=<?= $event['event_id'] ?>" class="btn btn-success btn-lg">
-                                <i class="fas fa-plus-circle"></i> S'inscrire à cet événement
-                            </a>
                             <a href="?page=event-list" class="btn btn-outline">
                                 <i class="fas fa-calendar-alt"></i> Voir tous les événements
                             </a>

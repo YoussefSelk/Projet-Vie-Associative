@@ -42,7 +42,7 @@ class ClubController {
      * @return array Données pour la vue
      */
     public function listClubs() {
-        checkPermission(3);
+        checkPermission(2); // Tuteurs (2), BDE (3) et admins (4+) peuvent voir tous les clubs
         
         $clubs = $this->clubModel->getAllValidatedClubs();
         $req_club = null;
@@ -57,6 +57,9 @@ class ClubController {
                 $req_club = $club;
             }
         }
+
+        $stmt = $this->db->query("SELECT id, nom, prenom FROM users WHERE permission = 2 ORDER BY nom ASC");
+        $tuteurs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Mise à jour d'un club
         if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_club'])) {
@@ -95,6 +98,7 @@ class ClubController {
 
         return [
             'clubs' => $clubs,
+            'tuteurs' => $tuteurs,
             'req_club' => $req_club,
             'error_msg' => $error_msg,
             'success_msg' => $success_msg,

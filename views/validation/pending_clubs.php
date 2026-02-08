@@ -85,6 +85,17 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                                         <i class="fas fa-check"></i> Approuver
                                     </button>
                                 </form>
+                                <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
+                                <form method="POST" style="display:inline;">
+                                    <?= Security::csrfField() ?>
+                                    <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
+                                    <input type="hidden" name="action" value="force_approve">
+                                    <input type="hidden" name="validate_club" value="1">
+                                    <button type="submit" class="btn btn-warning btn-sm" title="Valider immédiatement sans attendre le tuteur">
+                                        <i class="fas fa-bolt"></i> Forcer
+                                    </button>
+                                </form>
+                                <?php endif; ?>
                                 <form method="POST" style="display:inline;" class="reject-form">
                                     <?= Security::csrfField() ?>
                                     <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
@@ -167,6 +178,92 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
             if (e.target === this) closeCommentModal();
         });
     </script>
+    
+    <style>
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .modal-content {
+            background: #fff;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #0066cc;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Fix pour les boutons d'action des cartes */
+        .validation-card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 15px;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .validation-card-actions form {
+            display: inline-flex;
+        }
+        
+        .validation-card-actions .btn {
+            white-space: nowrap;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+        }
+        
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-1px);
+        }
+    </style>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

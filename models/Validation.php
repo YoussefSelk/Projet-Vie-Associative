@@ -43,7 +43,7 @@ class Validation {
      * @return array Liste des clubs non validés
      */
     public function getPendingClubs() {
-        $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE validation_finale IS NULL OR validation_finale = 0");
+        $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND (validation_admin IS NULL OR validation_admin = 0)");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

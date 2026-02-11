@@ -193,30 +193,15 @@
     els.prevBtn.disabled = true;
     els.nextBtn.disabled = true;
 
-    // Slide-out animation
-    if (direction && els.grid.innerHTML) {
-      const slideOut =
-        direction === "next" ? "cal-slide-out-left" : "cal-slide-out-right";
-      els.grid.classList.add(slideOut);
-      await new Promise((r) => setTimeout(r, 250));
-      els.grid.classList.remove(slideOut);
-    }
-
     try {
       const data = await fetchCalendarData(month, year);
       state.data = data;
       state.currentMonth = data.month;
       state.currentYear = data.year;
 
-      // Render
+      // Render new content immediately
       els.grid.innerHTML = renderGrid(data);
       updateMonthLabel(data);
-
-      // Slide-in animation
-      const slideIn =
-        direction === "prev" ? "cal-slide-in-right" : "cal-slide-in-left";
-      els.grid.classList.add(slideIn);
-      setTimeout(() => els.grid.classList.remove(slideIn), 350);
 
       // Apply campus filters
       applyFilters();

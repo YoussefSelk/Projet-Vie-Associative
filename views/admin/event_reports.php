@@ -50,7 +50,7 @@ function reportFileExists($rapportPath) {
     return file_exists($fullPath);
 }
 
-$pageCss = ['shared', 'buttons', 'tables', 'admin', 'events'];
+$pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'admin', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -114,6 +114,19 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'events'];
                 </div>
             </div>
 
+            <!-- Search Bar -->
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="reportSearch" class="search-input" 
+                           placeholder="Rechercher un rapport (événement, club, lieu)..." 
+                           autocomplete="off">
+                    <button type="button" class="search-clear" aria-label="Effacer">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- Tabs -->
             <div class="tabs-container">
                 <div class="tabs">
@@ -139,9 +152,11 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'events'];
                         <p>Les organisateurs n'ont pas encore soumis de rapports d'événements.</p>
                     </div>
                 <?php else: ?>
-                    <div class="reports-grid">
-                        <?php foreach ($events_with_reports as $event): ?>
-                            <div class="report-card">
+                    <div class="reports-grid" id="reportsGrid">
+                        <?php foreach ($events_with_reports as $event): 
+                            $searchData = strtolower(($event['titre'] ?? '') . ' ' . ($event['nom_club'] ?? '') . ' ' . ($event['lieu'] ?? ''));
+                        ?>
+                            <div class="report-card" data-search="<?= htmlspecialchars($searchData) ?>">
                                 <div class="report-card-header">
                                     <h3><?= htmlspecialchars($event['titre'] ?? 'Événement sans titre') ?></h3>
                                     <div class="club-name">
@@ -210,6 +225,9 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'events'];
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <!-- Pagination for reports -->
+                    <div id="reportsPagination" class="pagination-wrapper"></div>
                 <?php endif; ?>
             </div>
 
@@ -222,9 +240,11 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'events'];
                         <p>Félicitations ! Tous les événements passés ont un rapport.</p>
                     </div>
                 <?php else: ?>
-                    <div class="reports-grid">
-                        <?php foreach ($events_without_reports as $event): ?>
-                            <div class="report-card missing-report-card">
+                    <div class="reports-grid" id="missingGrid">
+                        <?php foreach ($events_without_reports as $event): 
+                            $searchData = strtolower(($event['titre'] ?? '') . ' ' . ($event['nom_club'] ?? '') . ' ' . ($event['lieu'] ?? ''));
+                        ?>
+                            <div class="report-card missing-report-card" data-search="<?= htmlspecialchars($searchData) ?>">
                                 <div class="report-card-header">
                                     <h3><?= htmlspecialchars($event['titre'] ?? 'Événement sans titre') ?></h3>
                                     <div class="club-name">
@@ -258,6 +278,9 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'events'];
                             </div>
                         <?php endforeach; ?>
                     </div>
+
+                    <!-- Pagination for missing -->
+                    <div id="missingPagination" class="pagination-wrapper"></div>
                 <?php endif; ?>
             </div>
         </div>
@@ -326,6 +349,38 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'events'];
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Search for reports tab
+        let reportsSearch = null;
+        if (document.querySelector('#reportSearch') && document.querySelector('#reportsGrid')) {
+            reportsSearch = new SearchComponent({
+                input: '#reportSearch',
+                items: '#reportsGrid',
+                fields: ['data-search', 'h3', '.club-name'],
+                noResultsMessage: 'Aucun rapport trouvé'
+            });
+        }
+
+        // Pagination for reports tab
+        if (document.querySelector('#reportsGrid')) {
+            window.reportsPagination = new PaginationComponent({
+                itemsSelector: '#reportsGrid',
+                paginationSelector: '#reportsPagination',
+                perPage: 9,
+                perPageOptions: [6, 9, 18],
+                searchComponent: reportsSearch
+            });
+        }
+
+        // Pagination for missing tab
+        if (document.querySelector('#missingGrid')) {
+            window.missingPagination = new PaginationComponent({
+                itemsSelector: '#missingGrid',
+                paginationSelector: '#missingPagination',
+                perPage: 9,
+                perPageOptions: [6, 9, 18]
+            });
+        }
+
         // Tab switching
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabContents = document.querySelectorAll('.tab-content');

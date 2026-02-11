@@ -257,8 +257,16 @@ class AdminController {
                 $maintenance_mode = isset($_POST['maintenance_mode']) ? 1 : 0;
                 
                 try {
-                    $stmt = $this->db->prepare("UPDATE config SET creation_club_active = ?");
-                    $stmt->execute([$creation_club_active]);
+                    // S'assurer que les colonnes existent (ajout si nécessaire)
+                    try {
+                        $this->db->exec("ALTER TABLE config ADD COLUMN IF NOT EXISTS creation_event_active TINYINT(1) NOT NULL DEFAULT 1");
+                        $this->db->exec("ALTER TABLE config ADD COLUMN IF NOT EXISTS maintenance_mode TINYINT(1) NOT NULL DEFAULT 0");
+                    } catch (Exception $e) {
+                        // Colonnes déjà existantes ou non supporté
+                    }
+                    
+                    $stmt = $this->db->prepare("UPDATE config SET creation_club_active = ?, creation_event_active = ?, maintenance_mode = ?");
+                    $stmt->execute([$creation_club_active, $creation_event_active, $maintenance_mode]);
                     $success_msg = "Paramètres mis à jour avec succès.";
                     $config['creation_club_active'] = $creation_club_active;
                     $config['creation_event_active'] = $creation_event_active;

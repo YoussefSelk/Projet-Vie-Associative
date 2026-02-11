@@ -133,7 +133,7 @@ class ValidationController {
 
             // --- CAS 3 : REJET (Validation finale = 0) ---
             } elseif ($action === 'reject') {
-                $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_tuteur = 0, validation_finale = 0, motif_refus = ? WHERE club_id = ?");
+                $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_tuteur = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?");
                 if ($stmt->execute([$remarques, $club_id])) {
                     $success_msg = "Club rejeté. La validation finale a été annulée.";
                 } else {
@@ -179,10 +179,11 @@ class ValidationController {
     $user_permission = (int)($_SESSION['permission'] ?? 0);
     $is_admin = ($user_permission >= 4); 
 
-    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['validate_event'])) {
-        $event_id = $_POST['event_id'] ?? null;
-        $action = $_POST['action'] ?? null;
-        $remarques = trim($_POST['remarques'] ?? '');
+        // Traitement de la validation ou du rejet d'un evenement
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['validate_event'])) {
+            $event_id = $_POST['event_id'] ?? null;
+            $action = $_POST['action'] ?? null;
+            $remarques = trim($_POST['remarques'] ?? $_POST['motif'] ?? '');
 
         if (!$event_id || !$action) {
             $error_msg = "Données manquantes.";

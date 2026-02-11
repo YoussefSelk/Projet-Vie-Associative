@@ -148,9 +148,9 @@ public function getAllValidatedEvents() {
             INSERT INTO fiche_event (
                 titre, description, date_ev, horaire_debut, horaire_fin, 
                 club_orga, campus, lieu, id_responsable,
-                financement_bde, montant,
+                financement_bde, montant, fiche_sanitaire, affiche,
                 validation_admin, validation_bde, validation_tuteur, validation_finale
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)
         ");
         return $stmt->execute([
             $data['nom_event'] ?? $data['titre'] ?? '',
@@ -163,7 +163,9 @@ public function getAllValidatedEvents() {
             $data['lieu'] ?? '',
             $data['user_id'] ?? $data['id_responsable'] ?? null,
             isset($data['financement_bde']) ? 1 : 0,
-            intval($data['montant'] ?? $data['budget'] ?? 0)
+            intval($data['montant'] ?? $data['budget'] ?? 0),
+            $data['fiche_sanitaire'] ?? null,
+            $data['affiche'] ?? null
         ]);
     }
 

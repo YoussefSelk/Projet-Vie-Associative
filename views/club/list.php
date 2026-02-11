@@ -16,7 +16,7 @@
  * 
  * @package Views/Club
  */
-$pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
+$pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -236,6 +236,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'tables', 'clubs'];
                             </table>
                         </div>
                     <?php endif; ?>
+
+                    <!-- Pagination -->
+                    <div id="clubPagination" class="pagination-wrapper"></div>
                 </div>
             </div>
         </div>

@@ -96,6 +96,10 @@ class EventController {
         $error_msg = '';
         $success_msg = '';
 
+        // Passer les clubs validés à la vue (au lieu de global $db dans la vue)
+        $stmtClubs = $this->db->query("SELECT club_id, nom_club FROM fiche_club WHERE validation_finale = 1 ORDER BY nom_club ASC");
+        $clubs = $stmtClubs->fetchAll(PDO::FETCH_ASSOC);
+
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_event'])) {
             // Get form data - respect actual DB column names
             $nom_event = trim($_POST['nom_event'] ?? '');
@@ -115,29 +119,86 @@ class EventController {
             } elseif (!$club_id) {
                 $error_msg = "Veuillez sélectionner un club organisateur.";
             } else {
-                $data = [
-                    'nom_event' => $nom_event,
-                    'description' => $description,
-                    'date_ev' => $date_ev,
-                    'horaire_debut' => $horaire_debut,
-                    'horaire_fin' => $horaire_fin,
-                    'campus' => $campus,
-                    'lieu' => $lieu,
-                    'club_id' => $club_id,
-                    'user_id' => $_SESSION['id'],
-                    'financement_bde' => $financement_bde,
-                    'montant' => $montant
-                ];
+                // Récupérer le nom du club pour le nommage des fichiers
+                $stmtClub = $this->db->prepare("SELECT nom_club FROM fiche_club WHERE club_id = ?");
+                $stmtClub->execute([$club_id]);
+                $clubInfo = $stmtClub->fetch(PDO::FETCH_ASSOC);
+                $club_name = preg_replace('/[^A-Za-z0-9]/', '', $clubInfo['nom_club'] ?? 'Club');
+                $event_title_clean = preg_replace('/[^A-Za-z0-9 ]/', '', $nom_event);
+                $timestamp = time();
+                
+                $fiche_sanitaire_path = null;
+                $affiche_path = null;
 
-                if ($this->eventModel->createEvent($data)) {
-                    $success_msg = "Événement créé avec succès. Il est en attente de validation.";
-                } else {
-                    $error_msg = "Erreur lors de la création de l'événement.";
+                // Upload fiche sanitaire (PDF)
+                if (isset($_FILES['fiche_sanitaire']) && $_FILES['fiche_sanitaire']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['fiche_sanitaire']['name'], PATHINFO_EXTENSION));
+                    if ($ext !== 'pdf') {
+                        $error_msg = "La fiche sanitaire doit être un fichier PDF.";
+                    } else {
+                        $upload_dir = ROOT_PATH . '/uploads/fiches_sanitaires/';
+                        if (!is_dir($upload_dir)) {
+                            mkdir($upload_dir, 0755, true);
+                        }
+                        $new_filename = $club_name . '_fiche_sanitaire_' . $event_title_clean . '_' . $timestamp . '.pdf';
+                        $upload_path = $upload_dir . $new_filename;
+                        if (move_uploaded_file($_FILES['fiche_sanitaire']['tmp_name'], $upload_path)) {
+                            $fiche_sanitaire_path = '../uploads/fiches_sanitaires/' . $new_filename;
+                        } else {
+                            $error_msg = "Erreur lors de l'upload de la fiche sanitaire.";
+                        }
+                    }
+                }
+
+                // Upload affiche (JPG, PNG, PDF)
+                if (empty($error_msg) && isset($_FILES['affiche']) && $_FILES['affiche']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['affiche']['name'], PATHINFO_EXTENSION));
+                    $allowed_ext = ['jpg', 'jpeg', 'png', 'pdf'];
+                    if (!in_array($ext, $allowed_ext)) {
+                        $error_msg = "L'affiche doit être un fichier JPG, PNG ou PDF.";
+                    } else {
+                        $upload_dir = ROOT_PATH . '/uploads/affiches_event/';
+                        if (!is_dir($upload_dir)) {
+                            mkdir($upload_dir, 0755, true);
+                        }
+                        $new_filename = $club_name . '_affiche_' . $event_title_clean . '_' . $timestamp . '.' . $ext;
+                        $upload_path = $upload_dir . $new_filename;
+                        if (move_uploaded_file($_FILES['affiche']['tmp_name'], $upload_path)) {
+                            $affiche_path = '../uploads/affiches_event/' . $new_filename;
+                        } else {
+                            $error_msg = "Erreur lors de l'upload de l'affiche.";
+                        }
+                    }
+                }
+
+                if (empty($error_msg)) {
+                    $data = [
+                        'nom_event' => $nom_event,
+                        'description' => $description,
+                        'date_ev' => $date_ev,
+                        'horaire_debut' => $horaire_debut,
+                        'horaire_fin' => $horaire_fin,
+                        'campus' => $campus,
+                        'lieu' => $lieu,
+                        'club_id' => $club_id,
+                        'user_id' => $_SESSION['id'],
+                        'financement_bde' => $financement_bde,
+                        'montant' => $montant,
+                        'fiche_sanitaire' => $fiche_sanitaire_path,
+                        'affiche' => $affiche_path
+                    ];
+
+                    if ($this->eventModel->createEvent($data)) {
+                        $success_msg = "Événement créé avec succès. Il est en attente de validation.";
+                    } else {
+                        $error_msg = "Erreur lors de la création de l'événement.";
+                    }
                 }
             }
         }
 
         return [
+            'clubs' => $clubs,
             'error_msg' => $error_msg,
             'success_msg' => $success_msg
         ];

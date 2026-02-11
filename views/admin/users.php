@@ -18,7 +18,7 @@
  * 
  * @package Views/Admin
  */
-$pageCss = ['shared', 'buttons', 'tables', 'search', 'admin', 'profiles'];
+$pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'admin', 'profiles'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -188,8 +188,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'admin', 'profiles'];
                                         </form>
                                         
                                         <a href="?page=delete-user&id=<?php echo $u['id']; ?>" 
-                                           class="action-btn delete" 
-                                           onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');"
+                                           class="action-btn delete btn-delete-user" 
+                                           data-user-name="<?php echo htmlspecialchars($u['prenom'] . ' ' . $u['nom']); ?>"
                                            title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </a>
@@ -202,10 +202,42 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'admin', 'profiles'];
                     <?php endforeach; ?>
                 </tbody>
             </table>
+
+            <!-- Pagination -->
+            <div id="adminUserPagination" class="pagination-wrapper"></div>
         <?php endif; ?>
     </div>
 </div>
     </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.querySelector('.users-table tbody')) {
+            window.adminUserPagination = new PaginationComponent({
+                itemsSelector: '.users-table tbody',
+                paginationSelector: '#adminUserPagination',
+                perPage: 15,
+                perPageOptions: [10, 15, 25, 50]
+            });
+        }
+    });
+
+    // Delete user confirmation with SweetAlert2
+    document.querySelectorAll('.btn-delete-user').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const userName = link.dataset.userName;
+            const deleteUrl = link.href;
+            
+            SwalHelper.confirmDelete('l\'utilisateur "' + userName + '"')
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = deleteUrl;
+                    }
+                });
+        });
+    });
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

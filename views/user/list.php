@@ -18,7 +18,7 @@
  * 
  * @package Views/User
  */
-$pageCss = ['shared', 'buttons', 'tables', 'search', 'profiles'];
+$pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'profiles'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -125,10 +125,10 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'profiles'];
                                             <td>
                                                 <?php if ($u['id'] != $_SESSION['id']): ?>
                                                 <div class="action-group">
-                                                    <form method="POST" action="?page=update-permission" class="inline-form">
+                                                    <form method="POST" action="?page=update-permission" class="inline-form form-permission-change">
                                                         <input type="hidden" name="csrf_token" value="<?= Security::generateCsrfToken() ?>">
                                                         <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                                        <select name="permission" class="permission-select" onchange="this.form.submit()">
+                                                        <select name="permission" class="permission-select" data-original="<?= $u['permission'] ?>">
                                                             <option value="0" <?= $u['permission'] == 0 ? 'selected' : '' ?>>Non vérifié</option>
                                                             <option value="1" <?= $u['permission'] == 1 ? 'selected' : '' ?>>Étudiant</option>
                                                             <option value="2" <?= $u['permission'] == 2 ? 'selected' : '' ?>>Tuteur</option>
@@ -138,8 +138,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'profiles'];
                                                         </select>
                                                     </form>
                                                     <a href="?page=delete-user&id=<?= $u['id'] ?>" 
-                                                       class="btn-icon danger" 
-                                                       onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.');"
+                                                       class="btn-icon danger btn-delete-user" 
+                                                       data-user-name="<?= htmlspecialchars($u['nom'] . ' ' . $u['prenom']) ?>"
                                                        title="Supprimer">
                                                         <i class="fas fa-trash"></i>
                                                     </a>
@@ -155,10 +155,77 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'profiles'];
                             </table>
                         </div>
                     <?php endif; ?>
+
+                    <!-- Pagination -->
+                    <div id="userPagination" class="pagination-wrapper"></div>
                 </div>
             </div>
         </div>
     </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure search component exists
+        if (document.querySelector('#userSearch') && !window.userSearch) {
+            window.userSearch = new SearchComponent({
+                input: '#userSearch',
+                items: '.data-table tbody',
+                fields: ['data-search'],
+                noResultsMessage: 'Aucun utilisateur trouvé'
+            });
+        }
+
+        // Initialize pagination for user table
+        if (document.querySelector('.data-table tbody')) {
+            window.userPagination = new PaginationComponent({
+                itemsSelector: '.data-table tbody',
+                paginationSelector: '#userPagination',
+                perPage: 15,
+                perPageOptions: [10, 15, 25, 50],
+                searchComponent: window.userSearch || null
+            });
+        }
+    });
+
+    // Delete user confirmation with SweetAlert2
+    document.querySelectorAll('.btn-delete-user').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const userName = link.dataset.userName;
+            const deleteUrl = link.href;
+            
+            SwalHelper.confirmDelete('l\'utilisateur "' + userName + '"')
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = deleteUrl;
+                    }
+                });
+        });
+    });
+
+    // Permission change confirmation with SweetAlert2
+    document.querySelectorAll('.form-permission-change select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const form = select.closest('form');
+            const original = select.dataset.original;
+            const permNames = {0: 'Non vérifié', 1: 'Étudiant', 2: 'Tuteur', 3: 'BDE', 4: 'Personnel', 5: 'Admin'};
+            const newPerm = permNames[select.value] || select.value;
+            
+            SwalHelper.confirm(
+                'Modifier la permission ?',
+                'Changer la permission vers "' + newPerm + '" ?',
+                'Oui, modifier',
+                'Annuler'
+            ).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                } else {
+                    select.value = original;
+                }
+            });
+        });
+    });
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

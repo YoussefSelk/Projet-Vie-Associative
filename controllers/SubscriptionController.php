@@ -106,4 +106,43 @@ class SubscriptionController {
             'subscriptions' => $subscriptions
         ];
     }
+
+    /**
+     * Toggle abonnement via AJAX (retourne JSON)
+     */
+    public function toggleSubscriptionAjax() {
+        header('Content-Type: application/json; charset=utf-8');
+        validateSession();
+        
+        $event_id = $_GET['event_id'] ?? $_POST['event_id'] ?? null;
+        if (!$event_id) {
+            echo json_encode(['success' => false, 'error' => 'ID événement manquant']);
+            exit;
+        }
+        
+        $event = $this->eventModel->getEventById($event_id);
+        if (!$event) {
+            echo json_encode(['success' => false, 'error' => 'Événement introuvable']);
+            exit;
+        }
+        
+        $user_id = $_SESSION['id'];
+        $isSubscribed = $this->subscriptionModel->isSubscribed($event_id, $user_id);
+        
+        if ($isSubscribed) {
+            $this->subscriptionModel->unsubscribeFromEvent($event_id, $user_id);
+            $newState = false;
+        } else {
+            $this->subscriptionModel->subscribeToEvent($event_id, $user_id);
+            $newState = true;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'subscribed' => $newState,
+            'event_id' => $event_id,
+            'event_title' => $event['titre'] ?? ''
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 }

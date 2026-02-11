@@ -165,16 +165,16 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                             <input type="hidden" name="csrf_token" value="<?= Security::generateCsrfToken() ?>">
                             
                             <div class="export-buttons" style="flex-direction: column;">
-                                <button type="submit" name="bulk_validate_clubs" class="export-btn success" style="width: 100%; justify-content: center;"
-                                        onclick="return confirm('Valider TOUS les clubs en attente ?');">
+                                <button type="submit" name="bulk_validate_clubs" class="export-btn success btn-bulk-action" style="width: 100%; justify-content: center;"
+                                        data-action="validate-clubs" data-count="<?= $advanced_stats['pending_clubs'] ?? 0 ?>">
                                     <i class="fas fa-check-double"></i> Valider tous les clubs en attente (<?= $advanced_stats['pending_clubs'] ?? 0 ?>)
                                 </button>
-                                <button type="submit" name="bulk_validate_events" class="export-btn" style="width: 100%; justify-content: center;"
-                                        onclick="return confirm('Valider TOUS les événements en attente ?');">
+                                <button type="submit" name="bulk_validate_events" class="export-btn btn-bulk-action" style="width: 100%; justify-content: center;"
+                                        data-action="validate-events" data-count="<?= $advanced_stats['pending_events'] ?? 0 ?>">
                                     <i class="fas fa-check-double"></i> Valider tous les événements en attente (<?= $advanced_stats['pending_events'] ?? 0 ?>)
                                 </button>
-                                <button type="submit" name="clean_old_events" class="export-btn" style="width: 100%; justify-content: center; background: #6c757d;"
-                                        onclick="return confirm('Analyser les anciens événements ?');">
+                                <button type="submit" name="clean_old_events" class="export-btn btn-bulk-action" style="width: 100%; justify-content: center; background: #6c757d;"
+                                        data-action="clean-events">
                                     <i class="fas fa-broom"></i> Analyser les anciens événements (+1 an)
                                 </button>
                             </div>
@@ -406,6 +406,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
             e.preventDefault();
             const form = btn.closest('form');
             const action = btn.dataset.action;
+            const btnName = btn.name;
             let title, text;
             
             if (action === 'validate-clubs') {
@@ -424,6 +425,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
             SwalHelper.confirm(title, text, 'Oui, continuer', 'Annuler')
                 .then((result) => {
                     if (result.isConfirmed) {
+                        // Add hidden input so the server knows which button was clicked
+                        const hidden = document.createElement('input');
+                        hidden.type = 'hidden';
+                        hidden.name = btnName;
+                        hidden.value = '1';
+                        form.appendChild(hidden);
                         form.submit();
                     }
                 });
@@ -436,14 +443,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
         clearLogsForm.addEventListener('submit', (e) => {
             e.preventDefault();
             
-            SwalHelper.warning(
-                'Êtes-vous sûr ?',
-                'Tous les logs seront définitivement effacés'
-            ).then((result) => {
-                if (result.isConfirmed) {
-                    clearLogsForm.submit();
-                }
-            });
+            SwalHelper.confirmDelete('tous les logs')
+                .then((result) => {
+                    if (result.isConfirmed) {
+                        clearLogsForm.submit();
+                    }
+                });
         });
     }
     </script>

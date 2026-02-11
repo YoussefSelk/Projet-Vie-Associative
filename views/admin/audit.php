@@ -16,7 +16,7 @@
  * 
  * @package Views/Admin
  */
-$pageCss = ['shared', 'buttons', 'tables', 'admin'];
+$pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'admin'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -78,7 +78,19 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
             <span class="title"><i class="fas fa-lock"></i> Logs de sécurité</span>
             <span class="count"><?php echo count($login_attempts); ?> entrées</span>
         </div>
-        <div class="log-body">
+        <!-- Search for security logs -->
+        <div class="search-container" style="padding: 12px 16px 0;">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="securityLogSearch" class="search-input" 
+                       placeholder="Rechercher dans les logs de sécurité..." 
+                       autocomplete="off">
+                <button type="button" class="search-clear" aria-label="Effacer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="log-body" id="securityLogBody">
             <?php if (empty($login_attempts)): ?>
                 <div class="empty-logs">
                     <i class="fas fa-check-circle"></i>
@@ -90,12 +102,14 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
                     <div class="log-entry <?php 
                         echo strpos($log, 'FAIL') !== false ? 'error' : 
                             (strpos($log, 'WARN') !== false ? 'warning' : 'info'); 
-                    ?>">
+                    ?>" data-search="<?php echo htmlspecialchars(strtolower(trim($log))); ?>">
                         <?php echo htmlspecialchars(trim($log)); ?>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
+        <!-- Pagination for security logs -->
+        <div id="securityLogPagination" class="pagination-wrapper" style="padding: 0 16px;"></div>
     </div>
     
     <!-- Error Logs -->
@@ -104,7 +118,19 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
             <span class="title"><i class="fas fa-exclamation-circle"></i> Logs d'erreurs</span>
             <span class="count"><?php echo count($error_logs); ?> entrées</span>
         </div>
-        <div class="log-body">
+        <!-- Search for error logs -->
+        <div class="search-container" style="padding: 12px 16px 0;">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="errorLogSearch" class="search-input" 
+                       placeholder="Rechercher dans les logs d'erreurs..." 
+                       autocomplete="off">
+                <button type="button" class="search-clear" aria-label="Effacer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div class="log-body" id="errorLogBody">
             <?php if (empty($error_logs)): ?>
                 <div class="empty-logs">
                     <i class="fas fa-smile"></i>
@@ -113,15 +139,61 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
                 </div>
             <?php else: ?>
                 <?php foreach ($error_logs as $log): ?>
-                    <div class="log-entry error">
+                    <div class="log-entry error" data-search="<?php echo htmlspecialchars(strtolower(trim($log))); ?>">
                         <?php echo htmlspecialchars(trim($log)); ?>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
+        <!-- Pagination for error logs -->
+        <div id="errorLogPagination" class="pagination-wrapper" style="padding: 0 16px;"></div>
     </div>
 </div>
     </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Search + Pagination for security logs
+        let securitySearch = null;
+        if (document.querySelector('#securityLogSearch') && document.querySelector('#securityLogBody')) {
+            securitySearch = new SearchComponent({
+                input: '#securityLogSearch',
+                items: '#securityLogBody',
+                fields: ['data-search'],
+                noResultsMessage: 'Aucun log trouvé'
+            });
+        }
+        if (document.querySelector('#securityLogBody')) {
+            window.securityPagination = new PaginationComponent({
+                itemsSelector: '#securityLogBody',
+                paginationSelector: '#securityLogPagination',
+                perPage: 20,
+                perPageOptions: [10, 20, 50, 100],
+                searchComponent: securitySearch
+            });
+        }
+
+        // Search + Pagination for error logs
+        let errorSearch = null;
+        if (document.querySelector('#errorLogSearch') && document.querySelector('#errorLogBody')) {
+            errorSearch = new SearchComponent({
+                input: '#errorLogSearch',
+                items: '#errorLogBody',
+                fields: ['data-search'],
+                noResultsMessage: 'Aucun log trouvé'
+            });
+        }
+        if (document.querySelector('#errorLogBody')) {
+            window.errorPagination = new PaginationComponent({
+                itemsSelector: '#errorLogBody',
+                paginationSelector: '#errorLogPagination',
+                perPage: 20,
+                perPageOptions: [10, 20, 50, 100],
+                searchComponent: errorSearch
+            });
+        }
+    });
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

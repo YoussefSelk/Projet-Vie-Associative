@@ -61,7 +61,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                         </div>
                     </div>
 
-                    <form method="POST" class="form-modern" id="eventForm">
+                    <form method="POST" enctype="multipart/form-data" class="form-modern" id="eventForm">
                         <?= Security::csrfField() ?>
                         
                         <!-- Type Selection -->
@@ -133,22 +133,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                 <label><i class="fas fa-building"></i> Club organisateur <span class="required">*</span></label>
                                 <select name="club_id" class="form-control" required>
                                     <option value="">Sélectionnez un club...</option>
-                                    <?php
-                                    global $db;
-                                    // Récupérer uniquement les clubs dont l'utilisateur est membre validé
-                                    $stmt = $db->prepare("
-                                        SELECT fc.club_id, fc.nom_club 
-                                        FROM fiche_club fc 
-                                        INNER JOIN membres_club mc ON fc.club_id = mc.club_id 
-                                        WHERE fc.validation_finale = 1 
-                                        AND mc.membre_id = ? 
-                                        AND mc.valide = 1 
-                                        ORDER BY fc.nom_club ASC
-                                    ");
-                                    $stmt->execute([$_SESSION['id']]);
-                                    $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                                    foreach ($clubs as $club):
-                                    ?>
+                                    <?php foreach ($clubs as $club): ?>
                                         <option value="<?= $club['club_id'] ?>"><?= htmlspecialchars($club['nom_club']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -164,6 +149,19 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                 <div class="form-group" id="montantGroup" style="display: none;">
                                     <label><i class="fas fa-euro-sign"></i> Montant demandé (€)</label>
                                     <input type="number" name="montant" class="form-control" placeholder="Ex: 100" min="0" value="0">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label><i class="fas fa-file-medical"></i> Fiche sanitaire (PDF)</label>
+                                    <input type="file" name="fiche_sanitaire" class="form-control" accept=".pdf">
+                                    <small class="form-help">Obligatoire si l'événement implique de la nourriture ou des activités à risque</small>
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fas fa-image"></i> Affiche de l'événement</label>
+                                    <input type="file" name="affiche" class="form-control" accept=".jpg,.jpeg,.png,.pdf">
+                                    <small class="form-help">Formats acceptés : JPG, PNG, PDF</small>
                                 </div>
                             </div>
                         </div>

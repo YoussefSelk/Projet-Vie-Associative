@@ -125,7 +125,15 @@ class Validation {
      * @return array Liste des événements non validés
      */
     public function getPendingEvents() {
-        $stmt = $this->db->prepare("SELECT * FROM fiche_event WHERE validation_finale IS NULL OR validation_finale = 0");
+        $stmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club, 
+                   u.prenom AS responsable_prenom, u.nom AS responsable_nom, u.mail AS responsable_mail, u.promo AS responsable_promo
+            FROM fiche_event fe
+            LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            LEFT JOIN users u ON fe.id_responsable = u.id
+            WHERE fe.validation_finale IS NULL OR (fe.validation_finale = 0 AND (fe.motif_refus IS NULL OR fe.motif_refus = ''))
+            ORDER BY fe.date_depot DESC
+        ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -136,7 +144,15 @@ class Validation {
      * @return array Liste des événements rejetés
      */
     public function getRejectedEvents() {
-        $stmt = $this->db->prepare("SELECT * FROM fiche_event WHERE validation_finale = -1");
+        $stmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club,
+                   u.prenom AS responsable_prenom, u.nom AS responsable_nom
+            FROM fiche_event fe
+            LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            LEFT JOIN users u ON fe.id_responsable = u.id
+            WHERE fe.validation_finale = 0 AND fe.motif_refus IS NOT NULL AND fe.motif_refus != ''
+            ORDER BY fe.date_depot DESC
+        ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

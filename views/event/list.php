@@ -13,7 +13,7 @@
  * 
  * @package Views/Event
  */
-$pageCss = ['shared', 'buttons', 'search', 'events'];
+$pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -110,9 +110,36 @@ $pageCss = ['shared', 'buttons', 'search', 'events'];
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <!-- Pagination -->
+                <div id="eventPagination" class="pagination-wrapper"></div>
             <?php endif; ?>
         </div>
     </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure search component exists (may not be initialized yet by auto-init)
+        if (document.querySelector('#eventSearch') && !window.eventSearch) {
+            window.eventSearch = new SearchComponent({
+                input: '#eventSearch',
+                items: '.events-grid',
+                fields: ['data-search', 'h3', '.event-description'],
+                noResultsMessage: 'Aucun événement trouvé'
+            });
+        }
+
+        if (document.querySelector('.events-grid')) {
+            window.eventPagination = new PaginationComponent({
+                itemsSelector: '.events-grid',
+                paginationSelector: '#eventPagination',
+                perPage: 9,
+                perPageOptions: [6, 9, 18, 30],
+                searchComponent: window.eventSearch || null
+            });
+        }
+    });
+    </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>

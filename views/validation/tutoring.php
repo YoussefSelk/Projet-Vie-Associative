@@ -192,17 +192,19 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
                                         <input type="hidden" name="action" value="approve">
-                                        <button type="submit" name="validate_club_admin" class="btn-approve">
+                                        <input type="hidden" name="validate_club_admin" value="1">
+                                        <button type="submit" class="btn-approve">
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
                                     <?php endif; ?>
                                     <?php if ($is_admin): ?>
-                                    <form method="POST">
+                                    <form method="POST" class="form-force-club-card" data-club-name="<?= htmlspecialchars($club['nom_club'] ?? '') ?>">
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
                                         <input type="hidden" name="action" value="force_approve">
-                                        <button type="submit" name="validate_club_admin" class="btn-force" title="Valider sans attendre le tuteur">
+                                        <input type="hidden" name="validate_club_admin" value="1">
+                                        <button type="submit" class="btn-force" title="Valider sans attendre le tuteur">
                                             <i class="fas fa-bolt"></i> Forcer
                                         </button>
                                     </form>
@@ -260,7 +262,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                     <button type="button" class="btn-view-details" onclick="openEventModal(<?= htmlspecialchars(json_encode($event)) ?>)">
                                         <i class="fas fa-eye"></i> Voir détails
                                     </button>
-                                    <form method="POST">
+                                    <form method="POST" class="form-approve-event-card">
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                                         <input type="hidden" name="action" value="approve">
@@ -279,11 +281,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                         </button>
                                     </form>
                                     <?php if ($is_admin): ?>
-                                    <form method="POST">
+                                    <form method="POST" class="form-force-event-card" data-event-title="<?= htmlspecialchars($event['titre'] ?? '') ?>">
                                         <?= Security::csrfField() ?>
                                         <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                                         <input type="hidden" name="action" value="force_approve">
-                                        <button type="submit" name="validate_event_admin" class="btn-force" title="Valider sans attendre le tuteur">
+                                        <input type="hidden" name="validate_event_admin" value="1">
+                                        <button type="submit" class="btn-force" title="Valider sans attendre le tuteur">
                                             <i class="fas fa-bolt"></i> Forcer
                                         </button>
                                     </form>
@@ -402,25 +405,28 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                     <input type="hidden" name="club_id" id="modalClubIdReject" value="">
                     <input type="hidden" name="action" value="reject">
                     <input type="hidden" name="motif" id="clubMotifInput" value="">
-                    <button type="submit" name="validate_club_admin" class="btn-reject">
+                    <input type="hidden" name="validate_club_admin" value="1">
+                    <button type="submit" class="btn-reject">
                         <i class="fas fa-times"></i> Confirmer le rejet
                     </button>
                 </form>
                 <?php if ($is_admin): ?>
-                <form method="POST" id="modalClubForceForm">
+                <form method="POST" id="modalClubForceForm" class="form-force-club-modal">
                     <?= Security::csrfField() ?>
                     <input type="hidden" name="club_id" id="modalClubIdForce" value="">
                     <input type="hidden" name="action" value="force_approve">
-                    <button type="submit" name="validate_club_admin" class="btn-force" title="Valider immédiatement sans attendre le tuteur">
+                    <input type="hidden" name="validate_club_admin" value="1">
+                    <button type="submit" class="btn-force" title="Valider immédiatement sans attendre le tuteur">
                         <i class="fas fa-bolt"></i> Forcer la validation
                     </button>
                 </form>
                 <?php endif; ?>
-                <form method="POST" id="modalClubApproveForm">
+                <form method="POST" id="modalClubApproveForm" class="form-approve-club-modal">
                     <?= Security::csrfField() ?>
                     <input type="hidden" name="club_id" id="modalClubIdApprove" value="">
                     <input type="hidden" name="action" value="approve">
-                    <button type="submit" name="validate_club_admin" class="btn-approve">
+                    <input type="hidden" name="validate_club_admin" value="1">
+                    <button type="submit" class="btn-approve">
                         <i class="fas fa-check"></i> Approuver ce club
                     </button>
                 </form>
@@ -482,32 +488,28 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                     <input type="hidden" name="event_id" id="modalEventIdReject" value="">
                     <input type="hidden" name="action" value="reject">
                     <input type="hidden" name="motif" id="eventMotifInput" value="">
-                        <button type="submit" 
-                            name="<?php 
-                                if($is_admin) echo 'validate_event_admin'; 
-                                elseif($is_bde) echo 'validate_event_bde'; 
-                                else echo 'validate_event_tutor'; 
-                            ?>" 
-                            class="btn-reject">
-                            <i class="fas fa-times"></i> Confirmer le rejet
-                        </button>                       
+                    <input type="hidden" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" value="1">
+                    <button type="submit" class="btn-reject">
+                        <i class="fas fa-times"></i> Confirmer le rejet
                     </button>
                 </form>
                 <?php if ($is_admin): ?>
-                <form method="POST" id="modalEventForceForm">
+                <form method="POST" id="modalEventForceForm" class="form-force-event-modal">
                     <?= Security::csrfField() ?>
                     <input type="hidden" name="event_id" id="modalEventIdForce" value="">
                     <input type="hidden" name="action" value="force_approve">
-                    <button type="submit" name="validate_event_admin" class="btn-force" title="Valider immédiatement sans attendre le tuteur">
+                    <input type="hidden" name="validate_event_admin" value="1">
+                    <button type="submit" class="btn-force" title="Valider immédiatement sans attendre le tuteur">
                         <i class="fas fa-bolt"></i> Forcer la validation
                     </button>
                 </form>
                 <?php endif; ?>
-                <form method="POST" id="modalEventApproveForm">
+                <form method="POST" id="modalEventApproveForm" class="form-approve-event-modal">
                     <?= Security::csrfField() ?>
                     <input type="hidden" name="event_id" id="modalEventIdApprove" value="">
                     <input type="hidden" name="action" value="approve">
-                    <button type="submit" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" class="btn-approve">
+                    <input type="hidden" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" value="1">
+                    <button type="submit" class="btn-approve">
                         <i class="fas fa-check"></i> Approuver cet événement
                     </button>
                 </form>
@@ -750,8 +752,103 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                     if (activeModal) window.closeModal(activeModal.id);
                 }
             });
-
-        })();
-</script>
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
+                    modal.classList.remove('active');
+                });
+                document.body.style.overflow = '';
+                // Reset rejection forms
+                cancelClubReject();
+                cancelEventReject();
+            }
+        });
+        
+        // =============================================
+        // SweetAlert2 confirmations for card-level actions
+        // =============================================
+        
+        // Card-level: Approve club
+        document.querySelectorAll('.form-approve-club-card').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                SwalHelper.confirm('Approuver ce club ?', 'Le club sera validé.', 'Oui, approuver', 'Annuler')
+                    .then(function(result) { if (result.isConfirmed) form.submit(); });
+            });
+        });
+        
+        // Card-level: Force approve club
+        document.querySelectorAll('.form-force-club-card').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var clubName = form.dataset.clubName || 'ce club';
+                SwalHelper.confirm('Forcer la validation ?', 'Le club "' + clubName + '" sera validé sans attendre le tuteur.', 'Oui, forcer', 'Annuler')
+                    .then(function(result) { if (result.isConfirmed) form.submit(); });
+            });
+        });
+        
+        // Card-level: Approve event
+        document.querySelectorAll('.form-approve-event-card').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                SwalHelper.confirm('Approuver cet événement ?', 'L\'événement sera validé.', 'Oui, approuver', 'Annuler')
+                    .then(function(result) { if (result.isConfirmed) form.submit(); });
+            });
+        });
+        
+        // Card-level: Force approve event
+        document.querySelectorAll('.form-force-event-card').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var eventTitle = form.dataset.eventTitle || 'cet événement';
+                SwalHelper.confirm('Forcer la validation ?', 'L\'événement "' + eventTitle + '" sera validé sans attendre le tuteur.', 'Oui, forcer', 'Annuler')
+                    .then(function(result) { if (result.isConfirmed) form.submit(); });
+            });
+        });
+        
+        // Modal: Force approve club
+        var modalClubForceForm = document.getElementById('modalClubForceForm');
+        if (modalClubForceForm) {
+            modalClubForceForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                SwalHelper.confirm('Forcer la validation ?', 'Ce club sera validé immédiatement sans attendre le tuteur.', 'Oui, forcer', 'Annuler')
+                    .then(function(result) { if (result.isConfirmed) modalClubForceForm.submit(); });
+            });
+        }
+        
+        // Modal: Approve club
+        var modalClubApproveForm = document.getElementById('modalClubApproveForm');
+        if (modalClubApproveForm) {
+            modalClubApproveForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                SwalHelper.confirm('Approuver ce club ?', 'Le club sera validé.', 'Oui, approuver', 'Annuler')
+                    .then(function(result) { if (result.isConfirmed) modalClubApproveForm.submit(); });
+            });
+        }
+        
+        // Modal: Force approve event
+        var modalEventForceForm = document.getElementById('modalEventForceForm');
+        if (modalEventForceForm) {
+            modalEventForceForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                SwalHelper.confirm('Forcer la validation ?', 'Cet événement sera validé immédiatement sans attendre le tuteur.', 'Oui, forcer', 'Annuler')
+                    .then(function(result) { if (result.isConfirmed) modalEventForceForm.submit(); });
+            });
+        }
+        
+        // Modal: Approve event
+        var modalEventApproveForm = document.getElementById('modalEventApproveForm');
+        if (modalEventApproveForm) {
+            modalEventApproveForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                SwalHelper.confirm('Approuver cet événement ?', 'L\'événement sera validé.', 'Oui, approuver', 'Annuler')
+                    .then(function(result) { if (result.isConfirmed) modalEventApproveForm.submit(); });
+            });
+        }
+    })();
+    </script>
 </body>
 </html>

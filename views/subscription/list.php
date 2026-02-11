@@ -13,7 +13,7 @@
  * 
  * @package Views/Subscription
  */
-$pageCss = ['shared', 'buttons', 'search', 'events'];
+$pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -91,7 +91,7 @@ $pageCss = ['shared', 'buttons', 'search', 'events'];
                                     </a>
                                     <a href="?page=unsubscribe&event_id=<?= $event['event_id'] ?>" 
                                        class="btn btn-danger btn-sm btn-unsubscribe" 
-                                       data-event-title="<?= htmlspecialchars($event['event_title']) ?>">
+                                       data-event-title="<?= htmlspecialchars($event['titre']) ?>">
                                         <i class="fas fa-times"></i> Se désinscrire
                                     </a>
                                 </div>
@@ -99,11 +99,37 @@ $pageCss = ['shared', 'buttons', 'search', 'events'];
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <!-- Pagination -->
+                <div id="subscriptionPagination" class="pagination-wrapper"></div>
             <?php endif; ?>
         </div>
     </main>
 
     <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure search component exists
+        if (document.querySelector('#subscriptionSearch') && !window.subscriptionSearch) {
+            window.subscriptionSearch = new SearchComponent({
+                input: '#subscriptionSearch',
+                items: '.events-grid',
+                fields: ['data-search', 'h3'],
+                noResultsMessage: 'Aucune inscription trouvée'
+            });
+        }
+
+        // Initialize pagination for subscriptions
+        if (document.querySelector('.events-grid')) {
+            window.subPagination = new PaginationComponent({
+                itemsSelector: '.events-grid',
+                paginationSelector: '#subscriptionPagination',
+                perPage: 9,
+                perPageOptions: [6, 9, 18, 30],
+                searchComponent: window.subscriptionSearch || null
+            });
+        }
+    });
+
     // Unsubscribe confirmation with SweetAlert2
     document.querySelectorAll('.btn-unsubscribe').forEach(btn => {
         btn.addEventListener('click', (e) => {

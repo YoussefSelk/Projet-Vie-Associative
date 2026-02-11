@@ -126,6 +126,7 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
         'forms' => 'components/forms',
         'tables' => 'components/tables',
         'search' => 'components/search',
+        'pagination' => 'components/pagination',
         'calendar' => 'components/calendar',
         // Pages
         'home' => 'pages/home',
@@ -172,6 +173,9 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
     
     <!-- Search component (deferred) -->
     <script src="<?= $baseUrl ?>/assets/js/search.js" defer></script>
+    
+    <!-- Pagination component (deferred) -->
+    <script src="<?= $baseUrl ?>/assets/js/pagination.js" defer></script>
     
     <!-- ========================================
          BROWSER COMPATIBILITY POLYFILLS

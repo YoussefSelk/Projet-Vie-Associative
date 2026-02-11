@@ -12,7 +12,7 @@
  * 
  * @package Views/Event
  */
-$pageCss = ['shared', 'buttons', 'search', 'events'];
+$pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -43,6 +43,35 @@ $pageCss = ['shared', 'buttons', 'search', 'events'];
                 </div>
             <?php endif; ?>
 
+            <!-- Search Bar -->
+            <?php if (!empty($events)): ?>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="myEventSearch" class="search-input" 
+                           placeholder="Rechercher un événement..." 
+                           autocomplete="off">
+                    <button type="button" class="search-clear" aria-label="Effacer">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="search-filters">
+                    <span class="filter-chip" data-search-filter="approuve">
+                        <i class="fas fa-check-circle"></i> Approuvé
+                    </span>
+                    <span class="filter-chip" data-search-filter="attente">
+                        <i class="fas fa-clock"></i> En attente
+                    </span>
+                    <span class="filter-chip" data-search-filter="refuse">
+                        <i class="fas fa-times-circle"></i> Refusé
+                    </span>
+                </div>
+                <div class="search-results-info">
+                    <span class="search-results-count"><strong><?= count($events) ?></strong> événement<?= count($events) !== 1 ? 's' : '' ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (empty($events)): ?>
                 <div class="empty-state">
                     <i class="fas fa-calendar-times"></i>
@@ -52,8 +81,19 @@ $pageCss = ['shared', 'buttons', 'search', 'events'];
                 </div>
             <?php else: ?>
                 <div class="events-grid">
-                    <?php foreach ($events as $event): ?>
-                        <div class="event-card">
+                    <?php foreach ($events as $event): 
+                        // Build search data and filter
+                        $statusFilter = '';
+                        if ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus']))) {
+                            $statusFilter = 'attente';
+                        } elseif ($event['validation_finale'] == 1) {
+                            $statusFilter = 'approuve';
+                        } else {
+                            $statusFilter = 'refuse';
+                        }
+                        $searchData = strtolower(($event['titre'] ?? '') . ' ' . ($event['description'] ?? '') . ' ' . ($event['campus'] ?? ''));
+                    ?>
+                        <div class="event-card" data-search="<?= htmlspecialchars($searchData) ?>" data-filter="<?= $statusFilter ?>">
                             <div class="event-date-badge">
                                 <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
                                 <span class="month"><?php 
@@ -119,11 +159,37 @@ $pageCss = ['shared', 'buttons', 'search', 'events'];
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <!-- Pagination -->
+                <div id="myEventPagination" class="pagination-wrapper"></div>
             <?php endif; ?>
         </div>
     </main>
 
     <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize search for my events
+        if (document.querySelector('#myEventSearch')) {
+            window.myEventSearch = new SearchComponent({
+                input: '#myEventSearch',
+                items: '.events-grid',
+                fields: ['data-search', 'h3', '.event-description'],
+                noResultsMessage: 'Aucun événement trouvé'
+            });
+        }
+
+        // Initialize pagination
+        if (document.querySelector('.events-grid')) {
+            window.myEventPagination = new PaginationComponent({
+                itemsSelector: '.events-grid',
+                paginationSelector: '#myEventPagination',
+                perPage: 9,
+                perPageOptions: [6, 9, 18, 30],
+                searchComponent: window.myEventSearch || null
+            });
+        }
+    });
+
     // Delete event confirmation with SweetAlert2
     document.querySelectorAll('.form-delete-event').forEach(form => {
         form.addEventListener('submit', (e) => {

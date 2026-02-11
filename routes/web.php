@@ -28,6 +28,22 @@ return [
         'view' => '/home/index.php'
     ],
     
+    'calendar-data' => [
+        'permission' => null,
+        'auth' => false,
+        'controller' => 'HomeController',
+        'method' => 'calendarData',
+        'view' => null
+    ],
+    
+    'subscribe-ajax' => [
+        'permission' => null,
+        'auth' => true,
+        'controller' => 'SubscriptionController',
+        'method' => 'toggleSubscriptionAjax',
+        'view' => null
+    ],
+    
     // ==========================================
     // ROUTES D'AUTHENTIFICATION
     // ==========================================

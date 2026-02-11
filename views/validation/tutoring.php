@@ -147,8 +147,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                         ?>
                         <div class="validation-card-advanced club-card" 
                              data-type="clubs" 
-                             data-search="<?= strtolower(htmlspecialchars($club['nom_club'] . ' ' . $club['type_club'] . ' ' . $club['campus'])) ?>"
-                             data-members='<?= htmlspecialchars(json_encode($clubMembers), ENT_QUOTES, 'UTF-8') ?>'>
+                             data-search="<?= strtolower(htmlspecialchars($club['nom_club'] . ' ' . $club['type_club'] . ' ' . $club['campus'])) ?>">
                             <div class="card-main">
                                 <div class="card-content">
                                     <div class="card-title-row">
@@ -184,33 +183,30 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                     <?php endif; ?>
                                 </div>
                                 <div class="card-actions">
-                                    <button type="button" class="btn-view-details" onclick="openClubModal(<?= htmlspecialchars(json_encode($club)) ?>, this)">
+                                    <button type="button" class="btn-view-details btn-swal-club-details"
+                                        data-club='<?= htmlspecialchars(json_encode($club), ENT_QUOTES, "UTF-8") ?>'
+                                        data-members='<?= htmlspecialchars(json_encode($clubMembers), ENT_QUOTES, "UTF-8") ?>'>
                                         <i class="fas fa-eye"></i> Voir détails
                                     </button>
                                     <?php if ($is_admin || $is_tutor): ?>
-                                    <form method="POST">
-                                        <?= Security::csrfField() ?>
-                                        <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
-                                        <input type="hidden" name="action" value="approve">
-                                        <input type="hidden" name="validate_club_admin" value="1">
-                                        <button type="submit" class="btn-approve">
-                                            <i class="fas fa-check"></i> Approuver
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn-approve btn-swal-club-approve"
+                                        data-id="<?= $club['club_id'] ?>"
+                                        data-name="<?= htmlspecialchars($club['nom_club']) ?>">
+                                        <i class="fas fa-check"></i> Approuver
+                                    </button>
                                     <?php endif; ?>
                                     <?php if ($is_admin): ?>
-                                    <form method="POST" class="form-force-club-card" data-club-name="<?= htmlspecialchars($club['nom_club'] ?? '') ?>">
-                                        <?= Security::csrfField() ?>
-                                        <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
-                                        <input type="hidden" name="action" value="force_approve">
-                                        <input type="hidden" name="validate_club_admin" value="1">
-                                        <button type="submit" class="btn-force" title="Valider sans attendre le tuteur">
-                                            <i class="fas fa-bolt"></i> Forcer
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn-force btn-swal-club-force"
+                                        data-id="<?= $club['club_id'] ?>"
+                                        data-name="<?= htmlspecialchars($club['nom_club']) ?>"
+                                        title="Valider sans attendre le tuteur">
+                                        <i class="fas fa-bolt"></i> Forcer
+                                    </button>
                                     <?php endif; ?>
                                     <?php if ($is_admin || $is_tutor): ?>
-                                    <button type="button" class="btn-reject" onclick="openClubModalReject(<?= htmlspecialchars(json_encode($club)) ?>, this)">
+                                    <button type="button" class="btn-reject btn-swal-club-reject"
+                                        data-id="<?= $club['club_id'] ?>"
+                                        data-name="<?= htmlspecialchars($club['nom_club']) ?>">
                                         <i class="fas fa-times"></i> Rejeter
                                     </button>
                                     <?php endif; ?>
@@ -259,39 +255,37 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                                     <?php endif; ?>
                                 </div>
                                 <div class="card-actions">
-                                    <button type="button" class="btn-view-details" onclick="openEventModal(<?= htmlspecialchars(json_encode($event)) ?>)">
+                                    <button type="button" class="btn-view-details btn-swal-event-details"
+                                        data-event='<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>'>
                                         <i class="fas fa-eye"></i> Voir détails
                                     </button>
-                                    <form method="POST" class="form-approve-event-card">
-                                        <?= Security::csrfField() ?>
-                                        <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
-                                        <input type="hidden" name="action" value="approve">
-                                        <?php 
-                                        // Déterminer le nom du bouton selon le rôle
-                                        if ($is_admin) {
-                                            $btn_name = 'validate_event_admin';
-                                        } elseif ($is_bde) {
-                                            $btn_name = 'validate_event_bde';
-                                        } else {
-                                            $btn_name = 'validate_event_tutor';
-                                        }
-                                        ?>
-                                        <button type="submit" name="<?= $btn_name ?>" class="btn-approve">
-                                            <i class="fas fa-check"></i> Approuver
-                                        </button>
-                                    </form>
+                                    <?php 
+                                    if ($is_admin) {
+                                        $btn_name = 'validate_event_admin';
+                                    } elseif ($is_bde) {
+                                        $btn_name = 'validate_event_bde';
+                                    } else {
+                                        $btn_name = 'validate_event_tutor';
+                                    }
+                                    ?>
+                                    <button type="button" class="btn-approve btn-swal-event-approve"
+                                        data-id="<?= $event['event_id'] ?>"
+                                        data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
+                                        data-validate-field="<?= $btn_name ?>">
+                                        <i class="fas fa-check"></i> Approuver
+                                    </button>
                                     <?php if ($is_admin): ?>
-                                    <form method="POST" class="form-force-event-card" data-event-title="<?= htmlspecialchars($event['titre'] ?? '') ?>">
-                                        <?= Security::csrfField() ?>
-                                        <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
-                                        <input type="hidden" name="action" value="force_approve">
-                                        <input type="hidden" name="validate_event_admin" value="1">
-                                        <button type="submit" class="btn-force" title="Valider sans attendre le tuteur">
-                                            <i class="fas fa-bolt"></i> Forcer
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn-force btn-swal-event-force"
+                                        data-id="<?= $event['event_id'] ?>"
+                                        data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
+                                        title="Valider sans attendre le tuteur">
+                                        <i class="fas fa-bolt"></i> Forcer
+                                    </button>
                                     <?php endif; ?>
-                                    <button type="button" class="btn-reject" onclick="openEventModalReject(<?= htmlspecialchars(json_encode($event)) ?>)">
+                                    <button type="button" class="btn-reject btn-swal-event-reject"
+                                        data-id="<?= $event['event_id'] ?>"
+                                        data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
+                                        data-validate-field="<?= $btn_name ?>">
                                         <i class="fas fa-times"></i> Rejeter
                                     </button>
                                 </div>
@@ -346,508 +340,313 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
         </div>
     </main>
 
-    <!-- Club Detail Modal -->
-    <div class="modal-overlay" id="clubModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-header-with-logo">
-                    <div class="modal-club-logo" id="modalClubLogo">
-                        <i class="fas fa-building no-logo"></i>
-                    </div>
-                    <h2><span id="modalClubName">Détails du club</span></h2>
-                </div>
-                <button class="modal-close" onclick="closeModal('clubModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-grid">
-                    <div class="detail-section">
-                        <h4>Type de club</h4>
-                        <p id="modalClubType">-</p>
-                    </div>
-                    <div class="detail-section">
-                        <h4>Campus</h4>
-                        <p id="modalClubCampus">-</p>
-                    </div>
-                </div>
-                <div class="detail-section">
-                    <h4>Email de contact</h4>
-                    <p id="modalClubEmail">-</p>
-                </div>
-                <div class="detail-section">
-                    <h4>Description</h4>
-                    <p id="modalClubDescription">-</p>
-                </div>
-                <div class="detail-section">
-                    <h4>Membres</h4>
-                    <div id="modalClubMembers" class="members-list"></div>
-                </div>
-            </div>
-            <!-- Rejection Reason Section -->
-            <div class="modal-reject-section" id="clubRejectSection" style="display: none;">
-                <div class="reject-reason-box">
-                    <h4><i class="fas fa-comment-alt"></i> Motif du rejet</h4>
-                    <p class="reject-hint">Expliquez la raison du rejet pour aider le créateur à améliorer sa demande.</p>
-                    <textarea id="clubRejectMotif" name="motif_preview" class="reject-textarea" rows="3" placeholder="Ex: Description insuffisante, objectifs pas clairs, doublon avec un club existant..."></textarea>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" id="clubCancelReject" style="display: none;" onclick="cancelClubReject()">
-                    <i class="fas fa-arrow-left"></i> Retour
-                </button>
-                <button type="button" class="btn-reject-init" id="clubRejectInit" onclick="showClubRejectForm()">
-                    <i class="fas fa-times"></i> Rejeter
-                </button>
-                <form method="POST" id="modalClubRejectForm" style="display: none;">
-                    <?= Security::csrfField() ?>
-                    <input type="hidden" name="club_id" id="modalClubIdReject" value="">
-                    <input type="hidden" name="action" value="reject">
-                    <input type="hidden" name="motif" id="clubMotifInput" value="">
-                    <input type="hidden" name="validate_club_admin" value="1">
-                    <button type="submit" class="btn-reject">
-                        <i class="fas fa-times"></i> Confirmer le rejet
-                    </button>
-                </form>
-                <?php if ($is_admin): ?>
-                <form method="POST" id="modalClubForceForm" class="form-force-club-modal">
-                    <?= Security::csrfField() ?>
-                    <input type="hidden" name="club_id" id="modalClubIdForce" value="">
-                    <input type="hidden" name="action" value="force_approve">
-                    <input type="hidden" name="validate_club_admin" value="1">
-                    <button type="submit" class="btn-force" title="Valider immédiatement sans attendre le tuteur">
-                        <i class="fas fa-bolt"></i> Forcer la validation
-                    </button>
-                </form>
-                <?php endif; ?>
-                <form method="POST" id="modalClubApproveForm" class="form-approve-club-modal">
-                    <?= Security::csrfField() ?>
-                    <input type="hidden" name="club_id" id="modalClubIdApprove" value="">
-                    <input type="hidden" name="action" value="approve">
-                    <input type="hidden" name="validate_club_admin" value="1">
-                    <button type="submit" class="btn-approve">
-                        <i class="fas fa-check"></i> Approuver ce club
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Event Detail Modal -->
-    <div class="modal-overlay" id="eventModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-calendar-alt"></i> <span id="modalEventName">Détails de l'événement</span></h2>
-                <button class="modal-close" onclick="closeModal('eventModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-section">
-                    <h4>Club organisateur</h4>
-                    <p id="modalEventClub">-</p>
-                </div>
-                <div class="detail-grid">
-                    <div class="detail-section">
-                        <h4>Date et heure</h4>
-                        <p id="modalEventDate">-</p>
-                    </div>
-                    <div class="detail-section">
-                        <h4>Campus</h4>
-                        <p id="modalEventCampus">-</p>
-                    </div>
-                </div>
-                <div class="detail-section">
-                    <h4>Lieu</h4>
-                    <p id="modalEventLieu">-</p>
-                </div>
-                <div class="detail-section">
-                    <h4>Description</h4>
-                    <p id="modalEventDescription">-</p>
-                </div>
-            </div>
-            <!-- Rejection Reason Section -->
-            <div class="modal-reject-section" id="eventRejectSection" style="display: none;">
-                <div class="reject-reason-box">
-                    <h4><i class="fas fa-comment-alt"></i> Motif du rejet</h4>
-                    <p class="reject-hint">Expliquez la raison du rejet pour aider l'organisateur à améliorer sa demande.</p>
-                    <textarea id="eventRejectMotif" name="motif_preview" class="reject-textarea" rows="3" placeholder="Ex: Date non disponible, lieu inapproprié, informations manquantes..."></textarea>
-                </div>
-            </div>
-            
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" id="eventCancelReject" style="display: none;" onclick="cancelEventReject()">
-                    <i class="fas fa-arrow-left"></i> Retour
-                </button>
-                <button type="button" class="btn-reject-init" id="eventRejectInit" onclick="showEventRejectForm()">
-                    <i class="fas fa-times"></i> Rejeter
-                </button>
-                <form method="POST" id="modalEventRejectForm" style="display: none;">
-                    <?= Security::csrfField() ?>
-                    <input type="hidden" name="event_id" id="modalEventIdReject" value="">
-                    <input type="hidden" name="action" value="reject">
-                    <input type="hidden" name="motif" id="eventMotifInput" value="">
-                    <input type="hidden" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" value="1">
-                    <button type="submit" class="btn-reject">
-                        <i class="fas fa-times"></i> Confirmer le rejet
-                    </button>
-                </form>
-                <?php if ($is_admin): ?>
-                <form method="POST" id="modalEventForceForm" class="form-force-event-modal">
-                    <?= Security::csrfField() ?>
-                    <input type="hidden" name="event_id" id="modalEventIdForce" value="">
-                    <input type="hidden" name="action" value="force_approve">
-                    <input type="hidden" name="validate_event_admin" value="1">
-                    <button type="submit" class="btn-force" title="Valider immédiatement sans attendre le tuteur">
-                        <i class="fas fa-bolt"></i> Forcer la validation
-                    </button>
-                </form>
-                <?php endif; ?>
-                <form method="POST" id="modalEventApproveForm" class="form-approve-event-modal">
-                    <?= Security::csrfField() ?>
-                    <input type="hidden" name="event_id" id="modalEventIdApprove" value="">
-                    <input type="hidden" name="action" value="approve">
-                    <input type="hidden" name="<?= $is_admin ? 'validate_event_admin' : 'validate_event_tutor' ?>" value="1">
-                    <button type="submit" class="btn-approve">
-                        <i class="fas fa-check"></i> Approuver cet événement
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 
+    <!-- CSRF token for AJAX requests -->
+    <input type="hidden" id="csrf_token" value="<?= htmlspecialchars(Security::generateCsrfToken()) ?>">
+
     <script>
-        (function() {
-            'use strict';
+    (function() {
+        'use strict';
 
-            // --- UTILITAIRES ---
-            function esc(str) {
-                if (!str) return '';
-                return String(str).replace(/[&<>"']/g, function(c) {
-                    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]);
-                });
-            }
+        // --- UTILITAIRES ---
+        const csrfToken = document.getElementById('csrf_token').value;
 
-            // Aide pour remplir le texte ou la valeur d'un élément s'il existe
-            const setContent = (id, value, isInput = false) => {
-                const el = document.getElementById(id);
-                if (el) {
-                    if (isInput) el.value = value;
-                    else el.textContent = value;
+        function esc(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, function(c) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]);
+            });
+        }
+
+        /**
+         * Submit a validation action via AJAX (form POST) and show SweetAlert feedback
+         */
+        function submitAction(formData) {
+            // Show loading
+            Swal.fire({ title: 'Traitement...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    Swal.fire({ icon: 'success', title: 'Succès', text: 'Action effectuée avec succès.', timer: 1500, showConfirmButton: false })
+                        .then(() => window.location.reload());
+                } else {
+                    throw new Error('Erreur serveur');
                 }
-            };
+            })
+            .catch(() => {
+                Swal.fire({ icon: 'error', title: 'Erreur', text: 'Une erreur est survenue. Veuillez réessayer.' });
+            });
+        }
 
-            // --- FILTRAGE ET RECHERCHE ---
-            const searchInput = document.getElementById('searchInput');
-            const filterTabs = document.querySelectorAll('.filter-tab');
-            const cards = document.querySelectorAll('.validation-card-advanced');
-            const noResults = document.getElementById('noResults');
-            const cardsContainer = document.getElementById('validationCards');
-            let currentFilter = 'all';
+        // --- FILTRAGE ET RECHERCHE ---
+        const searchInput = document.getElementById('searchInput');
+        const filterTabs = document.querySelectorAll('.filter-tab');
+        const cards = document.querySelectorAll('.validation-card-advanced');
+        const noResults = document.getElementById('noResults');
+        const cardsContainer = document.getElementById('validationCards');
+        let currentFilter = 'all';
 
-            function filterCards() {
-                const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
-                let visibleCount = 0;
-
-                cards.forEach(card => {
-                    const matchesSearch = card.dataset.search ? card.dataset.search.includes(searchTerm) : true;
-                    const matchesFilter = currentFilter === 'all' || card.dataset.type === currentFilter;
-
-                    if (matchesSearch && matchesFilter) {
-                        card.style.display = '';
-                        visibleCount++;
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-
-                if (noResults && cardsContainer) {
-                    const isEmpty = visibleCount === 0 && cards.length > 0;
-                    noResults.style.display = isEmpty ? 'block' : 'none';
-                    cardsContainer.style.display = isEmpty ? 'none' : 'grid';
-                }
+        function filterCards() {
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            let visibleCount = 0;
+            cards.forEach(card => {
+                const matchesSearch = card.dataset.search ? card.dataset.search.includes(searchTerm) : true;
+                const matchesFilter = currentFilter === 'all' || card.dataset.type === currentFilter;
+                if (matchesSearch && matchesFilter) { card.style.display = ''; visibleCount++; }
+                else { card.style.display = 'none'; }
+            });
+            if (noResults && cardsContainer) {
+                const isEmpty = visibleCount === 0 && cards.length > 0;
+                noResults.style.display = isEmpty ? 'block' : 'none';
+                cardsContainer.style.display = isEmpty ? 'none' : 'grid';
             }
+        }
 
-            if (searchInput) searchInput.addEventListener('input', filterCards);
+        if (searchInput) searchInput.addEventListener('input', filterCards);
+        filterTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                filterTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                filterCards();
+            });
+        });
 
-            filterTabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    filterTabs.forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    currentFilter = this.dataset.filter;
-                    filterCards();
+        // =============================================
+        // CLUB ACTIONS - SweetAlert + AJAX
+        // =============================================
+
+        // View club details
+        document.querySelectorAll('.btn-swal-club-details').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const club = JSON.parse(this.dataset.club);
+                let members = [];
+                try { members = JSON.parse(this.dataset.members || '[]'); } catch(e) {}
+
+                let membersHtml = '<p style="color:#888;">Aucun membre renseigné.</p>';
+                if (members.length > 0) {
+                    membersHtml = '<div style="text-align:left;max-height:200px;overflow-y:auto;">' +
+                        members.map(m =>
+                            '<div style="padding:4px 0;border-bottom:1px solid #eee;">' +
+                            '<strong>' + esc(m.prenom) + ' ' + esc(m.nom) + '</strong> — ' + esc(m.fonction) +
+                            (m.promo ? ' <span style="color:#888;">(' + esc(m.promo) + ')</span>' : '') +
+                            '</div>'
+                        ).join('') + '</div>';
+                }
+
+                Swal.fire({
+                    title: esc(club.nom_club || 'Club sans nom'),
+                    html:
+                        '<div style="text-align:left;">' +
+                        '<p><strong><i class="fas fa-tag"></i> Type :</strong> ' + esc(club.type_club || '-') + '</p>' +
+                        '<p><strong><i class="fas fa-map-marker-alt"></i> Campus :</strong> ' + esc(club.campus || '-') + '</p>' +
+                        '<p><strong><i class="fas fa-envelope"></i> Email :</strong> ' + esc(club.mail || 'Non renseigné') + '</p>' +
+                        '<p><strong><i class="fas fa-align-left"></i> Description :</strong></p>' +
+                        '<p>' + esc(club.description || 'Aucune description fournie.') + '</p>' +
+                        '<hr><p><strong><i class="fas fa-users"></i> Membres :</strong></p>' +
+                        membersHtml +
+                        '</div>',
+                    width: 600,
+                    confirmButtonText: 'Fermer',
+                    confirmButtonColor: '#6c757d'
                 });
             });
+        });
 
-            // --- FONCTIONS DE MODALE (CLUBS) ---
-            window.openClubModal = function(club, el) {
-                if (!club) return;
-
-                setContent('modalClubName', club.nom_club || 'Club sans nom');
-                setContent('modalClubType', club.type_club || '-');
-                setContent('modalClubCampus', club.campus || '-');
-                setContent('modalClubEmail', club.mail || 'Non renseigné');
-                setContent('modalClubDescription', club.description || 'Aucune description fournie.');
-                
-                // IDs pour les formulaires
-                setContent('modalClubIdApprove', club.club_id, true);
-                setContent('modalClubIdReject', club.club_id, true);
-                setContent('modalClubIdForce', club.club_id, true);
-
-                // Logo
-                const logoContainer = document.getElementById('modalClubLogo');
-                if (logoContainer) {
-                    logoContainer.innerHTML = club.logo_club 
-                        ? `<img src="${esc(club.logo_club)}" alt="Logo">` 
-                        : '<i class="fas fa-building no-logo"></i>';
-                }
-
-                // Membres (Récupération via data-attribute de la carte)
-                const membersContainer = document.getElementById('modalClubMembers');
-                if (membersContainer) {
-                    membersContainer.innerHTML = '';
-                    let members = [];
-                    if (el) {
-                        const card = el.closest('.validation-card-advanced');
-                        if (card && card.dataset.members) {
-                            try { members = JSON.parse(card.dataset.members); } catch (e) { console.error("Erreur JSON membres", e); }
-                        }
+        // Approve club
+        document.querySelectorAll('.btn-swal-club-approve').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const clubId = this.dataset.id;
+                const clubName = this.dataset.name;
+                SwalHelper.confirm(
+                    'Approuver ce club ?',
+                    'Le club "' + clubName + '" sera validé.',
+                    'Oui, approuver',
+                    'Annuler'
+                ).then(result => {
+                    if (result.isConfirmed) {
+                        const fd = new FormData();
+                        fd.append('csrf_token', csrfToken);
+                        fd.append('club_id', clubId);
+                        fd.append('action', 'approve');
+                        fd.append('validate_club_admin', '1');
+                        submitAction(fd);
                     }
+                });
+            });
+        });
 
-                    if (members.length > 0) {
-                        members.forEach(m => {
-                            const row = document.createElement('div');
-                            row.className = 'member-row';
-                            row.innerHTML = `
-                                <span class="member-name">${esc(m.prenom)} ${esc(m.nom)}</span>
-                                <span class="member-role">${esc(m.fonction)}</span>
-                                ${m.promo ? `<span class="member-promo">${esc(m.promo)}</span>` : ''}
-                            `;
-                            membersContainer.appendChild(row);
-                        });
-                    } else {
-                        membersContainer.innerHTML = '<div class="text-muted">Aucun membre renseigné.</div>';
+        // Force approve club
+        document.querySelectorAll('.btn-swal-club-force').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const clubId = this.dataset.id;
+                const clubName = this.dataset.name;
+                SwalHelper.confirm(
+                    'Forcer la validation ?',
+                    'Le club "' + clubName + '" sera validé immédiatement sans attendre le tuteur.',
+                    'Oui, forcer',
+                    'Annuler'
+                ).then(result => {
+                    if (result.isConfirmed) {
+                        const fd = new FormData();
+                        fd.append('csrf_token', csrfToken);
+                        fd.append('club_id', clubId);
+                        fd.append('action', 'force_approve');
+                        fd.append('validate_club_admin', '1');
+                        submitAction(fd);
                     }
-                }
+                });
+            });
+        });
 
-                document.getElementById('clubModal').classList.add('active');
-                document.body.style.overflow = 'hidden';
-            };
+        // Reject club (with motif textarea)
+        document.querySelectorAll('.btn-swal-club-reject').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const clubId = this.dataset.id;
+                const clubName = this.dataset.name;
+                Swal.fire({
+                    title: 'Rejeter le club "' + clubName + '" ?',
+                    html: '<p>Expliquez la raison du rejet pour aider le créateur à améliorer sa demande.</p>',
+                    input: 'textarea',
+                    inputPlaceholder: 'Ex: Description insuffisante, objectifs pas clairs, doublon avec un club existant...',
+                    inputAttributes: { 'aria-label': 'Motif du rejet' },
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmer le rejet',
+                    cancelButtonText: 'Annuler',
+                    confirmButtonColor: '#d33',
+                    inputValidator: value => { if (!value || !value.trim()) return 'Veuillez saisir un motif de rejet.'; }
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        const fd = new FormData();
+                        fd.append('csrf_token', csrfToken);
+                        fd.append('club_id', clubId);
+                        fd.append('action', 'reject');
+                        fd.append('motif', result.value.trim());
+                        fd.append('validate_club_admin', '1');
+                        submitAction(fd);
+                    }
+                });
+            });
+        });
 
-            // --- FONCTIONS DE MODALE (EVENTS) ---
-            window.openEventModal = function(event) {
-                if (!event) return;
+        // =============================================
+        // EVENT ACTIONS - SweetAlert + AJAX
+        // =============================================
 
-                setContent('modalEventName', event.titre || 'Événement sans titre');
-                setContent('modalEventClub', event.nom_club || '-');
-                setContent('modalEventCampus', event.campus || '-');
-                setContent('modalEventLieu', event.lieu || 'Non renseigné');
-                setContent('modalEventDescription', event.description || 'Aucune description fournie.');
-                
-                setContent('modalEventIdApprove', event.event_id, true);
-                setContent('modalEventIdReject', event.event_id, true);
-                setContent('modalEventIdForce', event.event_id, true);
-
-                const dateEl = document.getElementById('modalEventDate');
-                if (dateEl && event.date_ev) {
-                    const d = new Date(event.date_ev);
-                    dateEl.textContent = d.toLocaleDateString('fr-FR', {
+        // View event details
+        document.querySelectorAll('.btn-swal-event-details').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const ev = JSON.parse(this.dataset.event);
+                let dateStr = '-';
+                if (ev.date_ev) {
+                    const d = new Date(ev.date_ev);
+                    dateStr = d.toLocaleDateString('fr-FR', {
                         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
                     });
                 }
-
-                document.getElementById('eventModal').classList.add('active');
-                document.body.style.overflow = 'hidden';
-            };
-
-            // --- GESTION DU REJET ---
-            window.showClubRejectForm = function() {
-                document.getElementById('clubRejectSection').style.display = 'block';
-                document.getElementById('clubRejectInit').style.display = 'none';
-                document.getElementById('clubCancelReject').style.display = 'flex';
-                document.getElementById('modalClubRejectForm').style.display = 'inline';
-                document.getElementById('modalClubApproveForm').style.display = 'none';
-            };
-
-            window.cancelClubReject = function() {
-                document.getElementById('clubRejectSection').style.display = 'none';
-                document.getElementById('clubRejectInit').style.display = 'flex';
-                document.getElementById('clubCancelReject').style.display = 'none';
-                document.getElementById('modalClubRejectForm').style.display = 'none';
-                document.getElementById('modalClubApproveForm').style.display = 'inline';
-                const textarea = document.getElementById('clubRejectMotif');
-                if (textarea) textarea.value = '';
-            };
-
-            window.showEventRejectForm = function() {
-                document.getElementById('eventRejectSection').style.display = 'block';
-                document.getElementById('eventRejectInit').style.display = 'none';
-                document.getElementById('eventCancelReject').style.display = 'flex';
-                document.getElementById('modalEventRejectForm').style.display = 'inline';
-                document.getElementById('modalEventApproveForm').style.display = 'none';
-            };
-
-            window.cancelEventReject = function() {
-                document.getElementById('eventRejectSection').style.display = 'none';
-                document.getElementById('eventRejectInit').style.display = 'flex';
-                document.getElementById('eventCancelReject').style.display = 'none';
-                document.getElementById('modalEventRejectForm').style.display = 'none';
-                document.getElementById('modalEventApproveForm').style.display = 'inline';
-                const textarea = document.getElementById('eventRejectMotif');
-                if (textarea) textarea.value = '';
-            };
-
-            // Fonctions spécifiques pour ouvrir directement en mode rejet
-            window.openClubModalReject = function(club, el) {
-                window.openClubModal(club, el);
-                setTimeout(window.showClubRejectForm, 50);
-            };
-
-            window.openEventModalReject = function(event) {
-                window.openEventModal(event);
-                setTimeout(window.showEventRejectForm, 50);
-            };
-
-            // --- FERMETURE ET EVENTS ---
-            window.closeModal = function(modalId) {
-                const modal = document.getElementById(modalId);
-                if (modal) {
-                    modal.classList.remove('active');
-                    document.body.style.overflow = '';
-                    if (modalId === 'clubModal') window.cancelClubReject();
-                    if (modalId === 'eventModal') window.cancelEventReject();
-                }
-            };
-
-            // Transfert du motif vers l'input caché avant envoi
-            const setupSubmit = (formId, textareaId, hiddenId) => {
-                const form = document.getElementById(formId);
-                if (form) {
-                    form.addEventListener('submit', function(e) {
-                        const text = document.getElementById(textareaId).value.trim();
-                        if (!text) {
-                            alert("Veuillez saisir un motif de rejet.");
-                            e.preventDefault();
-                            return;
-                        }
-                        document.getElementById(hiddenId).value = text;
-                    });
-                }
-            };
-
-            setupSubmit('modalClubRejectForm', 'clubRejectMotif', 'clubMotifInput');
-            setupSubmit('modalEventRejectForm', 'eventRejectMotif', 'eventMotifInput');
-
-            // Fermeture clic extérieur et Echap
-            window.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-overlay')) window.closeModal(e.target.id);
-            });
-
-            window.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') {
-                    const activeModal = document.querySelector('.modal-overlay.active');
-                    if (activeModal) window.closeModal(activeModal.id);
-                }
-            });
-        });
-        
-        // Close modal on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay.active').forEach(function(modal) {
-                    modal.classList.remove('active');
+                Swal.fire({
+                    title: '<i class="fas fa-calendar-alt"></i> ' + esc(ev.titre || 'Événement sans titre'),
+                    html:
+                        '<div style="text-align:left;">' +
+                        '<p><strong><i class="fas fa-building"></i> Club :</strong> ' + esc(ev.nom_club || '-') + '</p>' +
+                        '<p><strong><i class="fas fa-calendar"></i> Date :</strong> ' + esc(dateStr) + '</p>' +
+                        '<p><strong><i class="fas fa-map-marker-alt"></i> Campus :</strong> ' + esc(ev.campus || '-') + '</p>' +
+                        '<p><strong><i class="fas fa-location-dot"></i> Lieu :</strong> ' + esc(ev.lieu || 'Non renseigné') + '</p>' +
+                        '<p><strong><i class="fas fa-align-left"></i> Description :</strong></p>' +
+                        '<p>' + esc(ev.description || 'Aucune description fournie.') + '</p>' +
+                        '</div>',
+                    width: 600,
+                    confirmButtonText: 'Fermer',
+                    confirmButtonColor: '#6c757d'
                 });
-                document.body.style.overflow = '';
-                // Reset rejection forms
-                cancelClubReject();
-                cancelEventReject();
-            }
-        });
-        
-        // =============================================
-        // SweetAlert2 confirmations for card-level actions
-        // =============================================
-        
-        // Card-level: Approve club
-        document.querySelectorAll('.form-approve-club-card').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                SwalHelper.confirm('Approuver ce club ?', 'Le club sera validé.', 'Oui, approuver', 'Annuler')
-                    .then(function(result) { if (result.isConfirmed) form.submit(); });
             });
         });
-        
-        // Card-level: Force approve club
-        document.querySelectorAll('.form-force-club-card').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var clubName = form.dataset.clubName || 'ce club';
-                SwalHelper.confirm('Forcer la validation ?', 'Le club "' + clubName + '" sera validé sans attendre le tuteur.', 'Oui, forcer', 'Annuler')
-                    .then(function(result) { if (result.isConfirmed) form.submit(); });
+
+        // Approve event
+        document.querySelectorAll('.btn-swal-event-approve').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const eventId = this.dataset.id;
+                const eventName = this.dataset.name;
+                const validateField = this.dataset.validateField;
+                SwalHelper.confirm(
+                    'Approuver cet événement ?',
+                    'L\'événement "' + eventName + '" sera validé.',
+                    'Oui, approuver',
+                    'Annuler'
+                ).then(result => {
+                    if (result.isConfirmed) {
+                        const fd = new FormData();
+                        fd.append('csrf_token', csrfToken);
+                        fd.append('event_id', eventId);
+                        fd.append('action', 'approve');
+                        fd.append(validateField, '1');
+                        submitAction(fd);
+                    }
+                });
             });
         });
-        
-        // Card-level: Approve event
-        document.querySelectorAll('.form-approve-event-card').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                SwalHelper.confirm('Approuver cet événement ?', 'L\'événement sera validé.', 'Oui, approuver', 'Annuler')
-                    .then(function(result) { if (result.isConfirmed) form.submit(); });
+
+        // Force approve event
+        document.querySelectorAll('.btn-swal-event-force').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const eventId = this.dataset.id;
+                const eventName = this.dataset.name;
+                SwalHelper.confirm(
+                    'Forcer la validation ?',
+                    'L\'événement "' + eventName + '" sera validé immédiatement sans attendre le tuteur.',
+                    'Oui, forcer',
+                    'Annuler'
+                ).then(result => {
+                    if (result.isConfirmed) {
+                        const fd = new FormData();
+                        fd.append('csrf_token', csrfToken);
+                        fd.append('event_id', eventId);
+                        fd.append('action', 'force_approve');
+                        fd.append('validate_event_admin', '1');
+                        submitAction(fd);
+                    }
+                });
             });
         });
-        
-        // Card-level: Force approve event
-        document.querySelectorAll('.form-force-event-card').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                var eventTitle = form.dataset.eventTitle || 'cet événement';
-                SwalHelper.confirm('Forcer la validation ?', 'L\'événement "' + eventTitle + '" sera validé sans attendre le tuteur.', 'Oui, forcer', 'Annuler')
-                    .then(function(result) { if (result.isConfirmed) form.submit(); });
+
+        // Reject event (with motif textarea)
+        document.querySelectorAll('.btn-swal-event-reject').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const eventId = this.dataset.id;
+                const eventName = this.dataset.name;
+                const validateField = this.dataset.validateField;
+                Swal.fire({
+                    title: 'Rejeter l\'événement "' + eventName + '" ?',
+                    html: '<p>Expliquez la raison du rejet pour aider l\'organisateur à améliorer sa demande.</p>',
+                    input: 'textarea',
+                    inputPlaceholder: 'Ex: Date non disponible, lieu inapproprié, informations manquantes...',
+                    inputAttributes: { 'aria-label': 'Motif du rejet' },
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmer le rejet',
+                    cancelButtonText: 'Annuler',
+                    confirmButtonColor: '#d33',
+                    inputValidator: value => { if (!value || !value.trim()) return 'Veuillez saisir un motif de rejet.'; }
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        const fd = new FormData();
+                        fd.append('csrf_token', csrfToken);
+                        fd.append('event_id', eventId);
+                        fd.append('action', 'reject');
+                        fd.append('motif', result.value.trim());
+                        fd.append(validateField, '1');
+                        submitAction(fd);
+                    }
+                });
             });
         });
-        
-        // Modal: Force approve club
-        var modalClubForceForm = document.getElementById('modalClubForceForm');
-        if (modalClubForceForm) {
-            modalClubForceForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                SwalHelper.confirm('Forcer la validation ?', 'Ce club sera validé immédiatement sans attendre le tuteur.', 'Oui, forcer', 'Annuler')
-                    .then(function(result) { if (result.isConfirmed) modalClubForceForm.submit(); });
-            });
-        }
-        
-        // Modal: Approve club
-        var modalClubApproveForm = document.getElementById('modalClubApproveForm');
-        if (modalClubApproveForm) {
-            modalClubApproveForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                SwalHelper.confirm('Approuver ce club ?', 'Le club sera validé.', 'Oui, approuver', 'Annuler')
-                    .then(function(result) { if (result.isConfirmed) modalClubApproveForm.submit(); });
-            });
-        }
-        
-        // Modal: Force approve event
-        var modalEventForceForm = document.getElementById('modalEventForceForm');
-        if (modalEventForceForm) {
-            modalEventForceForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                SwalHelper.confirm('Forcer la validation ?', 'Cet événement sera validé immédiatement sans attendre le tuteur.', 'Oui, forcer', 'Annuler')
-                    .then(function(result) { if (result.isConfirmed) modalEventForceForm.submit(); });
-            });
-        }
-        
-        // Modal: Approve event
-        var modalEventApproveForm = document.getElementById('modalEventApproveForm');
-        if (modalEventApproveForm) {
-            modalEventApproveForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                SwalHelper.confirm('Approuver cet événement ?', 'L\'événement sera validé.', 'Oui, approuver', 'Annuler')
-                    .then(function(result) { if (result.isConfirmed) modalEventApproveForm.submit(); });
-            });
-        }
+
     })();
     </script>
 </body>

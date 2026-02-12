@@ -174,27 +174,32 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'admin', 'pro
                                     </a>
                                     
                                     <?php if ($u['id'] != $_SESSION['id']): ?>
-                                        <form class="permission-form" method="POST" action="?page=update-permission" style="display: inline-flex;">
+                                        <form class="permission-form" method="POST" action="?page=update-permission">
                                             <input type="hidden" name="csrf_token" value="<?php echo Security::generateCsrfToken(); ?>">
                                             <input type="hidden" name="user_id" value="<?php echo $u['id']; ?>">
                                             <select name="permission">
-                                                <?php for ($p = 0; $p <= 5; $p++): ?>
+                                                <?php
+                                                $perm_options = [0 => 'Invité', 1 => 'Utilisateur', 2 => 'Tuteur', 3 => 'BDE', 4 => 'Personnel', 5 => 'Admin'];
+                                                for ($p = 0; $p <= 5; $p++): ?>
                                                     <option value="<?php echo $p; ?>" <?php if ($u['permission'] == $p) echo 'selected'; ?>>
-                                                        <?php echo $p; ?>
+                                                        <?php echo $p . ' - ' . $perm_options[$p]; ?>
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>
                                             <button type="submit"><i class="fas fa-check"></i></button>
                                         </form>
                                         
-                                        <a href="?page=delete-user&id=<?php echo $u['id']; ?>" 
-                                           class="action-btn delete btn-delete-user" 
-                                           data-user-name="<?php echo htmlspecialchars($u['prenom'] . ' ' . $u['nom']); ?>"
-                                           title="Supprimer">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                        <form method="POST" action="?page=delete-user" class="form-delete-user">
+                                            <?= Security::csrfField() ?>
+                                            <input type="hidden" name="id" value="<?php echo $u['id']; ?>">
+                                            <button type="submit" class="action-btn delete btn-delete-user"
+                                                    data-user-name="<?php echo htmlspecialchars($u['prenom'] . ' ' . $u['nom']); ?>"
+                                                    title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     <?php else: ?>
-                                        <span style="color: #999; font-size: 0.8rem;">(Vous)</span>
+                                        <span class="user-self-label">(Vous)</span>
                                     <?php endif; ?>
                                 </div>
                             </td>
@@ -223,16 +228,16 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'admin', 'pro
     });
 
     // Delete user confirmation with SweetAlert2
-    document.querySelectorAll('.btn-delete-user').forEach(link => {
-        link.addEventListener('click', (e) => {
+    document.querySelectorAll('.btn-delete-user').forEach(btn => {
+        btn.addEventListener('click', (e) => {
             e.preventDefault();
-            const userName = link.dataset.userName;
-            const deleteUrl = link.href;
+            const userName = btn.dataset.userName;
+            const form = btn.closest('form');
             
             SwalHelper.confirmDelete('l\'utilisateur "' + userName + '"')
                 .then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = deleteUrl;
+                        form.submit();
                     }
                 });
         });

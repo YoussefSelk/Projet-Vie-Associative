@@ -16,6 +16,7 @@
  * 
  * @package Views/Event
  */
+$pageTitle = 'Détails de l\'événement - EILCO';
 $pageCss = ['shared', 'buttons', 'events'];
 ?>
 <!DOCTYPE html>
@@ -123,14 +124,14 @@ $pageCss = ['shared', 'buttons', 'events'];
                                 </div>
 
                                 <?php if (!empty($event['rapport_event'])): ?>
-                                    <div style="margin-bottom: 25px;">
-                                        <a href="<?= htmlspecialchars($event['rapport_event']) ?>" class="btn btn-primary" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;">
-                                            <i class="fas fa-file-pdf" style="font-size: 1.2rem;"></i> 
+                                    <div class="mb-20">
+                                        <a href="<?= htmlspecialchars($event['rapport_event']) ?>" class="btn btn-primary" target="_blank">
+                                            <i class="fas fa-file-pdf"></i> 
                                             Consulter le rapport d'événement
                                         </a>
                                     </div>
                                 <?php else: ?>
-                                    <p style="color: #94a3b8; font-style: italic; margin-bottom: 20px;">Le rapport n'a pas encore été déposé.</p>
+                                    <p class="text-muted mb-20">Le rapport n'a pas encore été déposé.</p>
                                 <?php endif; ?>
 
                                 <?php 

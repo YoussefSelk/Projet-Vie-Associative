@@ -2,6 +2,11 @@
    Pagination Component Styles
    ================================================ */
 
+/* Hidden states for pagination and external filters */
+.filter-hidden {
+  display: none !important;
+}
+
 /* Pagination wrapper */
 .pagination-wrapper {
   margin-top: 24px;

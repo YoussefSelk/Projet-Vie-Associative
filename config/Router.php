@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * ROUTEUR DE L'APPLICATION
@@ -79,14 +80,6 @@ class Router
             return true;
         }
         
-        $page = $this->getPage();
-        // Routes POST publiques exemptées de CSRF
-        $publicPostRoutes = ['login', 'register'];
-        
-        if (in_array($page, $publicPostRoutes)) {
-            return true;
-        }
-        
         $token = $_POST['csrf_token'] ?? '';
         return Security::validateCsrfToken($token);
     }
@@ -136,11 +129,24 @@ class Router
         
         // Instancier le contrôleur
         $controllerClass = $route['controller'];
+        if (!class_exists($controllerClass)) {
+            ErrorHandler::renderHttpError(500, "Le contrôleur '$controllerClass' est introuvable.");
+        }
+        
         $controller = new $controllerClass($this->db);
         
         // Appeler la méthode
         $method = $route['method'];
-        $data = $controller->$method();
+        if (!method_exists($controller, $method)) {
+            ErrorHandler::renderHttpError(500, "La méthode '$method' n'existe pas dans '$controllerClass'.");
+        }
+        
+        try {
+            $data = $controller->$method();
+        } catch (\Throwable $e) {
+            ErrorHandler::renderHttpError(500, 'Erreur interne du serveur.');
+            return;
+        }
         
         // Rendre la vue si spécifiée
         if ($route['view'] !== null) {

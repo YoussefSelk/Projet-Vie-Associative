@@ -16,6 +16,7 @@
  * 
  * @package Views/User
  */
+$pageTitle = 'Modifier mon profil - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'profiles'];
 ?>
 <!DOCTYPE html>

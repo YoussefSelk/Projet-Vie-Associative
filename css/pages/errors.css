@@ -511,3 +511,38 @@
     opacity: 0.4;
   }
 }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .error-code {
+    font-size: clamp(4rem, 15vw, 8rem);
+  }
+
+  .error-message {
+    font-size: 1.2rem;
+    padding: 0 15px;
+  }
+
+  .error-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .floating-shape {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .error-container {
+    padding: 20px 10px;
+  }
+
+  .error-code {
+    font-size: 4rem;
+  }
+
+  .error-subtitle {
+    font-size: 0.9rem;
+  }
+}

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * CONTRÔLEUR DES CLUBS
@@ -127,13 +128,15 @@ class ClubController {
         ")->fetchAll(PDO::FETCH_ASSOC);
         
         // Get all users for member selection (exclude current user who will be added automatically)
-        $currentUserId = $_SESSION['id'] ?? 0;
-        $users = $this->db->query("
+        $currentUserId = (int)($_SESSION['id'] ?? 0);
+        $stmtUsers = $this->db->prepare("
             SELECT id, nom, prenom, mail, promo 
             FROM users 
-            WHERE id != $currentUserId
+            WHERE id != ?
             ORDER BY nom ASC, prenom ASC
-        ")->fetchAll(PDO::FETCH_ASSOC);
+        ");
+        $stmtUsers->execute([$currentUserId]);
+        $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_club'])) {
             $nom_club = trim($_POST['nom_club'] ?? '');
@@ -338,9 +341,9 @@ class ClubController {
                 $stmt->execute([$club_id, $user_id]);
                 
                 if ($stmt->fetch()) {
-                    // Vérifier que le club est refusé
+                    // Vérifier que le club est refusé (validation_finale = -1 for rejected clubs)
                     $club = $this->clubModel->getClubById($club_id);
-                    if ($club && $club['validation_finale'] == 0) {
+                    if ($club && ($club['validation_finale'] == -1 || $club['validation_finale'] === 0)) {
                         if ($this->clubModel->deleteClub($club_id)) {
                             $success_msg = "Club supprimé avec succès.";
                             $clubs = $this->clubModel->getClubsByUser($user_id);
@@ -411,12 +414,14 @@ class ClubController {
                 $currentMembers = $currentMembers->fetchAll(PDO::FETCH_ASSOC);
                 
                 // Récupérer tous les utilisateurs disponibles (sauf l'utilisateur actuel)
-                $users = $this->db->query("
+                $stmtUsers = $this->db->prepare("
                     SELECT id, nom, prenom, mail, promo 
                     FROM users 
-                    WHERE id != $user_id
+                    WHERE id != ?
                     ORDER BY nom ASC, prenom ASC
-                ")->fetchAll(PDO::FETCH_ASSOC);
+                ");
+                $stmtUsers->execute([(int)$user_id]);
+                $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
                 
                 // Traiter la soumission du formulaire
                 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_club'])) {
@@ -599,7 +604,7 @@ class ClubController {
                         <p>{$creator_name} a créé un nouveau $type_label qui requiert votre validation :</p>
                         <p><strong>$item_name</strong></p>
                         <p>Veuillez vous connecter à la plateforme pour valider ou refuser cette demande.</p>
-                        <p><a href='https://vie-etudiante.eilco.fr/?page=tutoring' class='btn'>Accéder aux validations</a></p>
+                        <p><a href='" . (defined('BASE_URL') ? BASE_URL : '') . "/?page=tutoring' class='btn'>Accéder aux validations</a></p>
                         <p>Cordialement,<br>L'équipe Vie Étudiante EILCO</p>
                     </div>
                 </div>

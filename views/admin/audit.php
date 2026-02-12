@@ -114,7 +114,7 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'admin'];
     
     <!-- Error Logs -->
     <div class="log-section">
-        <div class="log-header" style="background: #e74c3c;">
+        <div class="log-header" style="background: #991b1b;">
             <span class="title"><i class="fas fa-exclamation-circle"></i> Logs d'erreurs</span>
             <span class="count"><?php echo count($error_logs); ?> entrées</span>
         </div>

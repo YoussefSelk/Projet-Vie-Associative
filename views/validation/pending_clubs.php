@@ -18,53 +18,12 @@
  * 
  * @package Views/Validation
  */
+$pageTitle = 'Clubs en attente - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <?php include VIEWS_PATH . '/includes/head.php'; ?>
-
-<style>
-    .validation-card-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 15px;
-        border-top: 1px solid #e2e8f0;
-        background: #f8fafc;
-        border-radius: 0 0 12px 12px;
-    }
-    
-    .validation-card-actions form {
-        display: inline-flex;
-    }
-    
-    .validation-card-actions .btn {
-        white-space: nowrap;
-    }
-    
-    .btn-warning {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        color: white;
-        border: none;
-    }
-    
-    .btn-warning:hover {
-        background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-        transform: translateY(-1px);
-    }
-    
-    /* SweetAlert2 custom styling for validation */
-    .swal-validation-popup {
-        border-radius: 16px !important;
-    }
-    
-    .swal-validation-popup .swal2-textarea {
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        font-size: 0.9rem;
-    }
-</style>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -119,7 +78,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                                 <?php endif; ?>
                             </div>
                             <div class="validation-card-actions">
-                                <form method="POST" style="display:inline;" class="approve-form">
+                                <form method="POST" class="approve-form">
                                     <?= Security::csrfField() ?>
                                     <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
                                     <input type="hidden" name="action" value="approve">
@@ -128,7 +87,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                                     </button>
                                 </form>
                                 <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
-                                <form method="POST" style="display:inline;">
+                                <form method="POST">
                                     <?= Security::csrfField() ?>
                                     <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
                                     <input type="hidden" name="action" value="force_approve">
@@ -138,7 +97,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                                     </button>
                                 </form>
                                 <?php endif; ?>
-                                <form method="POST" style="display:inline;" class="reject-form">
+                                <form method="POST" class="reject-form">
                                     <?= Security::csrfField() ?>
                                     <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
                                     <input type="hidden" name="action" value="reject">

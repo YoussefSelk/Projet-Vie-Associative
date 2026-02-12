@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * MODÈLE VALIDATION
@@ -111,7 +112,7 @@ class Validation {
      * @return bool Succès de l'opération
      */
     public function rejectClub($club_id, $motif_refus = '') {
-        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE club_id = ?");
+        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?");
         return $stmt->execute([$motif_refus, $club_id]);
     }
 

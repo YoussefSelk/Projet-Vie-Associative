@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * CHARGEUR DE CONFIGURATION D'ENVIRONNEMENT

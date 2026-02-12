@@ -20,7 +20,8 @@
  * 
  * @package Views/Validation
  */
-$pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clubs', 'events', 'dashboard'];
+$pageTitle = 'Validations - EILCO';
+$pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'validation', 'clubs', 'events', 'dashboard'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -294,13 +295,16 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                     <?php endforeach; ?>
                 </div>
                 
-                <div class="empty-state-advanced" id="noResults" style="display: none;">
-                    <div class="empty-icon" style="background: #fef3c7; color: #d97706;">
+                <div class="empty-state-advanced" id="noResults">
+                    <div class="empty-icon empty-icon-search">
                         <i class="fas fa-search"></i>
                     </div>
                     <h3>Aucun résultat</h3>
                     <p>Aucun élément ne correspond à votre recherche.</p>
                 </div>
+
+                <!-- Pagination -->
+                <div id="tutoringPagination" class="pagination-wrapper"></div>
             <?php endif; ?>
 
             <!-- All Clubs Section -->
@@ -312,7 +316,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                 <div class="card-body">
                     <?php if (empty($tutored_clubs)): ?>
                         <div class="empty-state-advanced">
-                            <div class="empty-icon" style="background: #dbeafe; color: #2563eb;">
+                            <div class="empty-icon empty-icon-info">
                                 <i class="fas fa-building"></i>
                             </div>
                             <h3>Aucun club</h3>
@@ -391,19 +395,31 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
         const cardsContainer = document.getElementById('validationCards');
         let currentFilter = 'all';
 
+        // Pagination instance (initialized in DOMContentLoaded below, after deferred scripts load)
+        let tutoringPagination = null;
+
         function filterCards() {
             const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
             let visibleCount = 0;
             cards.forEach(card => {
                 const matchesSearch = card.dataset.search ? card.dataset.search.includes(searchTerm) : true;
                 const matchesFilter = currentFilter === 'all' || card.dataset.type === currentFilter;
-                if (matchesSearch && matchesFilter) { card.style.display = ''; visibleCount++; }
-                else { card.style.display = 'none'; }
+                if (matchesSearch && matchesFilter) {
+                    card.classList.remove('filter-hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('filter-hidden');
+                }
             });
             if (noResults && cardsContainer) {
                 const isEmpty = visibleCount === 0 && cards.length > 0;
                 noResults.style.display = isEmpty ? 'block' : 'none';
                 cardsContainer.style.display = isEmpty ? 'none' : 'grid';
+            }
+            // Re-paginate after filter change
+            if (tutoringPagination) {
+                tutoringPagination.currentPage = 1;
+                tutoringPagination.update();
             }
         }
 
@@ -417,6 +433,19 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
             });
         });
 
+        // Initialize pagination after deferred scripts have loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            if (cardsContainer && document.getElementById('tutoringPagination') && typeof PaginationComponent !== 'undefined') {
+                tutoringPagination = new PaginationComponent({
+                    itemsSelector: '#validationCards',
+                    paginationSelector: '#tutoringPagination',
+                    perPage: 9,
+                    perPageOptions: [6, 9, 18, 30]
+                });
+                window.tutoringPagination = tutoringPagination;
+            }
+        });
+
         // =============================================
         // CLUB ACTIONS - SweetAlert + AJAX
         // =============================================
@@ -428,32 +457,63 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                 let members = [];
                 try { members = JSON.parse(this.dataset.members || '[]'); } catch(e) {}
 
-                let membersHtml = '<p style="color:#888;">Aucun membre renseigné.</p>';
+                // Validation status badges
+                const valAdmin = club.validation_admin;
+                const valTuteur = club.validation_tuteur;
+                const valFinale = club.validation_finale;
+
+                function statusBadge(label, val) {
+                    if (val == 1) return '<span class="swal-badge swal-badge-success"><i class="fas fa-check-circle"></i> ' + label + '</span>';
+                    if (val == -1 || val === '0' || val === 0) return '<span class="swal-badge swal-badge-danger"><i class="fas fa-times-circle"></i> ' + label + '</span>';
+                    return '<span class="swal-badge swal-badge-pending"><i class="fas fa-hourglass-half"></i> ' + label + '</span>';
+                }
+
+                let membersHtml = '<div class="swal-empty-state"><i class="fas fa-users"></i> Aucun membre renseigné</div>';
                 if (members.length > 0) {
-                    membersHtml = '<div style="text-align:left;max-height:200px;overflow-y:auto;">' +
+                    membersHtml = '<div class="swal-members-list">' +
                         members.map(m =>
-                            '<div style="padding:4px 0;border-bottom:1px solid #eee;">' +
-                            '<strong>' + esc(m.prenom) + ' ' + esc(m.nom) + '</strong> — ' + esc(m.fonction) +
-                            (m.promo ? ' <span style="color:#888;">(' + esc(m.promo) + ')</span>' : '') +
-                            '</div>'
+                            '<div class="swal-member-item">' +
+                            '<div class="swal-member-avatar"><i class="fas fa-user"></i></div>' +
+                            '<div class="swal-member-info">' +
+                            '<span class="swal-member-name">' + esc(m.prenom) + ' ' + esc(m.nom) + '</span>' +
+                            '<span class="swal-member-role">' + esc(m.fonction) +
+                            (m.promo ? ' · ' + esc(m.promo) : '') + '</span>' +
+                            '</div></div>'
                         ).join('') + '</div>';
                 }
 
                 Swal.fire({
                     title: esc(club.nom_club || 'Club sans nom'),
                     html:
-                        '<div style="text-align:left;">' +
-                        '<p><strong><i class="fas fa-tag"></i> Type :</strong> ' + esc(club.type_club || '-') + '</p>' +
-                        '<p><strong><i class="fas fa-map-marker-alt"></i> Campus :</strong> ' + esc(club.campus || '-') + '</p>' +
-                        '<p><strong><i class="fas fa-envelope"></i> Email :</strong> ' + esc(club.mail || 'Non renseigné') + '</p>' +
-                        '<p><strong><i class="fas fa-align-left"></i> Description :</strong></p>' +
-                        '<p>' + esc(club.description || 'Aucune description fournie.') + '</p>' +
-                        '<hr><p><strong><i class="fas fa-users"></i> Membres :</strong></p>' +
-                        membersHtml +
+                        '<div class="swal-detail-content">' +
+                        '<div class="swal-detail-grid">' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-tag"></i> Type</div><div class="swal-detail-value">' + esc(club.type_club || '-') + '</div></div>' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (club.campus || 'calais').toLowerCase() + '">' + esc(club.campus || '-') + '</span></div></div>' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-envelope"></i> Email</div><div class="swal-detail-value">' + esc(club.mail || 'Non renseigné') + '</div></div>' +
+                            (club.tuteur_nom ? '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-chalkboard-teacher"></i> Tuteur</div><div class="swal-detail-value">' + esc(club.tuteur_nom) + '</div></div>' : '') +
+                        '</div>' +
+                        '<div class="swal-detail-section">' +
+                            '<div class="swal-detail-label"><i class="fas fa-align-left"></i> Description</div>' +
+                            '<div class="swal-detail-description">' + esc(club.description || 'Aucune description fournie.') + '</div>' +
+                        '</div>' +
+                        '<div class="swal-detail-section">' +
+                            '<div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div>' +
+                            '<div class="swal-badges-row">' +
+                                statusBadge('Admin', valAdmin) +
+                                statusBadge('Tuteur', valTuteur) +
+                                statusBadge('Finale', valFinale) +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="swal-detail-section">' +
+                            '<div class="swal-detail-label"><i class="fas fa-users"></i> Membres (' + members.length + ')</div>' +
+                            membersHtml +
+                        '</div>' +
+                        (club.motif_refus ? '<div class="swal-detail-section swal-reject-box"><div class="swal-detail-label"><i class="fas fa-comment-alt"></i> Motif de rejet</div><div class="swal-detail-description">' + esc(club.motif_refus) + '</div></div>' : '') +
                         '</div>',
-                    width: 600,
+                    width: 650,
                     confirmButtonText: 'Fermer',
-                    confirmButtonColor: '#6c757d'
+                    confirmButtonColor: '#6c757d',
+                    customClass: { popup: 'swal-detail-popup' }
                 });
             });
         });
@@ -547,23 +607,59 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'validation', 'clu
                 if (ev.date_ev) {
                     const d = new Date(ev.date_ev);
                     dateStr = d.toLocaleDateString('fr-FR', {
-                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
                     });
                 }
+                const timeStr = (ev.horaire_debut ? ev.horaire_debut.substring(0,5) : '?') + ' - ' + (ev.horaire_fin ? ev.horaire_fin.substring(0,5) : '?');
+
+                function statusBadge(label, val) {
+                    if (val == 1) return '<span class="swal-badge swal-badge-success"><i class="fas fa-check-circle"></i> ' + label + '</span>';
+                    if (val == -1 || val === '0' || val === 0) return '<span class="swal-badge swal-badge-danger"><i class="fas fa-times-circle"></i> ' + label + '</span>';
+                    return '<span class="swal-badge swal-badge-pending"><i class="fas fa-hourglass-half"></i> ' + label + '</span>';
+                }
+
+                let financeHtml = '<span class="swal-muted">Non demandé</span>';
+                if (ev.financement_bde == 1) {
+                    financeHtml = '<span class="swal-finance-highlight"><i class="fas fa-check-circle"></i> Oui — ' + parseInt(ev.montant || 0) + ' €</span>';
+                }
+
+                let filesHtml = '';
+                if (ev.fiche_sanitaire || ev.affiche) {
+                    filesHtml = '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-paperclip"></i> Documents joints</div><div class="swal-files-row">';
+                    if (ev.fiche_sanitaire) filesHtml += '<a href="' + esc(ev.fiche_sanitaire) + '" target="_blank" class="swal-file-link"><i class="fas fa-file-medical"></i> Fiche sanitaire</a>';
+                    if (ev.affiche) filesHtml += '<a href="' + esc(ev.affiche) + '" target="_blank" class="swal-file-link"><i class="fas fa-image"></i> Affiche</a>';
+                    filesHtml += '</div></div>';
+                }
+
                 Swal.fire({
-                    title: '<i class="fas fa-calendar-alt"></i> ' + esc(ev.titre || 'Événement sans titre'),
+                    title: '<i class="fas fa-calendar-alt" style="color:var(--color-primary, #0066cc);"></i> ' + esc(ev.titre || 'Événement sans titre'),
                     html:
-                        '<div style="text-align:left;">' +
-                        '<p><strong><i class="fas fa-building"></i> Club :</strong> ' + esc(ev.nom_club || '-') + '</p>' +
-                        '<p><strong><i class="fas fa-calendar"></i> Date :</strong> ' + esc(dateStr) + '</p>' +
-                        '<p><strong><i class="fas fa-map-marker-alt"></i> Campus :</strong> ' + esc(ev.campus || '-') + '</p>' +
-                        '<p><strong><i class="fas fa-location-dot"></i> Lieu :</strong> ' + esc(ev.lieu || 'Non renseigné') + '</p>' +
-                        '<p><strong><i class="fas fa-align-left"></i> Description :</strong></p>' +
-                        '<p>' + esc(ev.description || 'Aucune description fournie.') + '</p>' +
+                        '<div class="swal-detail-content">' +
+                        '<div class="swal-detail-grid">' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-building"></i> Club</div><div class="swal-detail-value">' + esc(ev.nom_club || '-') + '</div></div>' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-calendar"></i> Date</div><div class="swal-detail-value">' + esc(dateStr) + '</div></div>' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-clock"></i> Horaires</div><div class="swal-detail-value">' + esc(timeStr) + '</div></div>' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (ev.campus || 'calais').toLowerCase() + '">' + esc(ev.campus || '-') + '</span></div></div>' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-location-dot"></i> Lieu</div><div class="swal-detail-value">' + esc(ev.lieu || 'Non renseigné') + '</div></div>' +
+                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-euro-sign"></i> Financement BDE</div><div class="swal-detail-value">' + financeHtml + '</div></div>' +
+                        '</div>' +
+                        (ev.description ? '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-align-left"></i> Description</div><div class="swal-detail-description">' + esc(ev.description) + '</div></div>' : '') +
+                        filesHtml +
+                        '<div class="swal-detail-section">' +
+                            '<div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div>' +
+                            '<div class="swal-badges-row">' +
+                                statusBadge('BDE', ev.validation_bde) +
+                                statusBadge('Tuteur', ev.validation_tuteur) +
+                                statusBadge('Admin', ev.validation_admin) +
+                                statusBadge('Finale', ev.validation_finale) +
+                            '</div>' +
+                        '</div>' +
+                        (ev.motif_refus ? '<div class="swal-detail-section swal-reject-box"><div class="swal-detail-label"><i class="fas fa-comment-alt"></i> Motif de rejet</div><div class="swal-detail-description">' + esc(ev.motif_refus) + '</div></div>' : '') +
                         '</div>',
-                    width: 600,
+                    width: 700,
                     confirmButtonText: 'Fermer',
-                    confirmButtonColor: '#6c757d'
+                    confirmButtonColor: '#6c757d',
+                    customClass: { popup: 'swal-detail-popup' }
                 });
             });
         });

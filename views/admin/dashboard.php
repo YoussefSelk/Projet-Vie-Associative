@@ -85,8 +85,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                 
                 <?php if (($_SESSION['permission'] ?? 0) == 5): ?>
                 <!-- Super Admin Extra Stats -->
-                <div class="stat-box" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
-                    <div class="icon" style="background: rgba(255,255,255,0.2);">
+                <div class="stat-box superadmin new-users">
+                    <div class="icon">
                         <i class="fas fa-user-plus"></i>
                     </div>
                     <div class="info">
@@ -95,8 +95,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                     </div>
                 </div>
                 
-                <div class="stat-box" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
-                    <div class="icon" style="background: rgba(255,255,255,0.2);">
+                <div class="stat-box superadmin upcoming">
+                    <div class="icon">
                         <i class="fas fa-calendar-day"></i>
                     </div>
                     <div class="info">
@@ -105,8 +105,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                     </div>
                 </div>
                 
-                <div class="stat-box" style="background: linear-gradient(135deg, #fd7e14 0%, #e06b0a 100%);">
-                    <div class="icon" style="background: rgba(255,255,255,0.2);">
+                <div class="stat-box superadmin members">
+                    <div class="icon">
                         <i class="fas fa-user-friends"></i>
                     </div>
                     <div class="info">
@@ -115,8 +115,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                     </div>
                 </div>
                 
-                <div class="stat-box" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
-                    <div class="icon" style="background: rgba(255,255,255,0.2);">
+                <div class="stat-box superadmin rejected">
+                    <div class="icon">
                         <i class="fas fa-times-circle"></i>
                     </div>
                     <div class="info">
@@ -239,8 +239,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                                     <p>Ajouter un nouveau club</p>
                                 </div>
                             </a>
-                            <a href="?page=event-analytics" class="action-item" style="background: linear-gradient(135deg, rgba(0, 102, 204, 0.1) 0%, rgba(0, 73, 153, 0.1) 100%); border-left: 3px solid #0066cc;">
-                                <div class="action-icon" style="background: linear-gradient(135deg, #0066cc 0%, #004999 100%);">
+                            <a href="?page=event-analytics" class="action-item superadmin-analytics">
+                                <div class="action-icon">
                                     <i class="fas fa-chart-line"></i>
                                 </div>
                                 <div class="action-text">
@@ -278,8 +278,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                             
                             <?php if (($_SESSION['permission'] ?? 0) == 5): ?>
                             <!-- Super Admin Only -->
-                            <a href="?page=admin-users" class="action-item" style="background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 86, 179, 0.1) 100%); border-left: 3px solid #007bff;">
-                                <div class="action-icon" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);">
+                            <a href="?page=admin-users" class="action-item superadmin-users">
+                                <div class="action-icon">
                                     <i class="fas fa-users-cog"></i>
                                 </div>
                                 <div class="action-text">
@@ -287,8 +287,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                                     <p>Recherche, filtres, permissions</p>
                                 </div>
                             </a>
-                            <a href="?page=admin-settings" class="action-item" style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(200, 35, 51, 0.1) 100%); border-left: 3px solid #dc3545;">
-                                <div class="action-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                            <a href="?page=admin-settings" class="action-item superadmin-settings">
+                                <div class="action-icon">
                                     <i class="fas fa-cog"></i>
                                 </div>
                                 <div class="action-text">
@@ -296,8 +296,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                                     <p>Configuration avancée</p>
                                 </div>
                             </a>
-                            <a href="?page=admin-audit" class="action-item" style="background: linear-gradient(135deg, rgba(253, 126, 20, 0.1) 0%, rgba(230, 107, 10, 0.1) 100%); border-left: 3px solid #fd7e14;">
-                                <div class="action-icon" style="background: linear-gradient(135deg, #fd7e14 0%, #e06b0a 100%);">
+                            <a href="?page=admin-audit" class="action-item superadmin-audit">
+                                <div class="action-icon">
                                     <i class="fas fa-shield-alt"></i>
                                 </div>
                                 <div class="action-text">
@@ -305,8 +305,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                                     <p>Logs et événements sécurité</p>
                                 </div>
                             </a>
-                            <a href="?page=admin-database" class="action-item" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(32, 134, 55, 0.1) 100%); border-left: 3px solid #28a745;">
-                                <div class="action-icon" style="background: linear-gradient(135deg, #28a745 0%, #208637 100%);">
+                            <a href="?page=admin-database" class="action-item superadmin-database">
+                                <div class="action-icon">
                                     <i class="fas fa-database"></i>
                                 </div>
                                 <div class="action-text">
@@ -314,8 +314,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                                     <p>Nettoyage et maintenance</p>
                                 </div>
                             </a>
-                            <a href="?page=admin-reports" class="action-item" style="background: linear-gradient(135deg, rgba(155, 89, 182, 0.1) 0%, rgba(142, 68, 173, 0.1) 100%); border-left: 3px solid #9b59b6;">
-                                <div class="action-icon" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                            <a href="?page=admin-reports" class="action-item superadmin-reports">
+                                <div class="action-icon">
                                     <i class="fas fa-chart-line"></i>
                                 </div>
                                 <div class="action-text">
@@ -323,8 +323,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                                     <p>Statistiques détaillées</p>
                                 </div>
                             </a>
-                            <a href="?page=tutoring" class="action-item" style="background: linear-gradient(135deg, rgba(111, 66, 193, 0.1) 0%, rgba(90, 50, 163, 0.1) 100%); border-left: 3px solid #6f42c1;">
-                                <div class="action-icon" style="background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);">
+                            <a href="?page=tutoring" class="action-item superadmin-tutoring">
+                                <div class="action-icon">
                                     <i class="fas fa-user-graduate"></i>
                                 </div>
                                 <div class="action-text">
@@ -384,13 +384,13 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
         // Color palette
         const colors = {
             primary: '#0066cc',
-            success: '#28a745',
-            warning: '#ffc107',
-            danger: '#dc3545',
-            info: '#17a2b8',
-            purple: '#6f42c1',
-            pink: '#e83e8c',
-            orange: '#fd7e14'
+            success: '#059669',
+            warning: '#d97706',
+            danger: '#dc2626',
+            info: '#0284c7',
+            purple: '#5b21b6',
+            pink: '#9d174d',
+            orange: '#b45309'
         };
 
         const campusColors = [colors.primary, colors.success, colors.warning, colors.danger];

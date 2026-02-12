@@ -171,6 +171,7 @@ CREATE TABLE `fiche_event` (
   `fiche_sanitaire` varchar(255) DEFAULT NULL,
   `affiche` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `rapport_event` varchar(255) DEFAULT NULL,
+  `images_event` text DEFAULT NULL,
   `motif_refus` varchar(255) DEFAULT NULL,
   `validation_finale` tinyint DEFAULT NULL,
   `commentaire_validation` varchar(255) DEFAULT NULL

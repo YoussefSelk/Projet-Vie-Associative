@@ -217,12 +217,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                             5 => 'Super Admin'
                         ];
                         $permissionColors = [
-                            0 => '#6c757d',
-                            1 => '#17a2b8',
-                            2 => '#ffc107',
-                            3 => '#28a745',
-                            4 => '#6f42c1',
-                            5 => '#dc3545'
+                            0 => '#475569',
+                            1 => '#0284c7',
+                            2 => '#d97706',
+                            3 => '#059669',
+                            4 => '#5b21b6',
+                            5 => '#991b1b'
                         ];
                         ?>
                         <div class="system-info-list">
@@ -365,7 +365,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                             <span style="color: #6c757d;">
                                 <i class="fas fa-info-circle"></i> Dernières 50 entrées
                             </span>
-                            <form method="POST" style="display: inline;" class="form-clear-logs">
+                            <form method="POST" class="form-clear-logs">
                                 <input type="hidden" name="csrf_token" value="<?= Security::generateCsrfToken() ?>">
                                 <input type="hidden" name="clear_logs" value="1">
                                 <button type="submit" class="export-btn danger">

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * CONTRÔLEUR PAGE D'ACCUEIL
@@ -45,18 +46,24 @@ class HomeController {
      */
     public function index() {
         if (isset($_SESSION['id'])) {
-            // Utilisateur connecté : afficher le contenu
             $events = $this->eventModel->getAllValidatedEvents();
             $clubs = $this->clubModel->getAllValidatedClubs();
         } else {
-            // Visiteur non connecté : listes vides
             $events = [];
             $clubs = [];
         }
 
+        // Stats for the homepage hero section
+        $clubs_count = (int)$this->db->query("SELECT COUNT(*) FROM fiche_club WHERE validation_finale = 1")->fetchColumn();
+        $events_count = (int)$this->db->query("SELECT COUNT(*) FROM fiche_event WHERE validation_finale = 1")->fetchColumn();
+        $users_count = (int)$this->db->query("SELECT COUNT(*) FROM users")->fetchColumn();
+
         return [
             'events' => $events,
-            'clubs' => $clubs
+            'clubs' => $clubs,
+            'clubs_count' => $clubs_count,
+            'events_count' => $events_count,
+            'users_count' => $users_count,
         ];
     }
 
@@ -69,8 +76,9 @@ class HomeController {
     public function calendarData() {
         header('Content-Type: application/json; charset=utf-8');
         
-        $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
-        $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+        try {
+            $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
+            $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
         
         // Corriger les dépassements
         if ($month < 1) { $month = 12; $year--; }
@@ -88,14 +96,17 @@ class HomeController {
         $query->execute(['mois' => $month, 'annee' => $year]);
         $events = $query->fetchAll(PDO::FETCH_ASSOC);
         
-        // Abonnements de l'utilisateur
+        // Abonnements de l'utilisateur (single query instead of N+1)
         $subscriptions = [];
         $user_id = $_SESSION['id'] ?? null;
-        if ($user_id) {
-            foreach ($events as $event) {
-                $stmt = $this->db->prepare("SELECT COUNT(*) FROM abonnements WHERE id = :uid AND event_id = :eid");
-                $stmt->execute(['uid' => $user_id, 'eid' => $event['event_id']]);
-                $subscriptions[$event['event_id']] = (int)$stmt->fetchColumn() > 0;
+        if ($user_id && !empty($events)) {
+            $eventIds = array_column($events, 'event_id');
+            $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+            $stmt = $this->db->prepare("SELECT event_id FROM abonnements WHERE id = ? AND event_id IN ($placeholders)");
+            $stmt->execute(array_merge([$user_id], $eventIds));
+            $subscribedIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($eventIds as $eid) {
+                $subscriptions[$eid] = in_array($eid, $subscribedIds);
             }
         }
         
@@ -115,8 +126,8 @@ class HomeController {
             $reminders = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
         
-        // Infos du calendrier
-        $nb_days = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+        // Infos du calendrier (portable - no calendar extension needed)
+        $nb_days = (int)date('t', mktime(0, 0, 0, $month, 1, $year));
         $first_day = date('w', strtotime("$year-$month-01"));
         $first_day = ($first_day == 0) ? 6 : $first_day - 1;
         
@@ -147,6 +158,10 @@ class HomeController {
             'prev' => ['month' => $month == 1 ? 12 : $month - 1, 'year' => $month == 1 ? $year - 1 : $year],
             'next' => ['month' => $month == 12 ? 1 : $month + 1, 'year' => $month == 12 ? $year + 1 : $year],
         ], JSON_UNESCAPED_UNICODE);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Erreur interne du calendrier'], JSON_UNESCAPED_UNICODE);
+        }
         exit;
     }
 }

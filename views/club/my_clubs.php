@@ -14,7 +14,8 @@
  * 
  * @package Views/Club
  */
-$pageCss = ['shared', 'buttons', 'tables', 'clubs'];
+$pageTitle = 'Mes clubs - EILCO';
+$pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -51,6 +52,24 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
                 </div>
             <?php endif; ?>
 
+            <!-- Search Bar -->
+            <?php if (!empty($clubs)): ?>
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="myClubSearch" class="search-input" 
+                           placeholder="Rechercher un club..." 
+                           autocomplete="off">
+                    <button type="button" class="search-clear" aria-label="Effacer">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="search-results-info">
+                    <span class="search-results-count"><strong><?= count($clubs) ?></strong> club<?= count($clubs) !== 1 ? 's' : '' ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if (empty($clubs)): ?>
                 <div class="empty-state">
                     <i class="fas fa-inbox"></i>
@@ -62,8 +81,10 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
                 </div>
             <?php else: ?>
                 <div class="clubs-list">
-                    <?php foreach ($clubs as $club): ?>
-                        <div class="club-card">
+                    <?php foreach ($clubs as $club): 
+                        $searchData = strtolower(($club['nom_club'] ?? '') . ' ' . ($club['type_club'] ?? '') . ' ' . ($club['campus'] ?? '') . ' ' . ($club['description'] ?? ''));
+                    ?>
+                        <div class="club-card" data-search="<?= htmlspecialchars($searchData) ?>">
                             <div class="club-header">
                                 <div class="club-title">
                                     <h3><?= htmlspecialchars($club['nom_club']) ?></h3>
@@ -78,8 +99,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
                                         // Club validé avec succès
                                         $status = 'Validé';
                                         $statusClass = 'status-approved';
-                                    } elseif ($club['validation_finale'] == 0 && !empty($club['motif_refus'])) {
-                                        // Club refusé (validation_finale = 0 et motif_refus n'est pas vide)
+                                    } elseif (($club['validation_finale'] == -1 || $club['validation_finale'] === 0) && !empty($club['motif_refus'])) {
+                                        // Club refusé (validation_finale = -1 et motif_refus n'est pas vide)
                                         $status = 'Refusé';
                                         $statusClass = 'status-rejected';
                                     } else {
@@ -110,7 +131,7 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
                                 </div>
                             <?php endif; ?>
 
-                            <?php if ($club['validation_finale'] == 0 && !empty($club['motif_refus'])): ?>
+                            <?php if (($club['validation_finale'] == -1 || $club['validation_finale'] === 0) && !empty($club['motif_refus'])): ?>
                                 <div class="refusal-reason">
                                     <h5><i class="fas fa-times-circle"></i> Motif du refus :</h5>
                                     <p><?= htmlspecialchars($club['motif_refus']) ?></p>
@@ -123,8 +144,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
                                     <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-primary btn-sm">
                                         <i class="fas fa-edit"></i> Modifier
                                     </a>
-                                    <form method="POST" style="display: inline;" class="form-delete-club" data-club-name="<?= htmlspecialchars($club['nom_club'] ?? '') ?>">
-                                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                    <form method="POST" class="form-delete-club" data-club-name="<?= htmlspecialchars($club['nom_club'] ?? '') ?>">
+                                        <?= Security::csrfField() ?>
                                         <input type="hidden" name="club_id" value="<?= $club['club_id'] ?>">
                                         <input type="hidden" name="delete_club" value="1">
                                         <button type="submit" class="btn btn-danger btn-sm">
@@ -142,7 +163,10 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
                     <?php endforeach; ?>
                 </div>
 
-                <a href="?page=club-create" class="btn btn-primary" style="margin-top: 30px;">
+                <!-- Pagination -->
+                <div id="myClubsPagination" class="pagination-wrapper"></div>
+
+                <a href="?page=club-create" class="btn btn-primary mt-20">
                     <i class="fas fa-plus"></i> Créer un nouveau club
                 </a>
             <?php endif; ?>
@@ -150,6 +174,29 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
     </main>
 
     <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize search for my clubs
+        if (document.querySelector('#myClubSearch')) {
+            window.myClubSearch = new SearchComponent({
+                input: '#myClubSearch',
+                items: '.clubs-list',
+                fields: ['data-search', 'h3', '.club-type', '.club-description'],
+                noResultsMessage: 'Aucun club trouvé'
+            });
+        }
+
+        // Initialize pagination
+        if (document.querySelector('.clubs-list')) {
+            window.myClubPagination = new PaginationComponent({
+                itemsSelector: '.clubs-list',
+                paginationSelector: '#myClubsPagination',
+                perPage: 6,
+                perPageOptions: [6, 12, 24],
+                searchComponent: window.myClubSearch || null
+            });
+        }
+    });
+
     // Delete club confirmation with SweetAlert2
     document.querySelectorAll('.form-delete-club').forEach(form => {
         form.addEventListener('submit', (e) => {

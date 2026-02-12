@@ -1,78 +1,15 @@
 <?php
 /**
  * Depot de rapport d'evenement
- * * Permet aux organisateurs de deposer un bilan avec PDF et photos (Max 5, 500Ko/unité).
+ * * Permet aux organisateurs de deposer un bilan avec PDF et photo (Max 1, 500Ko).
  * * @package Views/Event
  */
+$pageTitle = 'Déposer un rapport - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'events'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<<<<<<< HEAD
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-    <style>
-        /* Design du conteneur d'images */
-        .upload-zone {
-            border: 2px dashed #cbd5e1;
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .upload-zone:hover {
-            border-color: #6366f1;
-            background: #f1f5f9;
-        }
-        .upload-zone i {
-            font-size: 2rem;
-            color: #6366f1;
-            margin-bottom: 10px;
-        }
-        .upload-zone p {
-            margin: 0;
-            color: #475569;
-            font-weight: 500;
-        }
-        .upload-zone small {
-            color: #94a3b8;
-        }
-
-        /* Grille de prévisualisation */
-        #imagePreview {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
-            margin-top: 20px;
-        }
-        .preview-wrapper {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .preview-wrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Alertes de taille */
-        .size-error {
-            color: #dc2626;
-            font-size: 0.8rem;
-            margin-top: 5px;
-            display: none;
-        }
-    </style>
-</head>
-=======
 <?php include VIEWS_PATH . '/includes/head.php'; ?>
->>>>>>> origin/main
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -135,10 +72,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                 </label>
                                 
                                 <div class="upload-zone" onclick="document.getElementById('eventPhotos').click()">
-                                    <i class="fas fa-images"></i>
-                                    <p>Ajouter des photos (max 5)</p>
-                                    <small>JPG, PNG, WEBP • <strong>Max 500 Ko par photo</strong></small>
-                                    <input type="file" name="event_photos[]" id="eventPhotos" multiple accept="image/*" style="display: none;">
+                                    <i class="fas fa-image"></i>
+                                    <p>Ajouter une photo (1 max)</p>
+                                    <small>JPG, PNG, WEBP • <strong>Max 500 Ko</strong></small>
+                                    <input type="file" name="event_photos[]" id="eventPhotos" accept="image/jpeg,image/png,image/webp" style="display: none;">
                                 </div>
                                 <div id="sizeErrorMessage" class="size-error">
                                     <i class="fas fa-exclamation-triangle"></i> Certaines images sont trop lourdes (> 500 Ko) et ont été retirées.
@@ -170,7 +107,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
             
             // Tableau pour stocker physiquement les fichiers cumulés
             let allFiles = []; 
-            const MAX_FILES = 5;
+            const MAX_FILES = 1;
             const MAX_SIZE = 512000; // 500 Ko
 
             fileInput.addEventListener('change', function() {
@@ -201,10 +138,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                             wrapper.className = 'preview-wrapper';
                             wrapper.setAttribute('data-index', index);
                             
-                            // On ajoute un petit bouton "x" pour supprimer une image précise
                             wrapper.innerHTML = `
                                 <img src="${e.target.result}" alt="Aperçu">
-                                <div onclick="removeSpecificImage(${index})" style="position:absolute; top:2px; right:2px; background:rgba(220, 38, 38, 0.8); color:white; border-radius:50%; width:20px; height:20px; cursor:pointer; text-align:center; line-height:18px; font-size:14px;">×</div>
+                                <button type="button" class="preview-remove" onclick="removeSpecificImage(${index})">&times;</button>
                             `;
                             previewGrid.appendChild(wrapper);
                         }
@@ -232,7 +168,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                         wrapper.className = 'preview-wrapper';
                         wrapper.innerHTML = `
                             <img src="${e.target.result}" alt="Aperçu">
-                            <div onclick="removeSpecificImage(${index})" style="position:absolute; top:2px; right:2px; background:rgba(220, 38, 38, 0.8); color:white; border-radius:50%; width:20px; height:20px; cursor:pointer; text-align:center; line-height:18px; font-size:14px;">×</div>
+                            <button type="button" class="preview-remove" onclick="removeSpecificImage(${index})">&times;</button>
                         `;
                         previewGrid.appendChild(wrapper);
                     }
@@ -247,7 +183,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                 
                 // Alerte si on atteint le max
                 if (allFiles.length >= MAX_FILES) {
-                    console.log("Limite de 5 photos atteinte.");
+                    console.log("Limite de 1 photo atteinte.");
                 }
             }
         });

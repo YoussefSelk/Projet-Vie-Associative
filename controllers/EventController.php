@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * CONTRÔLEUR DES ÉVÉNEMENTS
@@ -341,7 +342,7 @@ class EventController {
         $clean_event = preg_replace('/[^A-Za-z0-9]/', '', $event_title);
 
         for ($i = 0; $i < count($files['name']); $i++) {
-            if ($i >= 5) break;
+            if ($i >= 1) break;
 
             $ext = strtolower(pathinfo($files['name'][$i], PATHINFO_EXTENSION));
             
@@ -434,29 +435,33 @@ class EventController {
                         $images_list = $this->uploadEventImages($_FILES['event_photos'] ?? [], $event_id, $club_name, $event_title);
 
                         // 3. Mise à jour BDD
-                        $stmt = $this->db->prepare("UPDATE fiche_event SET rapport_event = ?, images_event = ? WHERE event_id = ?");
-                        
-                        if ($stmt->execute([$db_pdf_path, $images_list, $event_id])) {
-                            $success_msg = "Le rapport et les photos ont été déposés avec succès.";
-                            
-                            // Rafraîchir la liste (Logique identique à l'initiale)
-                            $stmt = $this->db->prepare("
-                                SELECT fe.*, fc.nom_club 
-                                FROM fiche_event fe
-                                INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
-                                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                                WHERE mc.membre_id = ? 
-                                AND mc.valide = 1
-                                AND fc.validation_finale = 1
-                                AND fe.validation_finale = 1
-                                AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
-                                ORDER BY fe.date_ev DESC
-                            ");
-                            $stmt->execute([$_SESSION['id']]);
-                            $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                        } else {
-                            $error_msg = "Erreur lors de l'enregistrement en base de données.";
+                        // Vérifier si la colonne images_event existe
+                        try {
+                            $stmt = $this->db->prepare("UPDATE fiche_event SET rapport_event = ?, images_event = ? WHERE event_id = ?");
+                            $stmt->execute([$db_pdf_path, $images_list, $event_id]);
+                        } catch (\PDOException $e) {
+                            // Fallback: colonne images_event n'existe pas encore
+                            $stmt = $this->db->prepare("UPDATE fiche_event SET rapport_event = ? WHERE event_id = ?");
+                            $stmt->execute([$db_pdf_path, $event_id]);
                         }
+                        
+                        $success_msg = "Le rapport" . ($images_list ? " et les photos" : "") . " ont été déposés avec succès.";
+                        
+                        // Rafraîchir la liste (Logique identique à l'initiale)
+                        $stmt = $this->db->prepare("
+                            SELECT fe.*, fc.nom_club 
+                            FROM fiche_event fe
+                            INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
+                            INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                            WHERE mc.membre_id = ? 
+                            AND mc.valide = 1
+                            AND fc.validation_finale = 1
+                            AND fe.validation_finale = 1
+                            AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
+                            ORDER BY fe.date_ev DESC
+                        ");
+                        $stmt->execute([$_SESSION['id']]);
+                        $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     } else {
                         $error_msg = "Erreur lors de l'upload du rapport PDF.";
                     }

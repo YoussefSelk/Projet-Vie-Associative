@@ -23,6 +23,7 @@
  * 
  * @package Views/User
  */
+$pageTitle = 'Tableau de bord - EILCO';
 $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
 ?>
 <!DOCTYPE html>

@@ -17,6 +17,7 @@
  * 
  * @package Views/Validation
  */
+$pageTitle = 'Événements en attente - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'search'];
 ?>
 <!DOCTYPE html>
@@ -62,8 +63,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         <p>Approuvés BDE</p>
                     </div>
                 </div>
-                <div class="stat-card clubs" style="border-left-color: #ef4444;">
-                    <div class="stat-icon" style="background: #fee2e2; color: #dc2626;"><i class="fas fa-times-circle"></i></div>
+                <div class="stat-card rejected">
+                    <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
                     <div class="stat-content">
                         <h3><?= count($rejected_events ?? []) ?></h3>
                         <p>Rejetés</p>
@@ -162,9 +163,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                         </div>
                                         <?php endif; ?>
                                         <?php if (($event['financement_bde'] ?? 0) == 1): ?>
-                                        <div class="meta-item">
-                                            <i class="fas fa-euro-sign" style="color: #d97706;"></i>
-                                            <span style="color: #d97706; font-weight: 600;"><?= intval($event['montant'] ?? 0) ?> €</span>
+                                        <div class="meta-item finance-highlight">
+                                            <i class="fas fa-euro-sign"></i>
+                                            <span><?= intval($event['montant'] ?? 0) ?> €</span>
                                         </div>
                                         <?php endif; ?>
                                     </div>
@@ -172,23 +173,23 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                         <p class="card-description"><?= htmlspecialchars($event['description']) ?></p>
                                     <?php endif; ?>
                                     <!-- Validation Progress -->
-                                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                                        <span class="badge <?= $has_bde ? 'badge-success' : 'badge-light' ?>" style="font-size: 0.75rem;">
+                                    <div class="validation-badges-row">
+                                        <span class="badge <?= $has_bde ? 'badge-success' : 'badge-light' ?>">
                                             <i class="fas <?= $has_bde ? 'fa-check' : 'fa-hourglass-half' ?>"></i> BDE
                                         </span>
-                                        <span class="badge <?= $has_tuteur ? 'badge-success' : 'badge-light' ?>" style="font-size: 0.75rem;">
+                                        <span class="badge <?= $has_tuteur ? 'badge-success' : 'badge-light' ?>">
                                             <i class="fas <?= $has_tuteur ? 'fa-check' : 'fa-hourglass-half' ?>"></i> Tuteur
                                         </span>
-                                        <span class="badge <?= $has_admin ? 'badge-success' : 'badge-light' ?>" style="font-size: 0.75rem;">
+                                        <span class="badge <?= $has_admin ? 'badge-success' : 'badge-light' ?>">
                                             <i class="fas <?= $has_admin ? 'fa-check' : 'fa-hourglass-half' ?>"></i> Admin
                                         </span>
                                         <?php if (!empty($event['fiche_sanitaire'])): ?>
-                                        <span class="badge badge-info" style="font-size: 0.75rem;">
+                                        <span class="badge badge-info">
                                             <i class="fas fa-file-medical"></i> Fiche sanitaire
                                         </span>
                                         <?php endif; ?>
                                         <?php if (!empty($event['affiche'])): ?>
-                                        <span class="badge badge-info" style="font-size: 0.75rem;">
+                                        <span class="badge badge-info">
                                             <i class="fas fa-image"></i> Affiche
                                         </span>
                                         <?php endif; ?>
@@ -207,6 +208,17 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                             <i class="fas fa-check"></i> Approuver
                                         </button>
                                     </form>
+                                    <?php if ($is_admin): ?>
+                                    <form method="POST" class="form-force-event">
+                                        <?= Security::csrfField() ?>
+                                        <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
+                                        <input type="hidden" name="action" value="force_approve">
+                                        <input type="hidden" name="validate_event" value="1">
+                                        <button type="submit" class="btn-force" title="Valider immédiatement (Admin)">
+                                            <i class="fas fa-bolt"></i> Forcer
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
                                     <button type="button" class="btn-reject" onclick='openEventModalReject(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)'>
                                         <i class="fas fa-times"></i> Rejeter
                                     </button>
@@ -216,8 +228,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                     <?php endforeach; ?>
                 </div>
                 
-                <div class="empty-state-advanced" id="noResults" style="display: none;">
-                    <div class="empty-icon" style="background: #fef3c7; color: #d97706;">
+                <div class="empty-state-advanced" id="noResults">
+                    <div class="empty-icon empty-icon-search">
                         <i class="fas fa-search"></i>
                     </div>
                     <h3>Aucun résultat</h3>
@@ -227,18 +239,18 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
 
             <!-- Rejected Events Section -->
             <?php if (!empty($rejected_events)): ?>
-            <div class="card" style="margin-top: 30px;">
-                <div class="card-header" style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border-bottom: 2px solid #fecaca;">
-                    <h3 style="color: #dc2626;"><i class="fas fa-times-circle"></i> Événements rejetés (<?= count($rejected_events) ?>)</h3>
+            <div class="card rejected-events-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-times-circle"></i> Événements rejetés (<?= count($rejected_events) ?>)</h3>
                 </div>
                 <div class="card-body">
                     <div class="validation-cards-container">
                         <?php foreach ($rejected_events as $event): ?>
-                            <div class="validation-card-advanced event-card" style="border-left-color: #ef4444; opacity: 0.85;">
+                            <div class="validation-card-advanced event-card rejected-event">
                                 <div class="card-main">
                                     <div class="card-content">
                                         <div class="card-title-row">
-                                            <div class="card-type-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                                            <div class="card-type-icon">
                                                 <i class="fas fa-calendar-times"></i>
                                             </div>
                                             <div class="card-title-info">
@@ -250,9 +262,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                             <span class="badge badge-danger"><i class="fas fa-times"></i> Rejeté</span>
                                         </div>
                                         <?php if (!empty($event['motif_refus'])): ?>
-                                        <div class="reject-reason-box" style="margin-top: 10px;">
+                                        <div class="reject-reason-box mt-10">
                                             <h4><i class="fas fa-comment-alt"></i> Motif du rejet</h4>
-                                            <p style="color: #7f1d1d; margin: 0;"><?= htmlspecialchars($event['motif_refus']) ?></p>
+                                            <p><?= htmlspecialchars($event['motif_refus']) ?></p>
                                         </div>
                                         <?php endif; ?>
                                     </div>
@@ -277,17 +289,23 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
     </main>
 
     <!-- Hidden forms for SweetAlert modal actions -->
-    <form method="POST" id="swalApproveForm" style="display:none;">
+    <form method="POST" id="swalApproveForm" class="hidden-form">
         <?= Security::csrfField() ?>
         <input type="hidden" name="event_id" id="swalApproveEventId" value="">
         <input type="hidden" name="action" value="approve">
         <input type="hidden" name="validate_event" value="1">
     </form>
-    <form method="POST" id="swalRejectForm" style="display:none;">
+    <form method="POST" id="swalRejectForm" class="hidden-form">
         <?= Security::csrfField() ?>
         <input type="hidden" name="event_id" id="swalRejectEventId" value="">
         <input type="hidden" name="action" value="reject">
         <input type="hidden" name="motif" id="swalRejectMotif" value="">
+        <input type="hidden" name="validate_event" value="1">
+    </form>
+    <form method="POST" id="swalForceForm" class="hidden-form">
+        <?= Security::csrfField() ?>
+        <input type="hidden" name="event_id" id="swalForceEventId" value="">
+        <input type="hidden" name="action" value="force_approve">
         <input type="hidden" name="validate_event" value="1">
     </form>
 
@@ -322,9 +340,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         }
 
         function valBadge(label, val) {
-            if (val == 1) return '<span class="badge badge-success" style="font-size:0.8rem;"><i class="fas fa-check"></i> ' + label + '</span>';
-            if (val === null || val === undefined || val === '') return '<span class="badge badge-light" style="font-size:0.8rem;"><i class="fas fa-hourglass-half"></i> ' + label + '</span>';
-            return '<span class="badge badge-danger" style="font-size:0.8rem;"><i class="fas fa-times"></i> ' + label + '</span>';
+            if (val == 1) return '<span class="swal-badge swal-badge-success"><i class="fas fa-check-circle"></i> ' + label + '</span>';
+            if (val === null || val === undefined || val === '') return '<span class="swal-badge swal-badge-pending"><i class="fas fa-hourglass-half"></i> ' + label + '</span>';
+            return '<span class="swal-badge swal-badge-danger"><i class="fas fa-times-circle"></i> ' + label + '</span>';
         }
 
         // ---- Search & Filter ----
@@ -371,47 +389,48 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
 
         // ---- SweetAlert2 Detail Modal ----
         function buildDetailHtml(ev) {
-            var resp = 'N/A';
+            var resp = '<span class="swal-muted">N/A</span>';
             if (ev.responsable_prenom) {
                 resp = esc(ev.responsable_prenom + ' ' + (ev.responsable_nom || ''));
                 if (ev.responsable_mail) resp += ' <span style="color:#64748b;">(' + esc(ev.responsable_mail) + ')</span>';
-                if (ev.responsable_promo) resp += ' &mdash; ' + esc(ev.responsable_promo);
+                if (ev.responsable_promo) resp += ' · ' + esc(ev.responsable_promo);
             }
 
-            var finHtml = '<span style="color:#64748b;">Non demandé</span>';
+            var finHtml = '<span class="swal-muted">Non demandé</span>';
             if (ev.financement_bde == 1) {
-                finHtml = '<span style="color:#d97706;font-weight:600;"><i class="fas fa-check-circle"></i> Oui &mdash; ' + parseInt(ev.montant || 0) + ' &euro;</span>';
+                finHtml = '<span class="swal-finance-highlight"><i class="fas fa-check-circle"></i> Oui — ' + parseInt(ev.montant || 0) + ' €</span>';
             }
 
             var filesHtml = '';
             if (ev.fiche_sanitaire || ev.affiche) {
-                filesHtml = '<div style="margin-top:12px;"><strong><i class="fas fa-paperclip"></i> Documents</strong><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">';
-                if (ev.fiche_sanitaire) filesHtml += '<a href="' + esc(ev.fiche_sanitaire) + '" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none;font-size:0.8rem;"><i class="fas fa-file-medical"></i> Fiche sanitaire</a>';
-                if (ev.affiche) filesHtml += '<a href="' + esc(ev.affiche) + '" target="_blank" class="btn btn-outline btn-sm" style="text-decoration:none;font-size:0.8rem;"><i class="fas fa-image"></i> Affiche</a>';
+                filesHtml = '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-paperclip"></i> Documents joints</div><div class="swal-files-row">';
+                if (ev.fiche_sanitaire) filesHtml += '<a href="' + esc(ev.fiche_sanitaire) + '" target="_blank" class="swal-file-link"><i class="fas fa-file-medical"></i> Fiche sanitaire</a>';
+                if (ev.affiche) filesHtml += '<a href="' + esc(ev.affiche) + '" target="_blank" class="swal-file-link"><i class="fas fa-image"></i> Affiche</a>';
                 filesHtml += '</div></div>';
             }
 
-            return '<div style="text-align:left;font-size:0.92rem;line-height:1.6;">' +
-                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;">' +
-                    '<div><strong><i class="fas fa-building"></i> Club</strong><br>' + esc(ev.nom_club || 'N/A') + '</div>' +
-                    '<div><strong><i class="fas fa-user"></i> Responsable</strong><br>' + resp + '</div>' +
-                    '<div><strong><i class="fas fa-calendar"></i> Date</strong><br>' + formatDate(ev.date_ev) + '</div>' +
-                    '<div><strong><i class="fas fa-clock"></i> Horaires</strong><br>' + formatTime(ev.horaire_debut) + ' - ' + formatTime(ev.horaire_fin) + '</div>' +
-                    '<div><strong><i class="fas fa-map-marker-alt"></i> Campus</strong><br>' + esc(ev.campus || 'N/A') + '</div>' +
-                    '<div><strong><i class="fas fa-map-pin"></i> Lieu</strong><br>' + esc(ev.lieu || 'N/A') + '</div>' +
-                    '<div><strong><i class="fas fa-euro-sign"></i> Financement BDE</strong><br>' + finHtml + '</div>' +
-                    '<div><strong><i class="fas fa-inbox"></i> Dépôt</strong><br>' + formatDatetime(ev.date_depot) + '</div>' +
+            return '<div class="swal-detail-content">' +
+                '<div class="swal-detail-grid">' +
+                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-building"></i> Club</div><div class="swal-detail-value">' + esc(ev.nom_club || 'N/A') + '</div></div>' +
+                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-user"></i> Responsable</div><div class="swal-detail-value">' + resp + '</div></div>' +
+                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-calendar"></i> Date</div><div class="swal-detail-value">' + formatDate(ev.date_ev) + '</div></div>' +
+                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-clock"></i> Horaires</div><div class="swal-detail-value">' + formatTime(ev.horaire_debut) + ' - ' + formatTime(ev.horaire_fin) + '</div></div>' +
+                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (ev.campus || 'calais').toLowerCase() + '">' + esc(ev.campus || 'N/A') + '</span></div></div>' +
+                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-pin"></i> Lieu</div><div class="swal-detail-value">' + esc(ev.lieu || 'N/A') + '</div></div>' +
+                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-euro-sign"></i> Financement BDE</div><div class="swal-detail-value">' + finHtml + '</div></div>' +
+                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-inbox"></i> Dépôt</div><div class="swal-detail-value">' + formatDatetime(ev.date_depot) + '</div></div>' +
                 '</div>' +
-                (ev.description ? '<div style="margin-top:12px;"><strong><i class="fas fa-align-left"></i> Description</strong><p style="margin:4px 0 0;color:#475569;">' + esc(ev.description) + '</p></div>' : '') +
+                (ev.description ? '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-align-left"></i> Description</div><div class="swal-detail-description">' + esc(ev.description) + '</div></div>' : '') +
                 filesHtml +
-                '<div style="margin-top:12px;"><strong>Validations</strong><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">' +
+                '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div><div class="swal-badges-row">' +
                     valBadge('BDE', ev.validation_bde) + valBadge('Tuteur', ev.validation_tuteur) + valBadge('Admin', ev.validation_admin) +
                 '</div></div>' +
             '</div>';
         }
 
         window.openEventModal = function(ev) {
-            Swal.fire({
+            var isAdmin = <?= json_encode($is_admin) ?>;
+            var swalOptions = {
                 title: '<i class="fas fa-calendar-alt" style="color:#3b82f6;"></i> ' + esc(ev.titre || 'Sans titre'),
                 html: buildDetailHtml(ev),
                 width: 700,
@@ -424,18 +443,41 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 confirmButtonColor: '#28a745',
                 denyButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
-                customClass: { popup: 'swal-event-detail-popup' },
-                reverseButtons: false
-            }).then(function(result) {
+                customClass: { popup: 'swal-detail-popup' },
+                reverseButtons: false,
+                footer: isAdmin ? '<button id="swalForceBtn" class="btn-force" style="background:#d97706;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:600;"><i class="fas fa-bolt"></i> Forcer la validation</button>' : ''
+            };
+            Swal.fire(swalOptions).then(function(result) {
                 if (result.isConfirmed) {
-                    // Approve this event
                     document.getElementById('swalApproveEventId').value = ev.event_id;
                     document.getElementById('swalApproveForm').submit();
                 } else if (result.isDenied) {
-                    // Open reject SweetAlert
                     openRejectSwal(ev);
                 }
             });
+            // Bind force button inside modal
+            if (isAdmin) {
+                var forceBtn = document.getElementById('swalForceBtn');
+                if (forceBtn) {
+                    forceBtn.addEventListener('click', function() {
+                        Swal.fire({
+                            title: 'Forcer la validation ?',
+                            html: '<p>L\'événement <strong>«\u00a0' + esc(ev.titre) + '\u00a0»</strong> sera validé immédiatement (Admin + BDE + Tuteur).</p><p style="color:#d97706;font-size:0.9em;margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> Cette action contourne le circuit de validation normal.</p>',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: '<i class="fas fa-bolt"></i> Oui, forcer',
+                            cancelButtonText: 'Annuler',
+                            confirmButtonColor: '#d97706',
+                            cancelButtonColor: '#6c757d'
+                        }).then(function(r) {
+                            if (r.isConfirmed) {
+                                document.getElementById('swalForceEventId').value = ev.event_id;
+                                document.getElementById('swalForceForm').submit();
+                            }
+                        });
+                    });
+                }
+            }
         };
 
         // ---- SweetAlert2 Reject Modal ----
@@ -457,7 +499,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
                 focusCancel: true,
-                customClass: { popup: 'swal-event-detail-popup' }
+                customClass: { popup: 'swal-detail-popup' }
             }).then(function(result) {
                 if (result.isConfirmed) {
                     document.getElementById('swalRejectEventId').value = ev.event_id;
@@ -481,6 +523,25 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                     'Oui, approuver',
                     'Annuler'
                 ).then(function(result) {
+                    if (result.isConfirmed) form.submit();
+                });
+            });
+        });
+
+        // ---- Card-level force approve (Admin only, SweetAlert confirm) ----
+        document.querySelectorAll('.form-force-event').forEach(function(form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Forcer la validation ?',
+                    html: '<p>L\'événement sera <strong>validé immédiatement</strong> (Admin + BDE + Tuteur).</p><p style="color:#d97706;font-size:0.9em;"><i class="fas fa-exclamation-triangle"></i> Cette action contourne le circuit de validation normal.</p>',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="fas fa-bolt"></i> Oui, forcer',
+                    cancelButtonText: 'Annuler',
+                    confirmButtonColor: '#d97706',
+                    cancelButtonColor: '#6c757d'
+                }).then(function(result) {
                     if (result.isConfirmed) form.submit();
                 });
             });

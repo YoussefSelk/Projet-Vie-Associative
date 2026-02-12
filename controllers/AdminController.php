@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 /**
  * Controleur d'administration centralise
@@ -83,7 +84,7 @@ class AdminController {
         $stats['total_events'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
         // Clubs en attente de validation finale (deja valides par tuteur)
-        $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale IS NULL AND validation_tuteur = 1");
+        $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_tuteur = 1");
         $stats['pending_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
         // Evenements en attente de validation finale (valides par BDE ET tuteur ou admin)
@@ -192,7 +193,7 @@ class AdminController {
         $stmt = $this->db->query("
             SELECT club_id, nom_club, type_club, campus 
             FROM fiche_club 
-            WHERE validation_finale IS NULL AND validation_tuteur = 1 
+            WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_tuteur = 1 
             LIMIT 5
         ");
         $pending_clubs_list = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -288,7 +289,7 @@ class AdminController {
             // Validation en masse de tous les clubs en attente
             if (isset($_POST['bulk_validate_clubs'])) {
                 try {
-                    $this->db->query("UPDATE fiche_club SET validation_finale = 1 WHERE validation_finale IS NULL AND validation_tuteur = 1");
+                    $this->db->query("UPDATE fiche_club SET validation_finale = 1 WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_tuteur = 1");
                     $success_msg = "Tous les clubs en attente ont été validés.";
                 } catch (Exception $e) {
                     $error_msg = "Erreur lors de la validation des clubs.";
@@ -347,7 +348,7 @@ class AdminController {
         $advanced_stats = [];
         
         // Comptage des elements en attente
-        $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale IS NULL AND validation_tuteur = 1");
+        $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_tuteur = 1");
         $advanced_stats['pending_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
         // Evenements : BDE valide ET (tuteur OU admin valide)
@@ -787,7 +788,13 @@ class AdminController {
     public function deleteUser() {
         checkPermission(5);
         
-        $user_id = $_GET['id'] ?? null;
+        // Require POST method for destructive action
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            redirect('index.php?page=admin-users');
+            return;
+        }
+        
+        $user_id = $_POST['id'] ?? null;
         
         // Protection contre l'auto-suppression
         if ($user_id && $user_id != $_SESSION['id']) {
@@ -1058,18 +1065,9 @@ class AdminController {
                 $stmt->execute([$month]);
                 $report_data['events'] = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                // Nouveaux clubs du mois (approximation basee sur l'ID)
-                $stmt = $this->db->prepare("
-                    SELECT COUNT(*) as count 
-                    FROM fiche_club 
-                    WHERE DATE_FORMAT(club_id, '%Y-%m') = ?
-                ");
-                try {
-                    $stmt->execute([$month]);
-                    $report_data['new_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
-                } catch (Exception $e) {
-                    $report_data['new_clubs'] = 0;
-                }
+                // Nombre total de clubs (pas de colonne date_creation dans fiche_club)
+                $stmt = $this->db->query("SELECT COUNT(*) as count FROM fiche_club WHERE validation_finale = 1");
+                $report_data['new_clubs'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
                 
                 // Inscriptions aux evenements du mois
                 try {

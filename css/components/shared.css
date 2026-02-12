@@ -364,6 +364,17 @@
   margin-right: auto;
 }
 
+/* Search empty icon variant */
+.empty-icon-search {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* Hidden utility for forms used by SweetAlert */
+.hidden-form {
+  display: none !important;
+}
+
 /* ================================================
    Dividers
    ================================================ */
@@ -521,4 +532,52 @@
 
 .tab-content.active {
   display: block;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: 100%;
+    margin: 10px;
+  }
+
+  .card {
+    margin: 0 -5px;
+    border-radius: 8px;
+  }
+
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+  }
+
+  .tooltip {
+    max-width: 250px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay,
+  .modal-backdrop {
+    padding: 5px;
+  }
+
+  .modal-content {
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    max-height: 90vh;
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+
+  .card-body {
+    padding: 15px;
+  }
 }

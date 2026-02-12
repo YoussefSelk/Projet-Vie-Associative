@@ -18,6 +18,7 @@
  * 
  * @package Views/Admin
  */
+$pageTitle = 'Détails utilisateur - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'tables', 'admin', 'profiles'];
 ?>
 <!DOCTYPE html>
@@ -40,14 +41,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'admin', 'profiles'];
     
     <!-- User Profile Card -->
     <div class="user-profile-card">
-        <div class="profile-header">
-            <div class="profile-avatar">
+        <div class="admin-profile-header">
+            <div class="admin-profile-avatar">
                 <?php echo strtoupper(substr($user['prenom'] ?? 'U', 0, 1) . substr($user['nom'] ?? 'U', 0, 1)); ?>
             </div>
-            <div class="profile-info">
+            <div class="admin-profile-info">
                 <h2><?php echo htmlspecialchars($user['prenom'] . ' ' . $user['nom']); ?></h2>
-                <div class="email"><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($user['mail']); ?></div>
-                <div class="profile-badges">
+                <div class="admin-profile-email"><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($user['mail']); ?></div>
+                <div class="admin-profile-badges">
                     <?php
                         $perm_names = [0 => 'Invité', 1 => 'Utilisateur', 2 => 'Tuteur', 3 => 'BDE', 4 => 'Personnel', 5 => 'Super Admin'];
                     ?>
@@ -97,11 +98,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'admin', 'profiles'];
             
             <div class="profile-actions">
                 <?php if ($user['id'] != $_SESSION['id']): ?>
-                    <a href="?page=delete-user&id=<?php echo $user['id']; ?>" 
-                       class="btn btn-danger btn-delete-this-user"
-                       data-user-name="<?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?>">
-                        <i class="fas fa-trash"></i> Supprimer l'utilisateur
-                    </a>
+                    <form method="POST" action="?page=delete-user" class="form-delete-user">
+                        <?= Security::csrfField() ?>
+                        <input type="hidden" name="id" value="<?php echo $user['id']; ?>">
+                        <button type="submit" class="btn btn-danger btn-delete-this-user"
+                                data-user-name="<?= htmlspecialchars(($user['prenom'] ?? '') . ' ' . ($user['nom'] ?? '')) ?>">
+                            <i class="fas fa-trash"></i> Supprimer l'utilisateur
+                        </button>
+                    </form>
                 <?php endif; ?>
             </div>
         </div>
@@ -129,7 +133,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'admin', 'profiles'];
                                     <div class="meta"><?php echo htmlspecialchars($club['campus'] ?? ''); ?> - <?php echo htmlspecialchars($club['type_club'] ?? ''); ?></div>
                                 </div>
                             </div>
-                            <a href="?page=club-view&id=<?php echo $club['club_id']; ?>" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">
+                            <a href="?page=club-view&id=<?php echo $club['club_id']; ?>" class="btn btn-secondary btn-sm">
                                 <i class="fas fa-eye"></i> Voir
                             </a>
                         </div>
@@ -163,7 +167,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'admin', 'profiles'];
                         ?>
                         <div class="item-row">
                             <div class="item-info">
-                                <div class="item-icon" style="background: <?php echo $is_past ? '#95a5a6' : '#27ae60'; ?>;">
+                                <div class="item-icon" style="background: <?php echo $is_past ? '#64748b' : '#059669'; ?>;">
                                     <i class="fas fa-calendar"></i>
                                 </div>
                                 <div class="item-details">
@@ -193,12 +197,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'admin', 'profiles'];
         deleteBtn.addEventListener('click', (e) => {
             e.preventDefault();
             const userName = deleteBtn.dataset.userName;
-            const deleteUrl = deleteBtn.href;
+            const form = deleteBtn.closest('form');
             
             SwalHelper.confirmDelete('l\'utilisateur "' + userName + '"')
                 .then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = deleteUrl;
+                        form.submit();
                     }
                 });
         });

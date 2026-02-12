@@ -49,7 +49,7 @@ if(isset($_SESSION['id'])){
     $nb_events_admin = $row[0]['total'];
 
     // Compteur de clubs en attente de validation finale
-    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE validation_finale IS NULL AND validation_tuteur = 1");
+    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_tuteur = 1");
     $req->execute();
     $row = $req->fetchAll();
     $nb_clubs_admin = $row[0]['total'];

@@ -20,6 +20,7 @@
  * 
  * @package Views/Home
  */
+$pageTitle = 'Accueil - Vie Étudiante EILCO';
 $pageCss = ['shared', 'buttons', 'calendar', 'home'];
 ?>
 <!DOCTYPE html>
@@ -72,25 +73,18 @@ $pageCss = ['shared', 'buttons', 'calendar', 'home'];
                 
                 <!-- Stats -->
                 <div class="hero-stats">
-                    <?php
-                    // Get stats
-                    global $db;
-                    $clubs_count = $db->query("SELECT COUNT(*) FROM fiche_club WHERE validation_finale = 1")->fetchColumn();
-                    $events_count = $db->query("SELECT COUNT(*) FROM fiche_event WHERE validation_finale = 1")->fetchColumn();
-                    $users_count = $db->query("SELECT COUNT(*) FROM users")->fetchColumn();
-                    ?>
                     <div class="stat-item">
-                        <span class="stat-number"><?= $clubs_count ?></span>
+                        <span class="stat-number"><?= $clubs_count ?? 0 ?></span>
                         <span class="stat-label">Clubs actifs</span>
                     </div>
                     <div class="stat-divider"></div>
                     <div class="stat-item">
-                        <span class="stat-number"><?= $events_count ?></span>
+                        <span class="stat-number"><?= $events_count ?? 0 ?></span>
                         <span class="stat-label">Événements</span>
                     </div>
                     <div class="stat-divider"></div>
                     <div class="stat-item">
-                        <span class="stat-number"><?= $users_count ?></span>
+                        <span class="stat-number"><?= $users_count ?? 0 ?></span>
                         <span class="stat-label">Membres</span>
                     </div>
                 </div>

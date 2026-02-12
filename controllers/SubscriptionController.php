@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * CONTRÔLEUR DES INSCRIPTIONS AUX ÉVÉNEMENTS
@@ -61,10 +62,10 @@ class SubscriptionController {
         // Redirection sécurisée vers le référent ou la page événement
         $referer = $_SERVER['HTTP_REFERER'] ?? null;
         $host = $_SERVER['HTTP_HOST'] ?? '';
-        if ($referer && strpos($referer, $host) !== false) {
+        if ($referer && !empty($host) && parse_url($referer, PHP_URL_HOST) === $host) {
             redirect($referer);
         }
-        redirect('index.php?page=event-view&id=' . $event_id);
+        redirect('index.php?page=event-view&id=' . (int)$event_id);
     }
 
     /**
@@ -86,10 +87,10 @@ class SubscriptionController {
         // Redirection sécurisée vers le référent ou la page événement
         $referer = $_SERVER['HTTP_REFERER'] ?? null;
         $host = $_SERVER['HTTP_HOST'] ?? '';
-        if ($referer && strpos($referer, $host) !== false) {
+        if ($referer && !empty($host) && parse_url($referer, PHP_URL_HOST) === $host) {
             redirect($referer);
         }
-        redirect('index.php?page=event-view&id=' . $event_id);
+        redirect('index.php?page=event-view&id=' . (int)$event_id);
     }
 
     /**
@@ -114,35 +115,39 @@ class SubscriptionController {
         header('Content-Type: application/json; charset=utf-8');
         validateSession();
         
-        $event_id = $_GET['event_id'] ?? $_POST['event_id'] ?? null;
-        if (!$event_id) {
-            echo json_encode(['success' => false, 'error' => 'ID événement manquant']);
-            exit;
+        try {
+            $event_id = $_GET['event_id'] ?? $_POST['event_id'] ?? null;
+            if (!$event_id) {
+                echo json_encode(['success' => false, 'error' => 'ID événement manquant']);
+                exit;
+            }
+            
+            $event = $this->eventModel->getEventById($event_id);
+            if (!$event) {
+                echo json_encode(['success' => false, 'error' => 'Événement introuvable']);
+                exit;
+            }
+            
+            $user_id = $_SESSION['id'];
+            $isSubscribed = $this->subscriptionModel->isSubscribed($event_id, $user_id);
+            
+            if ($isSubscribed) {
+                $this->subscriptionModel->unsubscribeFromEvent($event_id, $user_id);
+                $newState = false;
+            } else {
+                $this->subscriptionModel->subscribeToEvent($event_id, $user_id);
+                $newState = true;
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'subscribed' => $newState,
+                'event_id' => $event_id,
+                'event_title' => $event['titre'] ?? ''
+            ], JSON_UNESCAPED_UNICODE);
+        } catch (\Throwable $e) {
+            echo json_encode(['success' => false, 'error' => 'Erreur interne'], JSON_UNESCAPED_UNICODE);
         }
-        
-        $event = $this->eventModel->getEventById($event_id);
-        if (!$event) {
-            echo json_encode(['success' => false, 'error' => 'Événement introuvable']);
-            exit;
-        }
-        
-        $user_id = $_SESSION['id'];
-        $isSubscribed = $this->subscriptionModel->isSubscribed($event_id, $user_id);
-        
-        if ($isSubscribed) {
-            $this->subscriptionModel->unsubscribeFromEvent($event_id, $user_id);
-            $newState = false;
-        } else {
-            $this->subscriptionModel->subscribeToEvent($event_id, $user_id);
-            $newState = true;
-        }
-        
-        echo json_encode([
-            'success' => true,
-            'subscribed' => $newState,
-            'event_id' => $event_id,
-            'event_title' => $event['titre'] ?? ''
-        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 }

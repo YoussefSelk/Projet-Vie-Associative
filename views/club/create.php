@@ -18,6 +18,7 @@
  * 
  * @package Views/Club
  */
+$pageTitle = 'Créer un club - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
 ?>
 <!DOCTYPE html>

@@ -56,10 +56,11 @@ class PaginationComponent {
   /**
    * Returns only items currently visible (not hidden by search/filter).
    * Items hidden by pagination (pagination-hidden class) are still considered visible
-   * for pagination purposes — only search-hidden items are excluded.
+   * for pagination purposes — only search-hidden or filter-hidden items are excluded.
    */
   getVisibleItems() {
     return this.allItems.filter((item) => {
+      if (item.classList.contains("filter-hidden")) return false;
       if (item.classList.contains("pagination-hidden")) return true;
       return item.style.display !== "none";
     });

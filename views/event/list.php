@@ -13,6 +13,7 @@
  * 
  * @package Views/Event
  */
+$pageTitle = 'Événements - EILCO';
 $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 ?>
 <!DOCTYPE html>
@@ -84,7 +85,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                 <span class="month"><?= $months_fr[$monthIndex] ?></span>
                             </div>
                             <div class="event-content">
-                                <p class="club-name" style="color: #666; font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">
+                                <p class="club-name">
                                     <i class="fas fa-users"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club inconnu') ?>
                                 </p>
                                 

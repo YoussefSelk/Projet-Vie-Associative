@@ -16,13 +16,12 @@
  * 
  * @package Views/Club
  */
+$pageTitle = 'Liste des clubs - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <?php include VIEWS_PATH . '/includes/head.php'; ?>
-</head>
+<?php include VIEWS_PATH . '/includes/head.php'; ?>
 <body>
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
@@ -94,7 +93,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                             <p><?= nl2br(htmlspecialchars($req_club['description'])) ?></p>
                         </div>
                     </div>
-                    <div class="form-actions" style="margin-top: 20px;">
+                    <div class="form-actions mt-20">
                         <a href="?page=club-view&id=<?= $req_club['club_id'] ?>" class="btn btn-primary"><i class="fa fa-eye"></i> Voir la page du club</a>
                         <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
                             <a href="?page=club-edit&id=<?= $req_club['club_id'] ?>" class="btn btn-outline"><i class="fas fa-edit"></i> Modifier</a>
@@ -110,19 +109,18 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                     <h3><i class="fas fa-list"></i> Tous les clubs (<span id="clubCount"><?= count($clubs) ?></span>)</h3>
                 </div>
                 <div class="card-body">
-                    <div class="filters-row" style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; border: none; background: transparent; padding: 0;">
+                    <div class="filters-row">
                         
-                        <div class="filter-item" style="flex: 2; min-width: 200px;">
-                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-search"></i> Recherche</label>
+                        <div class="filter-item filter-item-search">
+                            <label><i class="fas fa-search"></i> Recherche</label>
                             <input type="text" id="clubTableFilter" class="filter-input" 
                                 placeholder="Nom du club..." 
-                                style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;"
                                 autocomplete="off">
                         </div>
                         
-                        <div class="filter-item" style="flex: 1; min-width: 150px;">
-                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-map-marker-alt"></i> Campus</label>
-                            <select id="campusFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                        <div class="filter-item filter-item-select">
+                            <label><i class="fas fa-map-marker-alt"></i> Campus</label>
+                            <select id="campusFilter" class="filter-select">
                                 <option value="">Tous</option>
                                 <option value="calais">Calais</option>
                                 <option value="longuenesse">Longuenesse</option>
@@ -131,9 +129,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                             </select>
                         </div>
 
-                        <div class="filter-item" style="flex: 1; min-width: 150px;">
-                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-user-shield"></i> Tuteur</label>
-                            <select id="tuteurFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                        <div class="filter-item filter-item-select">
+                            <label><i class="fas fa-user-shield"></i> Tuteur</label>
+                            <select id="tuteurFilter" class="filter-select">
                                 <option value="">Tous les tuteurs</option>
                                 <?php foreach ($tuteurs as $t): ?>
                                     <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nom'] . ' ' . $t['prenom']) ?></option>
@@ -141,9 +139,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                             </select>
                         </div>
                         
-                        <div class="filter-item" style="flex: 1; min-width: 150px;">
-                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-tag"></i> Type</label>
-                            <select id="typeFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                        <div class="filter-item filter-item-select">
+                            <label><i class="fas fa-tag"></i> Type</label>
+                            <select id="typeFilter" class="filter-select">
                                 <option value="">Tous les types</option>
                                 <?php 
                                 $types = array_unique(array_filter(array_column($clubs, 'type_club')));
@@ -154,9 +152,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                             </select>
                         </div>
                         
-                        <div class="filter-item" style="flex: 1; min-width: 150px;">
-                            <label style="margin-bottom: 8px; display: block;"><i class="fas fa-sort"></i> Trier par</label>
-                            <select id="sortFilter" class="filter-select" style="border: 1px solid #e2e8f0; background: #f8fafc; width: 100%; padding: 10px;">
+                        <div class="filter-item filter-item-select">
+                            <label><i class="fas fa-sort"></i> Trier par</label>
+                            <select id="sortFilter" class="filter-select">
                                 <option value="name-asc">Nom (A → Z)</option>
                                 <option value="name-desc">Nom (Z → A)</option>
                                 <option value="type-asc">Type (A → Z)</option>
@@ -164,9 +162,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                             </select>
                         </div>
                         
-                        <div class="filter-item" style="flex: 0 0 auto;">
-                            <button type="button" id="resetFilters" class="filter-reset-btn" 
-                                    style="border: none; background: #f1f5f9; color: #64748b; font-weight: 600; height: 42px; padding: 0 20px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <div class="filter-item filter-item-action">
+                            <button type="button" id="resetFilters" class="filter-reset-btn">
                                 <i class="fas fa-undo"></i> Réinitialiser
                             </button>
                         </div>
@@ -183,10 +180,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                             <table class="clubs-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 35%;">Nom</th>
-                                        <th style="width: 25%;">Type</th>
-                                        <th style="width: 15%;">Campus</th>
-                                        <th style="width: 25%;">Actions</th>
+                                        <th>Nom</th>
+                                        <th>Type</th>
+                                        <th>Campus</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="clubsTableBody">
@@ -217,7 +214,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                                             </a>
                                             
                                             <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
-                                            <form method="POST" style="margin: 0; display: inline-flex;">
+                                            <form method="POST">
                                                 <?= Security::csrfField() ?>
                                                 <input type="hidden" name="club" value="<?= htmlspecialchars($c['nom_club']) ?>">
                                                 <button type="submit" class="action-btn edit" title="Modifier">
@@ -262,6 +259,17 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
         // Get all rows
         const allRows = Array.from(tbody.querySelectorAll('tr'));
         
+        // Initialize PaginationComponent
+        let clubPagination = null;
+        if (document.querySelector('#clubPagination')) {
+            clubPagination = new PaginationComponent({
+                itemsSelector: '.clubs-table tbody',
+                paginationSelector: '#clubPagination',
+                perPage: 15,
+                perPageOptions: [10, 15, 25, 50]
+            });
+        }
+        
         function applyFilters() {
             const searchTerm = searchInput.value.toLowerCase().trim();
             const campusValue = campusFilter.value.toLowerCase();
@@ -284,14 +292,19 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                 const matchesType = !typeValue || type === typeValue;
                 
                 if (matchesSearch && matchesCampus && matchesTuteur && matchesType) {
-                    row.style.display = '';
+                    row.classList.remove('filter-hidden');
                     visibleCount++;
                 } else {
-                    row.style.display = 'none';
+                    row.classList.add('filter-hidden');
                 }
             });
             
             clubCount.textContent = visibleCount;
+            
+            // Refresh pagination after filter change
+            if (clubPagination) {
+                clubPagination.refresh();
+            }
         }
         
         function applySort() {

@@ -271,11 +271,14 @@
   font-size: 1rem;
   color: #333;
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .profile-info-item span i {
-  margin-right: 8px;
   color: #0066cc;
+  flex-shrink: 0;
 }
 
 .profile-actions {
@@ -285,6 +288,10 @@
   margin-top: 25px;
   padding-top: 25px;
   border-top: 2px solid #eee;
+}
+
+.profile-actions form {
+  display: inline-flex;
 }
 
 @media (max-width: 768px) {

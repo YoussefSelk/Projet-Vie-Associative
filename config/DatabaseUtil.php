@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * Database Utility Class
  * Provides helpers for database operations, migrations, backups

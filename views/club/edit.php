@@ -15,6 +15,7 @@
  * 
  * @package Views/Club
  */
+$pageTitle = 'Modifier un club - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
 ?>
 <!DOCTYPE html>
@@ -57,7 +58,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                     </div>
 
                     <form method="POST">
-                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                        <?= Security::csrfField() ?>
                         <div class="form-group">
                             <label for="nom_club">Nom du club <span style="color: red;">*</span></label>
                             <input 

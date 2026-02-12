@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * CONTRÔLEUR D'AUTHENTIFICATION
@@ -114,32 +115,27 @@ class AuthController {
             $_SESSION['verification_attempts'] = 0;
         }
         
-        // Vérification du code de réinitialisation
-        if (isset($_POST['reset_code'])) {
-            if ($_POST['reset_code'] != $_SESSION['reset_code']) {
+        // Vérification du code de réinitialisation (unified logic)
+        if (isset($_POST['verify_reset_code']) && isset($_SESSION['reset_code'])) {
+            if (!hash_equals((string)($_SESSION['reset_code'] ?? ''), (string)($_POST['reset_code'] ?? ''))) {
                 $_SESSION['verification_attempts']++;
                 $_SESSION['verification_attempts_time'] = time();
                 if ($_SESSION['verification_attempts'] >= 5) {
                     ErrorHandler::logSecurity("Rate limit atteint - trop de tentatives de vérification", 'WARN', [
                         'email' => $_SESSION['reset_mail'] ?? 'unknown'
                     ]);
-                    die("Trop de tentatives, veuillez réessayer plus tard.");
+                    $error_message = "<p style='color: red;'>Trop de tentatives. Veuillez réessayer plus tard.</p>";
+                    $_SESSION['reset_step'] = 1;
+                } else {
+                    ErrorHandler::logSecurity("Code de réinitialisation incorrect", 'FAIL', [
+                        'email' => $_SESSION['reset_mail'] ?? 'unknown',
+                        'attempts' => $_SESSION['verification_attempts']
+                    ]);
+                    $error_message = "<p style='color: red;'>Code de vérification incorrect.</p>";
                 }
-                ErrorHandler::logSecurity("Code de réinitialisation incorrect", 'FAIL', [
-                    'email' => $_SESSION['reset_mail'] ?? 'unknown',
-                    'attempts' => $_SESSION['verification_attempts']
-                ]);
-                $error_message = "<p style='color: red;'>Code de vérification incorrect.</p>";
             } else {
                 unset($_SESSION['verification_attempts']);
-            }
-        }
-
-        if (isset($_POST['verify_reset_code']) && isset($_SESSION['reset_code'])) {
-            if ($_POST['reset_code'] == $_SESSION['reset_code']) {
                 $_SESSION['reset_step'] = 3;
-            } else {
-                $error_message = "<p style='color: red;'>Code incorrect.</p>";
             }
         }
 
@@ -155,7 +151,6 @@ class AuthController {
             } else if ($_POST['password'] == $_POST['cpassword']) {
                 $this->userModel->updatePassword($_SESSION['reset_mail'], $_POST['password']);
                 unset($_SESSION['reset_mail'], $_SESSION['reset_code']);
-                session_regenerate_id(true);
                 session_unset();
                 session_destroy();
                 redirect('index.php?page=login');
@@ -174,6 +169,9 @@ class AuthController {
                 $user = $this->userModel->authenticate($mail, $password);
 
                 if ($user) {
+                    // Régénérer l'ID de session pour prévenir la fixation de session
+                    session_regenerate_id(true);
+                    
                     // Connexion réussie : stocker les infos en session
                     $_SESSION['id'] = $user['id'];
                     $_SESSION['nom'] = $user['nom'];
@@ -185,6 +183,9 @@ class AuthController {
                         'user_id' => $user['id'],
                         'email' => $mail
                     ]);
+                    
+                    // Réinitialiser le rate limit après connexion réussie
+                    Security::resetRateLimit('login_' . $mail);
                     
                     redirect('index.php');
                 } else {
@@ -338,7 +339,7 @@ class AuthController {
                 $error_message = 'Le code de vérification a expiré. Veuillez recommencer.';
                 $_SESSION['reset_step'] = 0;
                 $reset_step = 0;
-            } elseif ($verification_code != $_SESSION['code_verification']) {
+            } elseif (!hash_equals((string)$_SESSION['code_verification'], (string)$verification_code)) {
                 $_SESSION['verification_attempts']++;
                 $_SESSION['verification_attempts_time'] = time();
 

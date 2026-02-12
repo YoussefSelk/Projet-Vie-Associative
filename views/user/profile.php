@@ -16,6 +16,7 @@
  * 
  * @package Views/User
  */
+$pageTitle = 'Mon profil - EILCO';
 $pageCss = ['shared', 'buttons', 'profiles'];
 ?>
 <!DOCTYPE html>

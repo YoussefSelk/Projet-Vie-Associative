@@ -16,6 +16,7 @@
  * 
  * @package Views/Event
  */
+$pageTitle = 'Créer un événement - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'events'];
 ?>
 <!DOCTYPE html>

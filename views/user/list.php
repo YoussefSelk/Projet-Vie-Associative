@@ -137,12 +137,15 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'profiles'];
                                                             <option value="5" <?= $u['permission'] == 5 ? 'selected' : '' ?>>Admin</option>
                                                         </select>
                                                     </form>
-                                                    <a href="?page=delete-user&id=<?= $u['id'] ?>" 
-                                                       class="btn-icon danger btn-delete-user" 
-                                                       data-user-name="<?= htmlspecialchars($u['nom'] . ' ' . $u['prenom']) ?>"
-                                                       title="Supprimer">
-                                                        <i class="fas fa-trash"></i>
-                                                    </a>
+                                                    <form method="POST" action="?page=delete-user" class="form-delete-user">
+                                                        <?= Security::csrfField() ?>
+                                                        <input type="hidden" name="id" value="<?= $u['id'] ?>">
+                                                        <button type="submit" class="btn-icon danger btn-delete-user"
+                                                                data-user-name="<?= htmlspecialchars($u['nom'] . ' ' . $u['prenom']) ?>"
+                                                                title="Supprimer">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
                                                 </div>
                                                 <?php else: ?>
                                                 <span class="text-muted"><i class="fas fa-crown"></i> Vous</span>
@@ -188,16 +191,16 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'profiles'];
     });
 
     // Delete user confirmation with SweetAlert2
-    document.querySelectorAll('.btn-delete-user').forEach(link => {
-        link.addEventListener('click', (e) => {
+    document.querySelectorAll('.btn-delete-user').forEach(btn => {
+        btn.addEventListener('click', (e) => {
             e.preventDefault();
-            const userName = link.dataset.userName;
-            const deleteUrl = link.href;
+            const userName = btn.dataset.userName;
+            const form = btn.closest('form');
             
             SwalHelper.confirmDelete('l\'utilisateur "' + userName + '"')
                 .then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = deleteUrl;
+                        form.submit();
                     }
                 });
         });

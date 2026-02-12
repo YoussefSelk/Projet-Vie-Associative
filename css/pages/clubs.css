@@ -857,3 +857,161 @@
     width: 100%;
   }
 }
+
+@media (max-width: 480px) {
+  .clubs-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .club-card {
+    padding: 15px;
+  }
+
+  .club-detail-header {
+    padding: 15px;
+  }
+
+  .club-detail-header h1 {
+    font-size: 1.3rem;
+  }
+
+  .member-search-form {
+    flex-direction: column;
+  }
+
+  .member-search-form .btn {
+    width: 100%;
+  }
+}
+
+/* ================================================
+   Club List Filters Row
+   ================================================ */
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.filters-row .filter-item {
+  min-width: 150px;
+}
+
+.filters-row .filter-item.filter-item-search {
+  flex: 2;
+  min-width: 200px;
+}
+
+.filters-row .filter-item.filter-item-select {
+  flex: 1;
+  min-width: 150px;
+}
+
+.filters-row .filter-item.filter-item-action {
+  flex: 0 0 auto;
+}
+
+.filters-row .filter-item label {
+  margin-bottom: 8px;
+  display: block;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--color-gray-700, #334155);
+}
+
+.filters-row .filter-input,
+.filters-row .filter-select {
+  border: 1px solid var(--color-gray-200, #e2e8f0);
+  background: var(--color-gray-50, #f8fafc);
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.875rem;
+  color: var(--color-gray-800, #1e293b);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.filters-row .filter-input:focus,
+.filters-row .filter-select:focus {
+  outline: none;
+  border-color: var(--color-primary, #0066cc);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.filter-reset-btn {
+  border: none;
+  background: var(--color-gray-100, #f1f5f9);
+  color: var(--color-gray-500, #64748b);
+  font-weight: 600;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.filter-reset-btn:hover {
+  background: var(--color-gray-200, #e2e8f0);
+  color: var(--color-gray-700, #334155);
+}
+
+/* Clubs Table Column Widths */
+.clubs-table th:nth-child(1) {
+  width: 35%;
+}
+.clubs-table th:nth-child(2) {
+  width: 25%;
+}
+.clubs-table th:nth-child(3) {
+  width: 15%;
+}
+.clubs-table th:nth-child(4) {
+  width: 25%;
+}
+
+/* Action Button: Export Variant */
+.action-btn.export {
+  background: var(--color-gray-50, #f8fafc);
+  color: var(--color-gray-600, #475569);
+  border: 1px solid var(--color-gray-200, #e2e8f0);
+}
+
+.action-btn.export:hover {
+  background: var(--color-info, #17a2b8);
+  color: white;
+  border-color: var(--color-info, #17a2b8);
+}
+
+/* Inline forms in table action cells */
+.actions-cell form {
+  display: inline-flex;
+  margin: 0;
+}
+
+/* Club card inline forms */
+.club-card .club-actions form {
+  display: inline-flex;
+}
+
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filters-row .filter-item {
+    width: 100%;
+    min-width: 0;
+  }
+}

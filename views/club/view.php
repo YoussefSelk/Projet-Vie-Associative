@@ -17,6 +17,7 @@
  * 
  * @package Views/Club
  */
+$pageTitle = 'Détails du club - EILCO';
 $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
 ?>
 <!DOCTYPE html>

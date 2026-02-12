@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * MODÈLE CLUB
@@ -113,7 +114,7 @@ class Club {
 
     /**
      * Crée un nouveau club
-     * Le club est créé avec validation_finale = 0 (en attente de validation)
+     * Le club est créé avec validation_finale = NULL (en attente de validation)
      * 
      * @param array $data Données du club (nom_club, type_club, description, campus)
      * @return bool Succès de la création
@@ -125,7 +126,7 @@ class Club {
             $data['type_club'],
             $data['description'],
             $data['campus'],
-            0
+            null
         ]);
     }
 

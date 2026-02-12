@@ -14,6 +14,7 @@
  * 
  * @package Views/Auth
  */
+$pageTitle = 'Connexion - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'auth'];
 ?>
 <!DOCTYPE html>

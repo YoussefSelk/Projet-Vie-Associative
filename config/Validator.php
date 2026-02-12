@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * CLASSE DE VALIDATION ET ASSAINISSEMENT DES DONNÉES

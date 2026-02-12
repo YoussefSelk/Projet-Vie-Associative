@@ -19,6 +19,7 @@
  * 
  * @package Views/Event
  */
+$pageTitle = 'Statistiques événements - EILCO';
 $pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
 ?>
 <!DOCTYPE html>

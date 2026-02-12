@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 /**
  * =============================================================================
  * GESTIONNAIRE D'ERREURS ET LOGS
@@ -131,7 +132,7 @@ class ErrorHandler
      */
     private static function generateErrorRef(): string
     {
-        return 'ERR-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+        return 'ERR-' . strtoupper(substr(md5(uniqid((string)mt_rand(), true)), 0, 8));
     }
     
     /**

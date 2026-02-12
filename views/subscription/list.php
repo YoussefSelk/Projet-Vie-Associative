@@ -13,6 +13,7 @@
  * 
  * @package Views/Subscription
  */
+$pageTitle = 'Mes inscriptions - EILCO';
 $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 ?>
 <!DOCTYPE html>
@@ -67,10 +68,9 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                 <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
                                 <span class="month">
                                     <?php
-                                    setlocale(LC_TIME, 'fr_FR.UTF-8', 'fr_FR', 'fr');
-
-                                    $timestamp = strtotime($event['date_ev'] ?? 'now');
-                                    echo strftime('%b', $timestamp);
+                                    $moisFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+                                    $monthIdx = (int)date('n', strtotime($event['date_ev'] ?? 'now')) - 1;
+                                    echo $moisFr[$monthIdx] ?? 'N/A';
                                     ?>
                                 </span>
 
@@ -89,11 +89,14 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                     <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
                                         <i class="fas fa-eye"></i> Voir
                                     </a>
-                                    <a href="?page=unsubscribe&event_id=<?= $event['event_id'] ?>" 
-                                       class="btn btn-danger btn-sm btn-unsubscribe" 
-                                       data-event-title="<?= htmlspecialchars($event['titre']) ?>">
-                                        <i class="fas fa-times"></i> Se désinscrire
-                                    </a>
+                                    <form method="POST" action="?page=unsubscribe" class="form-unsubscribe">
+                                        <?= Security::csrfField() ?>
+                                        <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
+                                        <button type="submit" class="btn btn-danger btn-sm btn-unsubscribe"
+                                                data-event-title="<?= htmlspecialchars($event['titre']) ?>">
+                                            <i class="fas fa-times"></i> Se désinscrire
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -135,7 +138,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const eventTitle = btn.dataset.eventTitle;
-            const unsubscribeUrl = btn.href;
+            const form = btn.closest('form');
             
             SwalHelper.confirm(
                 'Se désinscrire ?',
@@ -144,7 +147,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                 'Annuler'
             ).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = unsubscribeUrl;
+                    form.submit();
                 }
             });
         });

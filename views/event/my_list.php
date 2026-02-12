@@ -12,6 +12,7 @@
  * 
  * @package Views/Event
  */
+$pageTitle = 'Mes événements - EILCO';
 $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 ?>
 <!DOCTYPE html>
@@ -133,20 +134,20 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                     <span class="badge <?= $statusClass ?>"><?= $status ?></span>
                                 </div>
                                 <?php if ($isRejected && !empty($event['motif_refus'])): ?>
-                                    <div class="refusal-reason" style="background-color: #ffe6e6; border-left: 4px solid #dc3545; padding: 8px 12px; border-radius: 4px; margin: 10px 0;">
-                                        <small style="color: #721c24;"><strong>Motif :</strong> <?= htmlspecialchars($event['motif_refus']) ?></small>
+                                    <div class="refusal-reason">
+                                        <small><strong>Motif :</strong> <?= htmlspecialchars($event['motif_refus']) ?></small>
                                     </div>
                                 <?php endif; ?>
                                 <?php if (!empty($event['description'])): ?>
                                     <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 100)) ?>...</p>
                                 <?php endif; ?>
-                                <div class="event-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <div class="event-actions">
                                     <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
                                         <i class="fas fa-eye"></i> Voir détails
                                     </a>
                                     <?php if ($isRejected): ?>
-                                        <form method="POST" style="display: inline;" class="form-delete-event" data-event-title="<?= htmlspecialchars($event['titre'] ?? '') ?>">
-                                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                                        <form method="POST" class="form-delete-event" data-event-title="<?= htmlspecialchars($event['titre'] ?? '') ?>">
+                                            <?= Security::csrfField() ?>
                                             <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                                             <input type="hidden" name="delete_event" value="1">
                                             <button type="submit" class="btn btn-danger btn-sm">

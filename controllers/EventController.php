@@ -119,6 +119,8 @@ class EventController {
                 $error_msg = "Tous les champs obligatoires doivent être remplis.";
             } elseif (!$club_id) {
                 $error_msg = "Veuillez sélectionner un club organisateur.";
+            } elseif (strtotime($date_ev) < strtotime('+15 days midnight')) {
+                $error_msg = "La date de l'événement doit être au minimum dans 15 jours.";
             } else {
                 // Récupérer le nom du club pour le nommage des fichiers
                 $stmtClub = $this->db->prepare("SELECT nom_club FROM fiche_club WHERE club_id = ?");

@@ -126,8 +126,12 @@ public function getAllValidatedEvents() {
      * @param array $data Données de l'événement
      * @return bool Succès de la création
      */
+    /**
+     * Crée un nouvel événement ou activité
+     * * @param array $data Données de l'événement
+     * @return bool Succès de la création
+     */
     public function createEvent($data) {
-        // Parse date_event (datetime-local format: "2025-12-15T14:30") into date and time parts
         $date_ev = null;
         $horaire_debut = null;
         $horaire_fin = null;
@@ -136,7 +140,6 @@ public function getAllValidatedEvents() {
             $datetime = new DateTime($data['date_event']);
             $date_ev = $datetime->format('Y-m-d');
             $horaire_debut = $datetime->format('H:i:s');
-            // Default end time: 2 hours after start
             $datetime->modify('+2 hours');
             $horaire_fin = $datetime->format('H:i:s');
         } elseif (!empty($data['date_ev'])) {
@@ -145,16 +148,19 @@ public function getAllValidatedEvents() {
             $horaire_fin = $data['horaire_fin'] ?? '17:00:00';
         }
         
+        // Ajout de type_event et doc_organisation dans la requête
         $stmt = $this->db->prepare("
             INSERT INTO fiche_event (
-                titre, description, date_ev, horaire_debut, horaire_fin, 
+                titre, type_event, description, date_ev, horaire_debut, horaire_fin, 
                 club_orga, campus, lieu, id_responsable,
-                financement_bde, montant, fiche_sanitaire, affiche,
+                financement_bde, montant, fiche_sanitaire, affiche, doc_organisation,
                 validation_admin, validation_bde, validation_tuteur, validation_finale
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL)
         ");
+
         return $stmt->execute([
             $data['nom_event'] ?? $data['titre'] ?? '',
+            $data['type_event'] ?? 'event', // Nouvelle valeur
             $data['description'] ?? '',
             $date_ev,
             $horaire_debut,
@@ -163,10 +169,11 @@ public function getAllValidatedEvents() {
             $data['campus'] ?? '',
             $data['lieu'] ?? '',
             $data['user_id'] ?? $data['id_responsable'] ?? null,
-            isset($data['financement_bde']) ? 1 : 0,
+            isset($data['financement_bde']) && $data['financement_bde'] == 1 ? 1 : 0,
             intval($data['montant'] ?? $data['budget'] ?? 0),
             $data['fiche_sanitaire'] ?? null,
-            $data['affiche'] ?? null
+            $data['affiche'] ?? null,
+            $data['doc_organisation'] ?? null // Nouvelle valeur
         ]);
     }
 

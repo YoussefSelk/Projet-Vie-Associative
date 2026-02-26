@@ -119,12 +119,27 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         $date_ev = !empty($event['date_ev']) ? date('d/m/Y', strtotime($event['date_ev'])) : 'N/A';
                         $horaire = (!empty($event['horaire_debut']) ? substr($event['horaire_debut'], 0, 5) : '?') . ' - ' . (!empty($event['horaire_fin']) ? substr($event['horaire_fin'], 0, 5) : '?');
                     ?>
+                        <?php 
+                            // Prepare logo path (can be full URL or relative like /uploads/...)
+                            $rawLogo = $event['logo_club'] ?? null;
+                            $logoPath = null;
+                            if (!empty($rawLogo)) {
+                                if (preg_match('#^https?://#i', $rawLogo)) {
+                                    $logoPath = $rawLogo;
+                                } else {
+                                    $logoPath = '/' . ltrim($rawLogo, '/');
+                                }
+                            }
+                        ?>
                         <div class="validation-card-advanced event-card" 
                              data-type="<?= $filter_type ?>" 
                              data-search="<?= strtolower(htmlspecialchars(($event['titre'] ?? '') . ' ' . ($event['nom_club'] ?? '') . ' ' . ($event['campus'] ?? '') . ' ' . ($event['lieu'] ?? ''))) ?>">
                             <div class="card-main">
                                 <div class="card-content">
                                     <div class="card-title-row">
+                                        <?php if ($logoPath): ?>
+                                            <img src="<?= htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($event['nom_club'] ?? 'Logo du club', ENT_QUOTES, 'UTF-8') ?>" class="validation-card-logo" loading="lazy" />
+                                        <?php endif; ?>
                                         <div class="card-type-icon">
                                             <i class="fas fa-calendar-alt"></i>
                                         </div>
@@ -168,6 +183,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                             <span><?= intval($event['montant'] ?? 0) ?> €</span>
                                         </div>
                                         <?php endif; ?>
+                                        <?php if (isset($event['type_event'])): ?>
+                                                <span class="type-badge <?= (!empty($event['type_event']) && $event['type_event'] == 'event') ? 'event' : 'activity' ?>">
+                                                    <?= htmlspecialchars((!empty($event['type_event']) && $event['type_event'] == 'event') ? 'Événement' : 'Activité') ?>
+                                                </span>
+                                            <?php endif; ?>
                                     </div>
                                     <?php if (!empty($event['description'])): ?>
                                         <p class="card-description"><?= htmlspecialchars($event['description']) ?></p>
@@ -183,6 +203,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                         <span class="badge <?= $has_admin ? 'badge-success' : 'badge-light' ?>">
                                             <i class="fas <?= $has_admin ? 'fa-check' : 'fa-hourglass-half' ?>"></i> Admin
                                         </span>
+                                        <?php if (!empty($event['doc_organisation'])): ?>
+                                        <span class="badge badge-info">
+                                            <i class="fas fa-image"></i> Document d'organisation
+                                        </span>
+                                        <?php endif; ?>
                                         <?php if (!empty($event['fiche_sanitaire'])): ?>
                                         <span class="badge badge-info">
                                             <i class="fas fa-file-medical"></i> Fiche sanitaire
@@ -396,29 +421,52 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 if (ev.responsable_promo) resp += ' · ' + esc(ev.responsable_promo);
             }
 
+            // Logo for modal (keep external URLs or prefix with /)
+            var logoHtml = '';
+            if (ev.logo_club) {
+                var lp = ev.logo_club.match(/^https?:\/\//i) ? ev.logo_club : '/' + String(ev.logo_club).replace(/^\/+/, '');
+                logoHtml = '<div style="text-align:center;margin-bottom:10px;"><img src="' + esc(lp) + '" alt="Logo" class="swal-detail-logo" /></div>';
+            }
+
             var finHtml = '<span class="swal-muted">Non demandé</span>';
             if (ev.financement_bde == 1) {
                 finHtml = '<span class="swal-finance-highlight"><i class="fas fa-check-circle"></i> Oui — ' + parseInt(ev.montant || 0) + ' €</span>';
             }
 
             var filesHtml = '';
-            if (ev.fiche_sanitaire || ev.affiche) {
+            if (ev.fiche_sanitaire || ev.affiche || ev.doc_organisation) {
                 filesHtml = '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-paperclip"></i> Documents joints</div><div class="swal-files-row">';
-                if (ev.fiche_sanitaire) filesHtml += '<a href="' + esc(ev.fiche_sanitaire) + '" target="_blank" class="swal-file-link"><i class="fas fa-file-medical"></i> Fiche sanitaire</a>';
-                if (ev.affiche) filesHtml += '<a href="' + esc(ev.affiche) + '" target="_blank" class="swal-file-link"><i class="fas fa-image"></i> Affiche</a>';
+
+                // Document d'organisation
+                if (ev.doc_organisation) {
+                    // Use HTML entity for the apostrophe to avoid breaking the JS string
+                    filesHtml += '<a href="' + esc(ev.doc_organisation) + '" target="_blank" class="swal-file-link" style="display:inline-block;margin-right:10px;"><i class="fas fa-file-alt"></i> Document d&apos;organisation</a>';
+                }
+
+                // Fiche sanitaire
+                if (ev.fiche_sanitaire) {
+                    filesHtml += '<a href="' + esc(ev.fiche_sanitaire) + '" target="_blank" class="swal-file-link" style="display:inline-block;margin-right:10px;"><i class="fas fa-file-medical"></i> Fiche sanitaire</a>';
+                }
+
+                // Lien vers l'affiche (après la preview)
+                if (ev.affiche) {
+                    filesHtml += '<a href="' + esc(ev.affiche) + '" target="_blank" class="swal-file-link"><i class="fas fa-image"></i> Affiche</a>';
+                }
+
                 filesHtml += '</div></div>';
             }
 
-            return '<div class="swal-detail-content">' +
-                '<div class="swal-detail-grid">' +
-                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-building"></i> Club</div><div class="swal-detail-value">' + esc(ev.nom_club || 'N/A') + '</div></div>' +
-                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-user"></i> Responsable</div><div class="swal-detail-value">' + resp + '</div></div>' +
-                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-calendar"></i> Date</div><div class="swal-detail-value">' + formatDate(ev.date_ev) + '</div></div>' +
-                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-clock"></i> Horaires</div><div class="swal-detail-value">' + formatTime(ev.horaire_debut) + ' - ' + formatTime(ev.horaire_fin) + '</div></div>' +
-                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (ev.campus || 'calais').toLowerCase() + '">' + esc(ev.campus || 'N/A') + '</span></div></div>' +
-                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-pin"></i> Lieu</div><div class="swal-detail-value">' + esc(ev.lieu || 'N/A') + '</div></div>' +
-                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-euro-sign"></i> Financement BDE</div><div class="swal-detail-value">' + finHtml + '</div></div>' +
-                    '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-inbox"></i> Dépôt</div><div class="swal-detail-value">' + formatDatetime(ev.date_depot) + '</div></div>' +
+            return '<div class="swal-detail-content">' + logoHtml +
+                 '<div class="swal-detail-grid">' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-building"></i> Club</div><div class="swal-detail-value">' + esc(ev.nom_club || 'N/A') + '</div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-tag"></i> Type</div><div class="swal-detail-value">' + (ev.is_event == 1 ? 'Événement' : 'Activité') + '</div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-user"></i> Responsable</div><div class="swal-detail-value">' + resp + '</div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-calendar"></i> Date</div><div class="swal-detail-value">' + formatDate(ev.date_ev) + '</div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-clock"></i> Horaires</div><div class="swal-detail-value">' + formatTime(ev.horaire_debut) + ' - ' + formatTime(ev.horaire_fin) + '</div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (ev.campus || 'calais').toLowerCase() + '">' + esc(ev.campus || 'N/A') + '</span></div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-pin"></i> Lieu</div><div class="swal-detail-value">' + esc(ev.lieu || 'N/A') + '</div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-euro-sign"></i> Financement BDE</div><div class="swal-detail-value">' + finHtml + '</div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-inbox"></i> Dépôt</div><div class="swal-detail-value">' + formatDatetime(ev.date_depot) + '</div></div>' +
                 '</div>' +
                 (ev.description ? '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-align-left"></i> Description</div><div class="swal-detail-description">' + esc(ev.description) + '</div></div>' : '') +
                 filesHtml +
@@ -517,9 +565,16 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         document.querySelectorAll('.form-approve-event').forEach(function(form) {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
+
+                // Récupère le titre de l'événement depuis la carte parente
+                var card = form.closest('.validation-card-advanced');
+                var titleEl = card ? card.querySelector('.card-title-info h3') : null;
+                var evTitle = titleEl ? titleEl.textContent.trim() : 'cet événement';
+                evTitle = esc(evTitle);
+
                 SwalHelper.confirm(
-                    'Approuver cet événement ?',
-                    'L\'événement sera validé par le BDE.',
+                    'Approuver « ' + evTitle + ' » ?',
+                    'L\'événement « ' + evTitle + ' » sera validé.',
                     'Oui, approuver',
                     'Annuler'
                 ).then(function(result) {

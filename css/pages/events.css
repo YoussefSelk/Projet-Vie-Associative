@@ -117,9 +117,59 @@
 }
 
 .event-detail-header {
-  padding: 50px 40px;
+  padding: 60px 40px; /* Un peu plus d'espace pour respirer */
   text-align: center;
   color: white;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  display: flex; /* Force l'alignement propre */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px; /* Donne une taille fixe pour que le logo soit bien centré */
+  padding-right: 180px; /* espace réservé pour le logo à droite */
+}
+
+/* Logo du club repositionné à droite, net et responsive */
+.event-header-bg-logo {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 120px;
+    height: 120px;
+    object-fit: contain;
+    z-index: 5;              /* Au-dessus du fond mais derrière le texte principal si besoin */
+    pointer-events: none;
+    background: rgba(255,255,255,0.06);
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(2,6,23,0.18);
+    border: 1px solid rgba(255,255,255,0.08);
+    opacity: 1; /* visible et net */
+}
+
+/* On s'assure que le contenu texte reste au-dessus */
+.event-detail-header > div {
+    position: relative;
+    z-index: 10;
+}
+
+/* Mobile : réduire l'espace réservé et la taille du logo */
+@media (max-width: 760px) {
+  .event-detail-header { padding-right: 110px; }
+  .event-header-bg-logo {
+      right: 12px;
+      top: 12px;
+      width: 72px;
+      height: 72px;
+      padding: 6px;
+  }
+}
+
+@media (max-width: 420px) {
+  .event-detail-header { padding-right: 96px; }
+  .event-header-bg-logo { width: 64px; height: 64px; }
 }
 
 .event-date-large {
@@ -879,4 +929,61 @@
   #imagePreview {
     grid-template-columns: repeat(3, 1fr);
   }
+}
+
+/* Liste d'événements : affichage du logo à gauche du contenu */
+.events-grid .event-card .event-content {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.event-card-logo {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex: 0 0 64px;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.12);
+    border: 1px solid rgba(0,0,0,0.06);
+    background: #fff;
+}
+
+/* Conteneur principal du texte à côté du logo */
+.event-content-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+    .events-grid .event-card .event-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .event-card-logo {
+        width: 56px;
+        height: 56px;
+        margin-bottom: 8px;
+        align-self: start;
+    }
+}
+
+/* Type badge (Activité / Événement) */
+.type-badge {
+    display: inline-block;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 999px;
+    color: #fff;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+.type-badge.event { background: #2563eb; }    /* blue for events */
+.type-badge.activity { background: #6b7280; } /* gray for activities */
+
+/* Make badge compact on small screens */
+@media (max-width: 640px) {
+    .type-badge { font-size: 0.7rem; padding: 3px 6px; margin-left: 6px; }
 }

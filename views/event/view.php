@@ -53,31 +53,52 @@ $pageCss = ['shared', 'buttons', 'events'];
                 ?>
                 
                 <div class="event-detail-card">
-                    <div class="event-detail-header" style="background: linear-gradient(135deg, <?= $campusColor ?> 0%, <?= $campusColor ?>dd 100%);">
-                        <div class="event-date-large">
-                            <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
-                            <span class="month"><?php 
-                                $moisFr = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-                                $dateTs = strtotime($event['date_ev'] ?? 'now');
-                                echo $moisFr[date('n', $dateTs) - 1] . ' ' . date('Y', $dateTs);
-                            ?></span>
-                        </div>
-                        <h1><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h1>
-                        <div class="event-badges">
-                            <span class="badge badge-light">
-                                <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
-                            </span>
-                            <?php if (!empty($event['horaire_debut'])): ?>
-                            <span class="badge badge-light">
-                                <i class="fas fa-clock"></i> <?= htmlspecialchars($event['horaire_debut']) ?>
-                                <?php if (!empty($event['horaire_fin'])): ?> - <?= htmlspecialchars($event['horaire_fin']) ?><?php endif; ?>
-                            </span>
-                            <?php endif; ?>
-                            <?php if (!empty($event['lieu'])): ?>
-                            <span class="badge badge-light">
-                                <i class="fas fa-location-arrow"></i> <?= htmlspecialchars($event['lieu']) ?>
-                            </span>
-                            <?php endif; ?>
+                    <div class="event-detail-header" style="background: linear-gradient(135deg, <?= $campusColor ?> 0%, <?= $campusColor ?>dd 100%);">    
+                        <?php if (!empty($event['logo_club'])): ?>
+                            <?php 
+                                $logoPath = '/' . ltrim($event['logo_club'], '/'); 
+                                $logoEscaped = htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8');
+                                $alt = htmlspecialchars($event['nom_club'] ?? 'Logo du club', ENT_QUOTES, 'UTF-8');
+                            ?>
+                            <img src="<?= $logoEscaped ?>" class="event-header-bg-logo" alt="<?= $alt ?>" loading="lazy" />
+                        <?php endif; ?>
+
+                        <div style="width: 100%;">
+                            <div class="event-date-large">
+                                <span class="day" style="display: block; font-size: 3.5rem; font-weight: 800; line-height: 1;"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
+                                <span class="month" style="display: block; font-size: 1.3rem; margin-top: 5px;">
+                                    <?php 
+                                        $moisFr = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+                                        $dateTs = strtotime($event['date_ev'] ?? 'now');
+                                        echo $moisFr[date('n', $dateTs) - 1] . ' ' . date('Y', $dateTs);
+                                    ?>
+                                </span>
+                            </div>
+
+                            <h1 style="margin: 20px 0; font-size: 2.8rem;"><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h1>
+
+                            <p style="margin-bottom: 20px; font-weight: 600; font-size: 1.1rem;">
+                                <i class="fas fa-users"></i> <?= htmlspecialchars($event['nom_club'] ?? 'EILCook') ?>
+                            </p>
+
+                            <div class="event-badges" style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                <span class="badge badge-light">
+                                    <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
+                                </span>
+                                
+                                <?php if (!empty($event['horaire_debut'])): ?>
+                                    <span class="badge badge-light">
+                                        <i class="fas fa-clock"></i> <?= htmlspecialchars($event['horaire_debut']) ?>
+                                        <?php if (!empty($event['horaire_fin'])): ?> - <?= htmlspecialchars($event['horaire_fin']) ?><?php endif; ?>
+                                    </span>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($event['lieu'])): ?>
+                                    <span class="badge badge-light">
+                                        <i class="fas fa-location-arrow"></i> <?= htmlspecialchars($event['lieu']) ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     
@@ -109,56 +130,96 @@ $pageCss = ['shared', 'buttons', 'events'];
                              */
                             $est_autorise = ($user_permission > 2) || ($user_permission === 2 && $user_id_session === $id_tuteur_responsable);
 
-                            if ($est_autorise): 
-                        ?>
-                            <div class="event-section" style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                    <h3 style="color: #1e293b; margin: 0; font-size: 1.25rem;">
-                                        <i class="fas fa-file-signature" style="color: #64748b;"></i> Documentation & Photos
-                                    </h3>
-                                    <?php if ($user_permission === 2): ?>
+                            if ($est_autorise): ?>
+                                <div class="event-section" style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                                    
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                        <h3 style="color: #1e293b; margin: 0; font-size: 1.25rem;">
+                                            <i class="fas fa-folder-open" style="color: #64748b;"></i> Dossier Administratif & Technique
+                                        </h3>
                                         <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
-                                            <i class="fas fa-user-shield"></i> Espace Tuteur
+                                            <i class="fas fa-shield-alt"></i> Accès Réservé
                                         </span>
-                                    <?php endif; ?>
-                                </div>
-
-                                <?php if (!empty($event['rapport_event'])): ?>
-                                    <div class="mb-20">
-                                        <a href="<?= htmlspecialchars($event['rapport_event']) ?>" class="btn btn-primary" target="_blank">
-                                            <i class="fas fa-file-pdf"></i> 
-                                            Consulter le rapport d'événement
-                                        </a>
                                     </div>
-                                <?php else: ?>
-                                    <p class="text-muted mb-20">Le rapport n'a pas encore été déposé.</p>
-                                <?php endif; ?>
 
-                                <?php 
-                                $photos = !empty($event['images_event']) ? explode(',', $event['images_event']) : [];
-                                if (!empty($photos)): 
-                                ?>
-                                    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                                        <h4 style="font-size: 0.95rem; color: #475569; margin-bottom: 15px;">
-                                            <i class="fas fa-camera"></i> Photos souvenirs
+                                    <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+                                        <div style="background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; flex: 1; min-width: 150px;">
+                                            <small style="color: #64748b; text-transform: uppercase; font-weight: 700; font-size: 0.7rem;">Type de projet</small>
+                                            <p style="margin: 5px 0 0 0; font-weight: 600;"><?= ($event['type_event'] === 'activity') ? '🛠️ Activité' : '🎉 Événement' ?></p>
+                                        </div>
+                                        <?php if ($event['financement_bde']): ?>
+                                        <div style="background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; flex: 1; min-width: 150px;">
+                                            <small style="color: #64748b; text-transform: uppercase; font-weight: 700; font-size: 0.7rem;">Budget BDE</small>
+                                            <p style="margin: 5px 0 0 0; font-weight: 600; color: #059669;"><?= htmlspecialchars($event['montant']) ?> €</p>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div style="margin-bottom: 25px;">
+                                        <h4 style="font-size: 0.95rem; color: #475569; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">
+                                            Documents de planification
                                         </h4>
-                                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">
-                                            <?php foreach ($photos as $url): ?>
-                                                <div class="photo-item" style="aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                                    <a href="<?= htmlspecialchars(trim($url)) ?>" target="_blank">
-                                                        <img src="<?= htmlspecialchars(trim($url)) ?>" 
-                                                            alt="Souvenir" 
-                                                            style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;"
-                                                            onmouseover="this.style.transform='scale(1.1)'"
-                                                            onmouseout="this.style.transform='scale(1)'">
-                                                    </a>
-                                                </div>
-                                            <?php endforeach; ?>
+                                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                            <?php if (!empty($event['doc_organisation'])): ?>
+                                                <a href="<?= htmlspecialchars($event['doc_organisation']) ?>" class="btn btn-sm" style="background: #0ea5e9; color: white;" target="_blank">
+                                                    <i class="fas fa-file-invoice"></i> Dossier Organisation
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="btn btn-sm" style="background: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; cursor: not-allowed;">
+                                                    <i class="fas fa-times-circle"></i> Dossier non déposé
+                                                </span>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($event['affiche'])): ?>
+                                                <a href="<?= htmlspecialchars($event['affiche']) ?>" class="btn btn-sm" style="background: #f59e0b; color: white;" target="_blank">
+                                                    <i class="fas fa-image"></i> Affiche
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="btn btn-sm" style="background: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; cursor: not-allowed;">
+                                                    <i class="fas fa-times-circle"></i> Affiche non déposée
+                                                </span>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($event['fiche_sanitaire'])): ?>
+                                                <a href="<?= htmlspecialchars($event['fiche_sanitaire']) ?>" class="btn btn-sm" style="background: #ef4444; color: white;" target="_blank">
+                                                    <i class="fas fa-notes-medical"></i> Fiche Sanitaire
+                                                </a>
+                                            <?php else: ?>
+                                                <span class="btn btn-sm" style="background: #f1f5f9; color: #94a3b8; border: 1px dashed #cbd5e1; cursor: not-allowed;">
+                                                    <i class="fas fa-times-circle"></i> Fiche sanitaire non déposée
+                                                </span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
+
+                                    <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                                        <h4 style="font-size: 0.95rem; color: #475569; margin-bottom: 12px;">Bilan & Souvenirs</h4>
+                                        
+                                        <?php if (!empty($event['rapport_event'])): ?>
+                                            <div class="mb-20">
+                                                <a href="<?= htmlspecialchars($event['rapport_event']) ?>" class="btn btn-outline btn-sm" target="_blank">
+                                                    <i class="fas fa-file-pdf"></i> Rapport final
+                                                </a>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php 
+                                        $photos = !empty($event['images_event']) ? explode(',', $event['images_event']) : [];
+                                        if (!empty($photos)): 
+                                        ?>
+                                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px;">
+                                                <?php foreach ($photos as $url): ?>
+                                                    <div class="photo-item" style="aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                                        <a href="<?= htmlspecialchars(trim($url)) ?>" target="_blank">
+                                                            <img src="<?= htmlspecialchars(trim($url)) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                                        </a>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         
                         <div class="event-actions">
                             <a href="?page=event-list" class="btn btn-outline">

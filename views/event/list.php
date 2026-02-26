@@ -15,6 +15,7 @@
  */
 $pageTitle = 'Événements - EILCO';
 $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
+$user_permission = (int)($_SESSION['permission'] ?? 1);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -85,28 +86,45 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                 <span class="month"><?= $months_fr[$monthIndex] ?></span>
                             </div>
                             <div class="event-content">
-                                <p class="club-name">
-                                    <i class="fas fa-users"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club inconnu') ?>
-                                </p>
-                                
-                                <h3><?= htmlspecialchars($event['titre']) ?></h3>
-                                
-                                <div class="event-meta">
-                                    <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
-                                        <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
-                                    </span>
-                                    <?php if (!empty($event['horaire_debut'])): ?>
-                                        <span class="time">
-                                            <i class="fas fa-clock"></i> <?= htmlspecialchars($event['horaire_debut']) ?>
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-                                <?php if (!empty($event['description'])): ?>
-                                    <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 120)) ?>...</p>
+                                <?php if (!empty($event['logo_club'])): ?>
+                                    <?php
+                                        $rawLogo = $event['logo_club'];
+                                        $logoPath = preg_match('#^https?://#i', $rawLogo) ? $rawLogo : '/' . ltrim($rawLogo, '/');
+                                        $logoEscaped = htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8');
+                                        $alt = htmlspecialchars($event['nom_club'] ?? 'Logo du club', ENT_QUOTES, 'UTF-8');
+                                    ?>
+                                    <img src="<?= $logoEscaped ?>" alt="<?= $alt ?>" class="event-card-logo" loading="lazy" />
                                 <?php endif; ?>
-                                <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary">
-                                    <i class="fas fa-eye"></i> Voir détails
-                                </a>
+
+                                <div class="event-content-main">
+                                    <p class="club-name">
+                                        <i class="fas fa-users"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club inconnu') ?>
+                                    </p>
+                                    
+                                    <h3><?= htmlspecialchars($event['titre']) ?></h3>
+                                    
+                                    <div class="event-meta">
+                                        <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
+                                            <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
+                                        </span>
+                                        <?php if (!empty($event['type_event'])): ?>
+                                            <span class="type-badge <?= ($event['type_event'] === 'event') ? 'event' : 'activity' ?>">
+                                                <?= htmlspecialchars($event['type_event'] === 'event' ? 'Événement' : 'Activité') ?>
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if (!empty($event['horaire_debut'])): ?>
+                                            <span class="time">
+                                                <i class="fas fa-clock"></i> <?= htmlspecialchars($event['horaire_debut']) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php if (!empty($event['description'])): ?>
+                                        <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 120)) ?>...</p>
+                                    <?php endif; ?>
+                                    <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary">
+                                        <i class="fas fa-eye"></i> Voir détails
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>

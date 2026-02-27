@@ -653,30 +653,34 @@ class ClubController {
             redirect('index.php?page=club-list');
         }
         
-        // Récupérer les membres avec tous les détails
+        // Récupérer les membres avec tous les détails (incl. soutenance et tuteur via JOIN)
         $stmt = $this->db->prepare("
-            SELECT 
+            SELECT
+                mc.membre_id,
                 u.nom,
                 u.prenom,
                 u.mail,
                 u.promo,
-                mc.fonction,
-                t.nom as tuteur_nom,
-                t.prenom as tuteur_prenom
+                COALESCE(NULLIF(TRIM(mc.fonction), ''), 'Membre') AS fonction,
+                mc.soutenance,
+                CONCAT(t.prenom, ' ', t.nom) AS tuteur_fullname
             FROM membres_club mc
-            JOIN users u ON mc.membre_id = u.id
-            LEFT JOIN fiche_club fc ON mc.club_id = fc.club_id
-            LEFT JOIN users t ON fc.tuteur = t.id
+            JOIN  users u  ON u.id  = mc.membre_id
+            JOIN  fiche_club fc ON fc.club_id = mc.club_id
+            LEFT JOIN users t  ON t.id = CAST(fc.tuteur AS UNSIGNED)
             WHERE mc.club_id = ? AND mc.valide = 1
-            ORDER BY u.nom ASC
+            ORDER BY u.nom ASC, u.prenom ASC
         ");
         $stmt->execute([$club_id]);
         $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Récupérer le nom du tuteur
-        // Note: 'tuteur' is VARCHAR in DB, stores user ID as string
+        // Le tuteur est désormais extrait directement dans la requête principale (tuteur_fullname).
+        // On conserve néanmoins un fallback en cas de LEFT JOIN NULL.
         $tutor_name = '';
-        if (!empty($club['tuteur'])) {
+        if (!empty($members)) {
+            $tutor_name = trim($members[0]['tuteur_fullname'] ?? '');
+        }
+        if ($tutor_name === '' && !empty($club['tuteur'])) {
             $tutorStmt = $this->db->prepare("SELECT nom, prenom FROM users WHERE id = ?");
             $tutorStmt->execute([$club['tuteur']]);
             $tutor = $tutorStmt->fetch(PDO::FETCH_ASSOC);
@@ -687,40 +691,66 @@ class ClubController {
         
         // Générer le CSV avec BOM pour compatibilité Excel UTF-8
         $filename = 'membres_' . preg_replace('/[^a-zA-Z0-9]/', '_', $club['nom_club']) . '_' . date('Y-m-d') . '.csv';
-        
-        header('Content-Type: text/csv; charset=UTF-8');
+
+        // Nettoyage du buffer de sortie avant d'émettre les headers
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/csv; charset=UTF-16LE');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-cache, no-store, must-revalidate');
         header('Pragma: no-cache');
         header('Expires: 0');
-        
-        // BOM UTF-8 pour Excel
-        echo "\xEF\xBB\xBF";
-        
-        $output = fopen('php://output', 'w');
-        
+
+        // Étape 1 : construire le CSV UTF-8 en mémoire
+        $tmp = fopen('php://temp', 'r+b');
+
         // En-tête des colonnes
-        fputcsv($output, [
+        fputcsv($tmp, [
             'Nom',
             'Prénom',
             'Email',
-            'Promotion',
-            'Fonction',
+            'Promotion / Spécialité',
+            'Rôle',
+            'Soutenance',
             'Tuteur du club'
-        ], ';', '"', '\\'); // Point-virgule pour Excel français
-        
+        ], "\t", '"', "\0");
+
         // Lignes de données
         foreach ($members as $member) {
-            fputcsv($output, [
-                $member['nom'] ?? '',
-                $member['prenom'] ?? '',
-                $member['mail'] ?? '',
-                $member['promo'] ?? '',
-                $member['fonction'] ?? '',
-                $tutor_name
-            ], ';', '"', '\\');
+            $soutenance = !empty($member['soutenance']) ? 'Oui' : 'Non';
+            $memberTutor = trim($member['tuteur_fullname'] ?? '');
+            if ($memberTutor === '') {
+                $memberTutor = $tutor_name;
+            }
+            if ($memberTutor === ' ' || $memberTutor === '') {
+                $memberTutor = 'Non assigné';
+            }
+            $row = [
+                $member['nom']      ?? '',
+                $member['prenom']   ?? '',
+                $member['mail']     ?? '',
+                $member['promo']    ?? '',
+                $member['fonction'] ?? 'Membre',
+                $soutenance,
+                $memberTutor,
+            ];
+            $row = array_map(static function($v) {
+                return str_replace(["\r\n", "\r", "\n"], ' ', trim((string)$v));
+            }, $row);
+            fputcsv($tmp, $row, "\t", '"', "\0");
         }
-        
-        fclose($output);
+
+        // Étape 2 : lire le CSV UTF-8 depuis le buffer
+        rewind($tmp);
+        $csv = stream_get_contents($tmp);
+        fclose($tmp);
+
+        // Étape 3 : BOM UTF-16 LE + conversion UTF-8 → UTF-16 LE
+        // Excel (toutes versions, toutes locales) détecte automatiquement le BOM
+        // et interprète la tabulation comme séparateur de colonnes.
+        echo "\xFF\xFE" . mb_convert_encoding($csv, 'UTF-16LE', 'UTF-8');
         exit;
     }
 }

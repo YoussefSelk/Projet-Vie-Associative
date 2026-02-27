@@ -301,6 +301,74 @@ return [
     ],
     
     // ==========================================
+    // ROUTES EXPORT CSV (Tuteur et supérieur)
+    // ==========================================
+
+    'export' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'index',
+        'view' => '/export/index.php'
+    ],
+
+    'export-clubs' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportClubs',
+        'view' => null
+    ],
+
+    'export-club-members' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportClubMembers',
+        'view' => null
+    ],
+
+    'export-soutenance-members' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportSoutenanceMembers',
+        'view' => null
+    ],
+
+    'export-club-events' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportClubEvents',
+        'view' => null
+    ],
+
+    'export-events-period' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportEventsByPeriod',
+        'view' => null
+    ],
+
+    'export-past-events' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportPastEvents',
+        'view' => null
+    ],
+
+    'export-upcoming-events' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportUpcomingEvents',
+        'view' => null
+    ],
+
+    // ==========================================
     // ROUTES SUPER ADMIN (Permission 5 uniquement)
     // ==========================================
     

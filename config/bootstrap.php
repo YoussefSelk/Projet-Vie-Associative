@@ -32,9 +32,13 @@ define('UPLOADS_PATH', ROOT_PATH . '/uploads');
 // =============================================================================
 // DÉFINITION DE L'URL DE BASE
 // =============================================================================
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-define('BASE_URL', $protocol . '://' . $host);
+// Détection HTTPS proxy-agnostique : couvre HTTPS direct, nginx/Apache SSL termination,
+// CloudFlare et AWS ELB (même logique que Security::isHttps(), chargée plus tard).
+$isHttpsConn = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+    || (($_SERVER['HTTP_X_FORWARDED_SSL']   ?? '') === 'on')
+    || (($_SERVER['SERVER_PORT']            ?? '') == '443');
+define('BASE_URL', ($isHttpsConn ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
 
 // =============================================================================
 // DÉMARRAGE DU BUFFER DE SORTIE

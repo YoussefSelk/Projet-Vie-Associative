@@ -144,6 +144,30 @@ class Router
         try {
             $data = $controller->$method();
         } catch (\Throwable $e) {
+            // Toujours journaliser l'exception réelle pour faciliter le diagnostic
+            error_log(
+                '[Router] Exception dans ' . $controllerClass . '::' . $method . '() — '
+                . get_class($e) . ': ' . $e->getMessage()
+                . ' in ' . $e->getFile() . ':' . $e->getLine()
+            );
+
+            // Pour les requêtes AJAX, renvoyer JSON plutôt qu'une page HTML
+            if (
+                !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+            ) {
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                http_response_code(500);
+                header('Content-Type: application/json; charset=UTF-8');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Erreur interne du serveur.'
+                ]);
+                exit;
+            }
+
             ErrorHandler::renderHttpError(500, 'Erreur interne du serveur.');
             return;
         }

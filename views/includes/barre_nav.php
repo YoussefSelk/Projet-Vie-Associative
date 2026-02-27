@@ -93,6 +93,17 @@ $campuses = [
                 <?php endif; ?>
             </li>
             <?php endforeach; ?>
+
+            <!-- Export CSV – Tuteurs (2) et supérieur -->
+            <?php if ($isAuth_NAVBAR && $auth_permission_NAVBAR >= 2): ?>
+            <li class="nav-item">
+                <a href="?page=export" class="nav-link<?= (($_GET['page'] ?? '') === 'export') ? ' active' : '' ?>">
+                    <i class="fas fa-file-csv"></i>
+                    <span>Export CSV</span>
+                </a>
+            </li>
+            <?php endif; ?>
+
         </ul>
     </div>
 </nav>

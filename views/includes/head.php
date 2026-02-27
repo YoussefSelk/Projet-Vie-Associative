@@ -20,7 +20,13 @@
  */
 
 // Use BASE_URL from bootstrap or compute it
-$baseUrl = defined('BASE_URL') ? BASE_URL : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+$baseUrl = defined('BASE_URL') ? BASE_URL : (
+    ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+        || (($_SERVER['HTTP_X_FORWARDED_SSL']   ?? '') === 'on')
+        ? 'https' : 'http')
+    . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
+);
 
 // Current page URL for canonical
 $currentUrl = $baseUrl . ($_SERVER['REQUEST_URI'] ?? '/');
@@ -139,6 +145,7 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
         'admin' => 'pages/admin',
         'validation' => 'pages/validation',
         'errors' => 'pages/errors',
+        'export'     => 'pages/export',
     ];
     
     if (!empty($pageCss) && is_array($pageCss)): 
@@ -163,13 +170,17 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
          JAVASCRIPT
          ======================================== -->
     <!-- SweetAlert2 for beautiful alerts and confirmations -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.20/dist/sweetalert2.all.min.js"
+            integrity="sha384-6W5GbmA1e/krqeMofQ3ghXcfiCAF0UOhB5fh5Hp6BenD1NBQq4BFtyz4nAfOrryB"
+            crossorigin="anonymous"></script>
     
     <!-- SweetAlert2 Helper Functions -->
     <script src="<?= $baseUrl ?>/assets/js/sweetalert-helpers.js"></script>
     
     <!-- Chart.js for admin dashboards (deferred) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+            integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+            crossorigin="anonymous" defer></script>
     
     <!-- Search component (deferred) -->
     <script src="<?= $baseUrl ?>/assets/js/search.js" defer></script>

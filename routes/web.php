@@ -239,7 +239,7 @@ return [
     // ==========================================
     
     'pending-clubs' => [
-        'permission' => 4,
+        'permission' => 3,
         'auth' => true,
         'controller' => 'ValidationController',
         'method' => 'validateClub',

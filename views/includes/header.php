@@ -49,7 +49,8 @@ if(isset($_SESSION['id'])){
     $nb_events_admin = $row[0]['total'];
 
     // Compteur de clubs en attente de validation finale
-    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_tuteur = 1");
+    // Seuls les clubs ayant passé la validation BDE sont comptabilisés
+    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_bde = 1 AND validation_tuteur = 1");
     $req->execute();
     $row = $req->fetchAll();
     $nb_clubs_admin = $row[0]['total'];
@@ -58,12 +59,12 @@ if(isset($_SESSION['id'])){
     $nb_badge_admin = $nb_events_admin + $nb_clubs_admin;
 
     // Compteur de clubs en attente de validation tuteur
-    // Les admins voient tout, les tuteurs voient seulement leurs clubs
+    // Les admins voient tout (filtré par validation_bde = 1), les tuteurs voient seulement leurs clubs
     if (($_SESSION['permission'] ?? 0) == 5) {
-        $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE validation_tuteur IS NULL");
+        $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE validation_tuteur IS NULL AND validation_bde = 1");
         $req->execute();
     } else {
-        $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE (validation_tuteur IS NULL) AND tuteur = ?");
+        $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE (validation_tuteur IS NULL) AND validation_bde = 1 AND tuteur = ?");
         $req->execute([$_SESSION['id']]);
     }
     $row = $req->fetchAll();
@@ -83,6 +84,21 @@ if(isset($_SESSION['id'])){
     // Total des elements en attente pour le badge tuteur
     $nb_badge_tuteur = $nb_clubs_tuteur + $nb_events_tuteur;
 
+    // Compteur de clubs en attente de validation BDE (pour le badge BDE)
+    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND (validation_bde IS NULL OR validation_bde = 0)");
+    $req->execute();
+    $row = $req->fetchAll();
+    $nb_clubs_bde = $row[0]['total'];
+
+    // Compteur d'événements en attente de validation BDE
+    $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event WHERE (validation_finale IS NULL OR validation_finale = 0) AND (validation_bde IS NULL OR validation_bde = 0)");
+    $req->execute();
+    $row = $req->fetchAll();
+    $nb_events_bde = $row[0]['total'];
+
+    // Total des elements en attente pour le badge BDE
+    $nb_badge_bde = $nb_clubs_bde + $nb_events_bde;
+
     // Recuperer les informations de l'utilisateur connecte
     $q = $db->prepare("SELECT * FROM users WHERE id = ?");
     $q->execute([$_SESSION['id']]);
@@ -93,6 +109,7 @@ else {
     $is_membre_club = 0;
     $nb_badge_admin = 0;
     $nb_badge_tuteur = 0;
+    $nb_badge_bde = 0;
     $current_user = null;
 }
 ?>
@@ -283,11 +300,23 @@ else {
                     <button class="quick-action-item highlight" onclick="toggleQuickDropdown(this)">
                         <i class="fas fa-thumbs-up"></i>
                         <span>Validation BDE</span>
+                        <?php if ($nb_badge_bde > 0): ?>
+                            <span class="action-badge"><?= $nb_badge_bde ?></span>
+                        <?php endif; ?>
                         <i class="fas fa-chevron-down dropdown-arrow"></i>
                     </button>
                     <div class="quick-dropdown-menu">
+                        <a href="?page=pending-clubs" class="quick-dropdown-item">
+                            <i class="fas fa-building"></i> Valider les clubs
+                            <?php if ($nb_clubs_bde > 0): ?>
+                                <span class="action-badge"><?= $nb_clubs_bde ?></span>
+                            <?php endif; ?>
+                        </a>
                         <a href="?page=tutoring" class="quick-dropdown-item">
                             <i class="fas fa-calendar-check"></i> Valider les événements
+                            <?php if ($nb_events_bde > 0): ?>
+                                <span class="action-badge"><?= $nb_events_bde ?></span>
+                            <?php endif; ?>
                         </a>
                     </div>
                 </div>

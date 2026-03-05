@@ -99,4 +99,40 @@ class ClubMember {
         $stmt = $this->db->prepare("UPDATE membres_club SET valide = 1 WHERE club_id = ? AND membre_id = ?");
         return $stmt->execute([$club_id, $user_id]);
     }
-}
+
+    /**
+     * Récupère le rôle (fonction) d'un utilisateur dans un club
+     * Retourne la fonction si l'utilisateur est membre validé, null sinon
+     * 
+     * @param int $club_id Identifiant du club
+     * @param int $user_id Identifiant de l'utilisateur
+     * @return string|null La fonction de l'utilisateur ou null
+     */
+    public function getUserRoleInClub($club_id, $user_id) {
+        $stmt = $this->db->prepare("SELECT fonction FROM membres_club WHERE club_id = ? AND membre_id = ? AND valide = 1");
+        $stmt->execute([$club_id, $user_id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result['fonction'] : null;
+    }
+
+    /**
+     * Vérifie si un utilisateur peut modifier un club
+     * Seuls le Président, le Secrétaire du club ou un Administrateur global peuvent modifier
+     * 
+     * @param int $club_id Identifiant du club
+     * @param int $user_id Identifiant de l'utilisateur
+     * @param int $user_permission Niveau de permission global de l'utilisateur
+     * @return bool True si l'utilisateur peut modifier le club
+     */
+    public function canEditClub($club_id, $user_id, $user_permission) {
+        // Les admins (permission 4 ou 5) peuvent toujours modifier
+        if ((int)$user_permission >= 4) {
+            return true;
+        }
+
+        // Vérifier si l'utilisateur est Président ou Secrétaire du club
+        $role = $this->getUserRoleInClub($club_id, $user_id);
+        return in_array($role, ['Président', 'Secrétaire'], true);
+    }
+} 
+    

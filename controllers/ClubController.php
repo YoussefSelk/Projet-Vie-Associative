@@ -70,6 +70,18 @@ class ClubController {
             $new_description = trim($_POST['description'] ?? '');
             $new_campus = trim($_POST['campus'] ?? '');
 
+
+             // Vérification d'accès : seuls le Président, le Secrétaire du club ou un Admin (permission >= 4) peuvent modifier
+            if ($club_id) {
+                $memberModel = new ClubMember($this->db);
+                $current_user_id = $_SESSION['id'] ?? null;
+                $current_user_permission = $_SESSION['permission'] ?? 0;
+                if (!$memberModel->canEditClub((int)$club_id, (int)$current_user_id, (int)$current_user_permission)) {
+                    ErrorHandler::renderHttpError(403, "Accès refusé. Seuls le Président, le Secrétaire du club ou un Administrateur peuvent modifier ce club.");
+                    return [];
+                }
+            }
+
             if (!$club_id) {
                 $error_msg = "ID du club manquant.";
             } elseif (!$new_nom) {
@@ -391,15 +403,14 @@ class ClubController {
         if (!$club) {
             $error_msg = "Club non trouvé.";
         } else {
-            // Vérifier que l'utilisateur est bien un membre du bureau (Président ou Secrétaire)
-            $stmt = $this->db->prepare("
-                SELECT mc.fonction FROM membres_club mc
-                WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.fonction IN ('Président', 'Secrétaire')
-            ");
-            $stmt->execute([$club_id, $user_id]);
+            // Vérifier que l'utilisateur est Président/Secrétaire du club OU Admin (permission >= 4)
+            $memberModel = new ClubMember($this->db);
+            $current_user_permission = (int)($_SESSION['permission'] ?? 0);
+            $canEdit = $memberModel->canEditClub((int)$club_id, (int)$user_id, $current_user_permission);
             
-            if (!$stmt->fetch()) {
-                $error_msg = "Vous n'avez pas la permission de modifier ce club. Seuls le Président et le Secrétaire peuvent modifier le club.";
+            if (!$canEdit) {
+                ErrorHandler::renderHttpError(403, "Accès refusé. Seuls le Président, le Secrétaire du club ou un Administrateur peuvent modifier ce club.");
+                return [];
             } elseif ($club['validation_finale'] == 1) {
                 $error_msg = "Vous ne pouvez pas modifier un club déjà validé.";            
             } else {
@@ -541,6 +552,17 @@ class ClubController {
                         $tutor = null;
                     }
                 }
+
+                // Vérifier si l'utilisateur connecté peut modifier ce club
+                $canEditClub = false;
+                if (isset($_SESSION['id'])) {
+                    $memberModel = new ClubMember($this->db);
+                    $canEditClub = $memberModel->canEditClub(
+                        (int)$club_id,
+                        (int)$_SESSION['id'],
+                        (int)($_SESSION['permission'] ?? 0)
+                    );
+                }
             }
         }
         
@@ -548,6 +570,7 @@ class ClubController {
             'id' => $club_id,
             'club' => $club,
             'members' => $members,
+            'canEditClub' => $canEditClub ?? false,
             'events' => $events,
             'tutor' => $tutor,
             'error_msg' => $error_msg

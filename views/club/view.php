@@ -200,6 +200,11 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
                         <?php endif; ?>
                         
                         <div class="club-actions">
+                            <?php if (!empty($canEditClub)): ?>
+                                <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i> Modifier le club
+                                </a>
+                            <?php endif; ?>
                             <?php if (isset($_SESSION['id'])): ?>
                                 <a href="?page=event-list" class="btn btn-primary">
                                     <i class="fas fa-calendar-alt"></i> Voir les événements

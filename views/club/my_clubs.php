@@ -139,6 +139,11 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                             <?php endif; ?>
 
                             <div class="club-actions">
+                                <?php if (!empty($canEditClub)): ?>
+                                <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i> Modifier le club
+                                </a>
+                                <?php endif; ?>
                                 <?php if ($club['validation_finale'] != 1): ?>
                                     <!-- Club non validé: affiche Modifier et Supprimer -->
                                     <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-primary btn-sm">

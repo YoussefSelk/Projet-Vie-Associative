@@ -184,10 +184,12 @@ class ClubController {
                     if (!in_array($role, $allowedRoles, true)) {
                         $role = 'Membre';
                     }
+                    $soutenance_membre = intval($member['soutenance'] ?? 0) === 1 ? 1 : 0;
 
                     $normalizedMembers[] = [
                         'user_id' => $memberId,
-                        'role' => $role
+                        'role' => $role,
+                        'soutenance' => $soutenance_membre
                     ];
                 }
             }
@@ -273,11 +275,14 @@ class ClubController {
                         $club_id = $this->db->lastInsertId();
                         
                         // Add the creator as a member with their chosen role
+                        // Add the creator as a member with their chosen role
                         if ($creatorId) {
-                            $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
-                            $insertStmt->execute([$club_id, $creatorId, $creator_role]);
+                            // CORRECTION : On remplace le '0' par un '?' et on passe la variable $soutenance
+                            $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, ?, 1)");
+                            $insertStmt->execute([$club_id, $creatorId, $creator_role, $soutenance]);
                         }
                         
+                        // Add selected members
                         // Add selected members
                         if (!empty($normalizedMembers)) {
                             foreach ($normalizedMembers as $member) {
@@ -287,9 +292,15 @@ class ClubController {
                                 // Check if member already exists
                                 $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
                                 $checkStmt->execute([$club_id, $memberId]);
+                                
                                 if (!$checkStmt->fetch()) {
-                                    $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
-                                    $insertStmt->execute([$club_id, $memberId, $member['role']]);
+                                    // CORRECTION : Le paramètre dynamique pour la soutenance du membre
+                                    $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, ?, 1)");
+                                    
+                                    // On s'assure que si la valeur n'existe pas, on force 0
+                                    $valeur_soutenance = intval($member['soutenance'] ?? 0) === 1 ? 1 : 0; 
+                                    
+                                    $insertStmt->execute([$club_id, $memberId, $member['role'], $valeur_soutenance]);
                                 }
                             }
                         }
@@ -416,7 +427,7 @@ class ClubController {
             } else {
                 // Récupérer les membres actuels du club (sauf le Président)
                 $currentMembers = $this->db->prepare("
-                    SELECT u.id, u.nom, u.prenom, mc.fonction 
+                    SELECT u.id, u.nom, u.prenom, mc.fonction, mc.soutenance 
                     FROM membres_club mc 
                     INNER JOIN users u ON mc.membre_id = u.id 
                     WHERE mc.club_id = ? AND mc.fonction != 'Président'
@@ -475,8 +486,9 @@ class ClubController {
                                             $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
                                             $checkStmt->execute([$club_id, $memberId]);
                                             if (!$checkStmt->fetch()) {
-                                                $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
-                                                $insertStmt->execute([$club_id, $memberId, $member['role'] ?? 'Membre']);
+                                                $soutenance_membre = intval($member['soutenance'] ?? 0) === 1 ? 1 : 0;
+                                                $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, ?, 1)");
+                                                $insertStmt->execute([$club_id, $memberId, $member['role'] ?? 'Membre', $soutenance_membre]);
                                             }
                                         }
                                     }

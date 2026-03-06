@@ -137,6 +137,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                                 <option value="Responsable Communication" <?= ($member['fonction'] == 'Responsable Communication') ? 'selected' : '' ?>>Responsable Communication</option>
                                                 <option value="Responsable Événements" <?= ($member['fonction'] == 'Responsable Événements') ? 'selected' : '' ?>>Responsable Événements</option>
                                             </select>
+                                            <label class="form-check" style="margin: 0; white-space: nowrap;">
+                                                <input type="checkbox" name="members[<?= $index ?>][soutenance]" value="1" <?= (!empty($member['soutenance'])) ? 'checked' : '' ?>>
+                                                <span>Soutenance</span>
+                                            </label>
                                             <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -177,6 +181,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                     <option value="Responsable Communication">Responsable Communication</option>
                                     <option value="Responsable Événements">Responsable Événements</option>
                                 </select>
+                                <label class="form-check" style="margin: 0; white-space: nowrap;">
+                                    <input type="checkbox" name="members[${memberIndex}][soutenance]" value="1">
+                                    <span>Soutenance</span>
+                                </label>
                                 <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">
                                     <i class="fas fa-trash"></i>
                                 </button>

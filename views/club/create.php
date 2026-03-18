@@ -164,6 +164,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                     <option value="Charge d'événement / communication" selected>Charge d'événement / communication</option>
                                     <option value="Membre">Membre</option>
                                 </select>
+                                <div id="creatorSoutenanceContainer" style="margin-top: 10px;">
+                                    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:500;">
+                                        <input type="checkbox" name="creator_soutenance" id="creatorSoutenance" value="1">
+                                        <i class="fas fa-graduation-cap" style="color:#6366f1;"></i> Soutenance
+                                    </label>
+                                </div>
                                 <small class="text-muted"><i class="fas fa-info-circle"></i> Vous serez automatiquement ajouté avec ce rôle.</small>
                             </div>
                             
@@ -379,6 +385,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
             }
             syncRoleDropdown();
 
+            // Masquer/afficher la case soutenance du créateur selon son rôle
+            var creatorSoutenanceContainer = document.getElementById('creatorSoutenanceContainer');
+            if (creatorSoutenanceContainer) {
+                if (creatorRoleSelect.value === 'Membre') {
+                    creatorSoutenanceContainer.style.display = 'none';
+                }
+            }
+
             creatorRoleSelect.addEventListener('change', function () {
                 // Libérer l'ancien rôle unique du créateur
                 if (creatorUniqueRole) {
@@ -390,6 +404,15 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 if (UNIQUE_ROLES.indexOf(newRole) !== -1) {
                     usedUniqueRoles[newRole] = true;
                     creatorUniqueRole = newRole;
+                }
+                // Masquer/afficher la case soutenance du créateur
+                if (creatorSoutenanceContainer) {
+                    if (newRole === 'Membre') {
+                        creatorSoutenanceContainer.style.display = 'none';
+                        document.getElementById('creatorSoutenance').checked = false;
+                    } else {
+                        creatorSoutenanceContainer.style.display = '';
+                    }
                 }
                 syncRoleDropdown();
                 updateRequiredRoles();

@@ -187,11 +187,19 @@ return [
     // ==========================================
     
     'club-list' => [
-        'permission' => 2,
+        'permission' => 1,
         'auth' => true,
         'controller' => 'ClubController',
         'method' => 'listClubs',
         'view' => '/club/list.php'
+    ],
+
+    'clubs-browse' => [
+        'permission' => null,
+        'auth' => false,
+        'controller' => 'ClubController',
+        'method' => 'browseClubs',
+        'view' => '/club/browse.php'
     ],
 
     'my-clubs' => [
@@ -227,7 +235,7 @@ return [
     ],
     
     'export-members' => [
-        'permission' => 3,
+        'permission' => 2,
         'auth' => true,
         'controller' => 'ClubController',
         'method' => 'exportMembers',

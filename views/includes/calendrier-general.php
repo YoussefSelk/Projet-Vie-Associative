@@ -19,7 +19,7 @@ $campus_colors = [
 ?>
 
 <!-- Calendar Component - AJAX Powered -->
-<div class="calendar-component" id="calendarApp" data-logged-in="<?= $user_id ? 'true' : 'false' ?>">
+<div class="calendar-component" id="calendarApp" data-logged-in="<?= $user_id ? 'true' : 'false' ?>" data-csrf="<?= htmlspecialchars(Security::generateCsrfToken(), ENT_QUOTES, 'UTF-8') ?>">
 
     <div class="calendar-title">
         <h2><i class="fas fa-calendar-alt"></i> Programme associatif du mois</h2>

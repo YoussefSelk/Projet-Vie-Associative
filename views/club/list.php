@@ -33,8 +33,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
         <div class="page-container">
             <div class="page-header">
                 <div class="header-center">
-                    <h1><i class="fas fa-building"></i> Gestion des clubs</h1>
-                    <p class="subtitle">Modifier et gérer les clubs de l'EILCO</p>
+                    <?php if (!empty($is_tuteur_only)): ?>
+                        <h1><i class="fas fa-chalkboard-teacher"></i> Mes clubs tutorés</h1>
+                        <p class="subtitle">Clubs dont vous êtes le tuteur référent</p>
+                    <?php else: ?>
+                        <h1><i class="fas fa-building"></i> Gestion des clubs</h1>
+                        <p class="subtitle">Modifier et gérer les clubs de l'EILCO</p>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -129,6 +134,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                             </select>
                         </div>
 
+                        <?php if (empty($is_tuteur_only)): ?>
                         <div class="filter-item filter-item-select">
                             <label><i class="fas fa-user-shield"></i> Tuteur</label>
                             <select id="tuteurFilter" class="filter-select">
@@ -138,6 +144,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                        <?php else: ?>
+                        <input type="hidden" id="tuteurFilter" value="">
+                        <?php endif; ?>
                         
                         <div class="filter-item filter-item-select">
                             <label><i class="fas fa-tag"></i> Type</label>
@@ -212,17 +221,19 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                                             <a href="?page=club-view&id=<?= $c['club_id'] ?>" class="action-btn view" title="Voir">
                                                 <i class="fa-regular fa-eye"></i>
                                             </a>
-                                            
-                                            <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
-                                            <form method="POST">
-                                                <?= Security::csrfField() ?>
-                                                <input type="hidden" name="club" value="<?= htmlspecialchars($c['nom_club']) ?>">
-                                                <button type="submit" class="action-btn edit" title="Modifier">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                            </form>
+
+                                            <?php if (empty($is_tuteur_only)): ?>
+                                                <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
+                                                <form method="POST">
+                                                    <?= Security::csrfField() ?>
+                                                    <input type="hidden" name="club" value="<?= htmlspecialchars($c['nom_club']) ?>">
+                                                    <button type="submit" class="action-btn edit" title="Modifier">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                </form>
+                                                <?php endif; ?>
                                             <?php endif; ?>
-                                            
+
                                             <a href="?page=export-members&club_id=<?= $c['club_id'] ?>" class="action-btn export" title="Exporter membres">
                                                 <i class="fas fa-file-csv"></i>
                                             </a>

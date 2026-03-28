@@ -42,25 +42,55 @@ class ClubController {
      * 
      * @return array Données pour la vue
      */
+    public function browseClubs() {
+        $stmt = $this->db->prepare("
+            SELECT fc.*, COUNT(mc.membre_id) AS membres_count
+            FROM fiche_club fc
+            LEFT JOIN membres_club mc ON mc.club_id = fc.club_id AND mc.valide = 1
+            WHERE fc.validation_finale = 1
+            GROUP BY fc.club_id
+            ORDER BY fc.nom_club ASC
+        ");
+        $stmt->execute();
+        $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return ['clubs' => $clubs];
+    }
+
     public function listClubs() {
-        checkPermission(2); // Tuteurs (2), BDE (3) et admins (4+) peuvent voir tous les clubs
-        
-        $clubs = $this->clubModel->getAllValidatedClubs();
+        checkPermission(2);
+
+        $user_id = (int)($_SESSION['id'] ?? 0);
+        $userPermission = (int)($_SESSION['permission'] ?? 0);
+        $isTuteurOnly = ($userPermission === 2);
+
+        // Tuteurs : seulement leurs clubs. BDE/Admin : tous les clubs validés.
+        if ($isTuteurOnly) {
+            $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE validation_finale = 1 AND tuteur = ? ORDER BY nom_club ASC");
+            $stmt->execute([$user_id]);
+            $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $clubs = $this->clubModel->getAllValidatedClubs();
+        }
+
         $req_club = null;
         $update_msg = '';
         $error_msg = '';
         $success_msg = '';
 
-        // Recherche d'un club par nom
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['club'])) {
+        // Recherche d'un club par nom (BDE/Admin uniquement)
+        if (!$isTuteurOnly && $_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['club'])) {
             $club = $this->clubModel->getClubByName($_POST['club']);
             if ($club) {
                 $req_club = $club;
             }
         }
 
-        $stmt = $this->db->query("SELECT id, nom, prenom FROM users WHERE permission = 2 ORDER BY nom ASC");
-        $tuteurs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $tuteurs = [];
+        if (!$isTuteurOnly) {
+            $stmt = $this->db->query("SELECT id, nom, prenom FROM users WHERE permission = 2 ORDER BY nom ASC");
+            $tuteurs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         // Mise à jour d'un club
         if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_club'])) {
@@ -98,12 +128,13 @@ class ClubController {
         }
 
         return [
-            'clubs' => $clubs,
-            'tuteurs' => $tuteurs,
-            'req_club' => $req_club,
-            'error_msg' => $error_msg,
-            'success_msg' => $success_msg,
-            'update_msg' => $update_msg
+            'clubs'         => $clubs,
+            'tuteurs'       => $tuteurs,
+            'req_club'      => $req_club,
+            'error_msg'     => $error_msg,
+            'success_msg'   => $success_msg,
+            'update_msg'    => $update_msg,
+            'is_tuteur_only' => $isTuteurOnly,
         ];
     }
 
@@ -215,8 +246,10 @@ class ClubController {
                         $file = $_FILES['logo'];
                         $allowed_types = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
                         $max_size = 2 * 1024 * 1024; // 2MB
-                        
-                        if (!in_array($file['type'], $allowed_types)) {
+                        $finfo_logo = new \finfo(FILEINFO_MIME_TYPE);
+                        $detected_logo_mime = $finfo_logo->file($file['tmp_name']);
+
+                        if (!in_array($detected_logo_mime, $allowed_types)) {
                             $error_msg = "Format de logo non supporté. Utilisez PNG, JPG, GIF ou WebP.";
                         } elseif ($file['size'] > $max_size) {
                             $error_msg = "Le logo est trop volumineux. Taille maximale : 2 Mo.";
@@ -375,7 +408,9 @@ class ClubController {
     public function editClub() {
         $user_id = $_SESSION['id'] ?? null;
         $club_id = $_GET['id'] ?? null;
-        
+        $userPermission = (int)($_SESSION['permission'] ?? 0);
+        $isAdmin = $userPermission >= 4;
+
         if (!$user_id) {
             redirect('index.php?page=login');
         }
@@ -387,6 +422,9 @@ class ClubController {
         $club = $this->clubModel->getClubById($club_id);
         $error_msg = '';
         $success_msg = '';
+        $currentMembers = [];
+        $users = [];
+        $is_admin_force = false;
 
         if (!$club) {
             $error_msg = "Club non trouvé.";
@@ -397,32 +435,37 @@ class ClubController {
                 WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.fonction IN ('Président', 'Secrétaire')
             ");
             $stmt->execute([$club_id, $user_id]);
-            
-            if (!$stmt->fetch()) {
+            $isBureau = (bool)$stmt->fetch();
+
+            // Les admins (≥4) peuvent modifier n'importe quel club, validé ou non
+            if (!$isBureau && !$isAdmin) {
                 $error_msg = "Vous n'avez pas la permission de modifier ce club. Seuls le Président et le Secrétaire peuvent modifier le club.";
-            } elseif ($club['validation_finale'] == 1) {
-                $error_msg = "Vous ne pouvez pas modifier un club déjà validé.";            
+            } elseif ($club['validation_finale'] == 1 && !$isAdmin) {
+                $error_msg = "Vous ne pouvez pas modifier un club déjà validé.";
             } else {
+                // Flag : admin forçant la modification d'un club déjà validé
+                $is_admin_force = $isAdmin && ($club['validation_finale'] == 1);
+
                 // Récupérer les membres actuels du club (sauf le Président)
-                $currentMembers = $this->db->prepare("
-                    SELECT u.id, u.nom, u.prenom, mc.fonction 
-                    FROM membres_club mc 
-                    INNER JOIN users u ON mc.membre_id = u.id 
+                $memberStmt = $this->db->prepare("
+                    SELECT u.id, u.nom, u.prenom, mc.fonction
+                    FROM membres_club mc
+                    INNER JOIN users u ON mc.membre_id = u.id
                     WHERE mc.club_id = ? AND mc.fonction != 'Président'
                 ");
-                $currentMembers->execute([$club_id]);
-                $currentMembers = $currentMembers->fetchAll(PDO::FETCH_ASSOC);
-                
+                $memberStmt->execute([$club_id]);
+                $currentMembers = $memberStmt->fetchAll(PDO::FETCH_ASSOC);
+
                 // Récupérer tous les utilisateurs disponibles (sauf l'utilisateur actuel)
                 $stmtUsers = $this->db->prepare("
-                    SELECT id, nom, prenom, mail, promo 
-                    FROM users 
+                    SELECT id, nom, prenom, mail, promo
+                    FROM users
                     WHERE id != ?
                     ORDER BY nom ASC, prenom ASC
                 ");
                 $stmtUsers->execute([(int)$user_id]);
                 $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
-                
+
                 // Traiter la soumission du formulaire
                 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_club'])) {
                     $nom_club = trim($_POST['nom_club'] ?? '');
@@ -436,7 +479,6 @@ class ClubController {
                     } elseif (!in_array($campus, ["Calais", "Longuenesse", "Dunkerque", "Boulogne"])) {
                         $error_msg = "Campus invalide.";
                     } else {
-                        // Vérifier que le nouveau nom n'existe pas déjà (sauf pour ce club)
                         if ($this->clubModel->clubNameExists($nom_club, $club_id)) {
                             $error_msg = "Un club avec ce nom existe déjà.";
                         } else {
@@ -447,20 +489,19 @@ class ClubController {
                                 'campus' => $campus
                             ];
 
-                            // Mettre à jour le club et réinitialiser la validation
-                            if ($this->clubModel->updateClub($club_id, $data, true)) {
-                                // Tâche 5: Supprimer tous les membres existants pour éviter les doublons
-                                // Ne pas supprimer le Président (créateur)
+                            // Admin : ne pas réinitialiser la validation (modification directe)
+                            // Utilisateur normal : réinitialise la validation pour resoumission
+                            $resetValidation = !$isAdmin;
+
+                            if ($this->clubModel->updateClub($club_id, $data, $resetValidation)) {
+                                // Supprimer tous les membres non-Président puis réinsérer
                                 $deleteStmt = $this->db->prepare("DELETE FROM membres_club WHERE club_id = ? AND fonction != 'Président'");
                                 $deleteStmt->execute([$club_id]);
-                                
-                                // Réinsérer les membres mis à jour
+
                                 if (!empty($members)) {
                                     foreach ($members as $member) {
                                         $memberId = !empty($member['user_id']) ? intval($member['user_id']) : null;
-                                        
                                         if ($memberId && $memberId != $user_id) {
-                                            // Vérifier que le membre n'existe pas déjà (double sécurité)
                                             $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
                                             $checkStmt->execute([$club_id, $memberId]);
                                             if (!$checkStmt->fetch()) {
@@ -470,8 +511,13 @@ class ClubController {
                                         }
                                     }
                                 }
-                                
-                                redirect('index.php?page=my-clubs&success=1');
+
+                                if ($isAdmin) {
+                                    $_SESSION['flash_success'] = 'Modification administrateur enregistrée avec succès.';
+                                    redirect('index.php?page=club-view&id=' . $club_id);
+                                } else {
+                                    redirect('index.php?page=my-clubs&success=1');
+                                }
                             } else {
                                 $error_msg = "Erreur lors de la modification du club.";
                             }
@@ -482,11 +528,13 @@ class ClubController {
         }
 
         return [
-            'club' => $club,
-            'error_msg' => $error_msg,
-            'success_msg' => $success_msg,
-            'currentMembers' => $currentMembers ?? [],
-            'users' => $users ?? []
+            'club'           => $club,
+            'error_msg'      => $error_msg,
+            'success_msg'    => $success_msg,
+            'currentMembers' => $currentMembers,
+            'users'          => $users,
+            'is_admin_force' => $is_admin_force,
+            'is_admin'       => $isAdmin,
         ];
     }
 
@@ -640,17 +688,24 @@ class ClubController {
      * @return void (sortie directe du fichier CSV)
      */
     public function exportMembers() {
-        checkPermission(3);
-        
+        checkPermission(2);
+
+        $user_id = (int)($_SESSION['id'] ?? 0);
+        $userPermission = (int)($_SESSION['permission'] ?? 0);
         $club_id = $_GET['club_id'] ?? null;
-        
+
         if (!$club_id) {
             redirect('index.php?page=club-list');
         }
-        
+
         $club = $this->clubModel->getClubById($club_id);
         if (!$club) {
             redirect('index.php?page=club-list');
+        }
+
+        // Tuteurs : vérifier que ce club leur est bien assigné
+        if ($userPermission === 2 && (string)($club['tuteur'] ?? '') !== (string)$user_id) {
+            ErrorHandler::renderHttpError(403, "Vous n'êtes pas le tuteur de ce club.");
         }
         
         // Récupérer les membres avec tous les détails (incl. soutenance et tuteur via JOIN)

@@ -55,7 +55,7 @@ $pageCss = ['shared', 'buttons', 'calendar', 'home'];
                             <i class="fas fa-calendar-alt"></i>
                             Voir les événements
                         </a>
-                        <a href="?page=club-list" class="hero-btn hero-btn-secondary">
+                        <a href="?page=clubs-browse" class="hero-btn hero-btn-secondary">
                             <i class="fas fa-users"></i>
                             Explorer les clubs
                         </a>

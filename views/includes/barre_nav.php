@@ -94,6 +94,16 @@ $campuses = [
             </li>
             <?php endforeach; ?>
 
+            <!-- Découvrir les clubs – utilisateurs connectés uniquement -->
+            <?php if ($isAuth_NAVBAR && $auth_permission_NAVBAR >= 1): ?>
+            <li class="nav-item">
+                <a href="?page=clubs-browse" class="nav-link<?= (($_GET['page'] ?? '') === 'clubs-browse') ? ' active' : '' ?>">
+                    <i class="fas fa-users"></i>
+                    <span>Clubs</span>
+                </a>
+            </li>
+            <?php endif; ?>
+
             <!-- Export CSV – Tuteurs (2) et supérieur -->
             <?php if ($isAuth_NAVBAR && $auth_permission_NAVBAR >= 2): ?>
             <li class="nav-item">

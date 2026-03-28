@@ -52,7 +52,7 @@ $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
                         <i class="fas fa-calendar-alt"></i>
                         Voir les événements
                     </a>
-                    <a href="?page=club-list" class="hero-btn">
+                    <a href="?page=clubs-browse" class="hero-btn">
                         <i class="fas fa-users"></i>
                         Découvrir les clubs
                     </a>
@@ -124,9 +124,9 @@ $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
                                                 <div class="month"><?= $months_fr[date('n', $date) - 1] ?></div>
                                             </div>
                                             <div class="event-details">
-                                                <h4><?= htmlspecialchars(html_entity_decode($event['titre'], ENT_QUOTES, 'UTF-8')) ?></h4>
+                                                <h4><?= htmlspecialchars($event['titre'], ENT_QUOTES, 'UTF-8') ?></h4>
                                                 <p>
-                                                    <i class="fas fa-building"></i> <?= htmlspecialchars(html_entity_decode($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8')) ?>
+                                                    <i class="fas fa-building"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?>
                                                     &bull;
                                                     <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus']) ?>
                                                 </p>
@@ -167,8 +167,8 @@ $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
                                             <div class="month"><?= $months_fr[date('n', $date) - 1] ?></div>
                                         </div>
                                         <div class="event-details">
-                                            <h4><?= htmlspecialchars(html_entity_decode($event['titre'], ENT_QUOTES, 'UTF-8')) ?></h4>
-                                            <p><i class="fas fa-building"></i> <?= htmlspecialchars(html_entity_decode($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8')) ?></p>
+                                            <h4><?= htmlspecialchars($event['titre'], ENT_QUOTES, 'UTF-8') ?></h4>
+                                            <p><i class="fas fa-building"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?></p>
                                         </div>
                                         <span class="event-badge recommended">
                                             <i class="fas fa-star"></i> Recommandé
@@ -197,7 +197,7 @@ $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
                                                 <i class="fas fa-building"></i>
                                             </div>
                                             <div class="club-details">
-                                                <h4><?= htmlspecialchars(html_entity_decode($club['nom_club'], ENT_QUOTES, 'UTF-8')) ?></h4>
+                                                <h4><?= htmlspecialchars($club['nom_club'], ENT_QUOTES, 'UTF-8') ?></h4>
                                                 <p><i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($club['campus']) ?></p>
                                             </div>
                                         </a>

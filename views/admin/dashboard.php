@@ -18,6 +18,7 @@
  * 
  * @package Views/Admin
  */
+$pageTitle = 'Tableau de bord - Administration EILCO';
 $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
 ?>
 <!DOCTYPE html>
@@ -156,11 +157,11 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
                             <?php if (!empty($recent_activities)): ?>
                                 <?php foreach ($recent_activities as $activity): ?>
                                     <div class="activity-item">
-                                        <div class="activity-icon <?= $activity['type'] ?>">
+                                        <div class="activity-icon <?= htmlspecialchars($activity['type'], ENT_QUOTES, 'UTF-8') ?>">
                                             <i class="fas <?= $activity['type'] === 'club' ? 'fa-building' : 'fa-calendar' ?>"></i>
                                         </div>
                                         <div class="activity-content">
-                                            <h4><?= html_entity_decode(htmlspecialchars_decode($activity['title'] ?? 'Sans titre')) ?></h4>
+                                            <h4><?= htmlspecialchars($activity['title'] ?? 'Sans titre', ENT_QUOTES, 'UTF-8') ?></h4>
                                             <p>
                                                 <?= $activity['type'] === 'club' ? 'Nouveau club' : 'Nouvel événement' ?>
                                                 - <?= htmlspecialchars($activity['campus'] ?? '') ?>
@@ -412,9 +413,9 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
             new Chart(clubsByCampusCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: <?= json_encode($campusLabels) ?>,
+                    labels: <?= json_encode($campusLabels, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                     datasets: [{
-                        data: <?= json_encode($campusData) ?>,
+                        data: <?= json_encode($campusData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                         backgroundColor: campusColors,
                         borderWidth: 0
                     }]
@@ -453,10 +454,10 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
             new Chart(eventsByMonthCtx, {
                 type: 'bar',
                 data: {
-                    labels: <?= json_encode($monthLabels) ?>,
+                    labels: <?= json_encode($monthLabels, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                     datasets: [{
                         label: 'Événements',
-                        data: <?= json_encode($monthData) ?>,
+                        data: <?= json_encode($monthData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                         backgroundColor: colors.primary,
                         borderRadius: 6
                     }]
@@ -505,9 +506,9 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
             new Chart(usersByRoleCtx, {
                 type: 'pie',
                 data: {
-                    labels: <?= json_encode($roleLabels) ?>,
+                    labels: <?= json_encode($roleLabels, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                     datasets: [{
-                        data: <?= json_encode($roleData) ?>,
+                        data: <?= json_encode($roleData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                         backgroundColor: [colors.info, colors.success, colors.warning, colors.danger, colors.purple],
                         borderWidth: 0
                     }]

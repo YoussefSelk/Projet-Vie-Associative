@@ -31,8 +31,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
     <main>
         <div class="page-container">
             <div class="page-header">
-                <h1><i class="fas fa-edit"></i> Modifier ma demande de club</h1>
-                <p class="subtitle">Mettez à jour les informations de votre club</p>
+                <?php if (!empty($is_admin)): ?>
+                    <h1><i class="fas fa-shield-alt"></i> Modification administrateur</h1>
+                    <p class="subtitle">Modification directe du club — les validations ne seront pas réinitialisées</p>
+                <?php else: ?>
+                    <h1><i class="fas fa-edit"></i> Modifier ma demande de club</h1>
+                    <p class="subtitle">Mettez à jour les informations de votre club</p>
+                <?php endif; ?>
             </div>
 
             <?php if (!empty($error_msg)): ?>
@@ -47,8 +52,17 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 </div>
             <?php endif; ?>
 
-            <?php if ($club): ?>
+            <?php if ($club && empty($error_msg)): ?>
                 <div class="edit-container">
+                    <?php if (!empty($is_admin_force)): ?>
+                    <div class="warning-box" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+                        <h5><i class="fas fa-exclamation-triangle" style="color:#e0a800;"></i> Modification forcée — Club validé</h5>
+                        <p>
+                            Vous modifiez un club <strong>déjà validé</strong> en tant qu'administrateur.
+                            Le statut de validation du club sera <strong>conservé</strong> (il ne repassera pas en attente).
+                        </p>
+                    </div>
+                    <?php elseif (empty($is_admin)): ?>
                     <div class="warning-box">
                         <h5><i class="fas fa-info-circle"></i> Information importante</h5>
                         <p>
@@ -56,16 +70,17 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                             Un administrateur et un tuteur examineront à nouveau votre demande.
                         </p>
                     </div>
+                    <?php endif; ?>
 
-                    <form method="POST">
+                    <form method="POST" id="editClubForm">
                         <?= Security::csrfField() ?>
                         <div class="form-group">
                             <label for="nom_club">Nom du club <span style="color: red;">*</span></label>
-                            <input 
-                                type="text" 
-                                id="nom_club" 
-                                name="nom_club" 
-                                value="<?= htmlspecialchars($club['nom_club'] ?? '') ?>" 
+                            <input
+                                type="text"
+                                id="nom_club"
+                                name="nom_club"
+                                value="<?= htmlspecialchars($club['nom_club'] ?? '') ?>"
                                 required
                                 placeholder="Entrez le nom de votre club"
                             >
@@ -188,19 +203,87 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                         </script>
 
                         <div class="form-actions">
-                            <a href="?page=my-clubs" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Retour
-                            </a>
-                            <button type="submit" name="update_club" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Enregistrer et resoummettre
-                            </button>
+                            <?php if (!empty($is_admin)): ?>
+                                <a href="?page=club-view&id=<?= $club['club_id'] ?>" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Retour au club
+                                </a>
+                                <button type="button" class="btn btn-primary" id="adminSubmitBtn">
+                                    <i class="fas fa-save"></i> Enregistrer (Admin)
+                                </button>
+                            <?php else: ?>
+                                <a href="?page=my-clubs" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Retour
+                                </a>
+                                <button type="submit" name="update_club" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Enregistrer et resoummettre
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </form>
+                </div>
+            <?php elseif ($club && !empty($error_msg)): ?>
+                <!-- Erreur non-admin : afficher uniquement le bouton retour -->
+                <div style="text-align:center; margin-top: 2rem;">
+                    <a href="?page=my-clubs" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour à mes clubs
+                    </a>
                 </div>
             <?php endif; ?>
         </div>
     </main>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
+
+    <?php if (!empty($is_admin)): ?>
+    <script>
+    document.getElementById('adminSubmitBtn').addEventListener('click', function () {
+        <?php if (!empty($is_admin_force)): ?>
+        Swal.fire({
+            title: 'Modification forcée',
+            html: `<p>Vous êtes sur le point de modifier le club <strong><?= htmlspecialchars($club['nom_club'], ENT_QUOTES) ?></strong> qui est <strong>déjà validé</strong>.</p>
+                   <p style="margin-top:.5rem;">Le statut de validation sera <strong>conservé</strong>. Cette action est irréversible.</p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0066cc',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-save"></i> Confirmer la modification',
+            cancelButtonText: 'Annuler',
+            focusCancel: true
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                // Inject the hidden submit button value and submit
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'update_club';
+                hidden.value = '1';
+                document.getElementById('editClubForm').appendChild(hidden);
+                document.getElementById('editClubForm').submit();
+            }
+        });
+        <?php else: ?>
+        Swal.fire({
+            title: 'Modifier ce club ?',
+            html: `<p>Vous allez modifier le club <strong><?= htmlspecialchars($club['nom_club'], ENT_QUOTES) ?></strong> en tant qu'administrateur.</p>
+                   <p style="margin-top:.5rem;">Le statut de validation du club ne sera <strong>pas modifié</strong>.</p>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0066cc',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-save"></i> Confirmer',
+            cancelButtonText: 'Annuler'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                var hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'update_club';
+                hidden.value = '1';
+                document.getElementById('editClubForm').appendChild(hidden);
+                document.getElementById('editClubForm').submit();
+            }
+        });
+        <?php endif; ?>
+    });
+    </script>
+    <?php endif; ?>
 </body>
 </html>

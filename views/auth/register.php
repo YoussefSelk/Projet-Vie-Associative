@@ -1,25 +1,13 @@
 <?php
 /**
  * Page d'inscription utilisateur
- * 
- * Processus d'inscription en plusieurs etapes :
- * 1. Saisie des informations personnelles (nom, prenom, email)
- * 2. Verification de l'email avec code de confirmation
- * 3. Creation du mot de passe
- * 
- * Validations :
- * - Email doit etre du domaine @eilco-ulco.fr ou @univ-littoral.fr
- * - Mot de passe minimum 8 caracteres
- * - Protection CSRF sur tous les formulaires
- * 
- * Variables attendues :
- * - $error_message / $success_message : Messages de feedback
- * - $reset_step : Etape actuelle du processus (0, 1, 2)
- * 
- * @package Views/Auth
+ * * Processus d'inscription en plusieurs étapes :
+ * 1. Saisie des informations personnelles (nom, prénom, email)
+ * 2. Vérification de l'email avec code de confirmation
+ * 3. Création du mot de passe
  */
 
-// Redirection si deja connecte
+// Redirection si déjà connecté
 if (isset($_SESSION['id'])) {
     header('Location: index.php');
     exit();
@@ -40,7 +28,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                 <div class="auth-header">
                     <i class="fas fa-user-plus"></i>
                     <h2>Créer un compte</h2>
-                    <p>Rejoignez la communauté étudiante de l'EILCO</p>
+                    <p>Rejoignez la communauté de l'EILCO</p>
                 </div>
 
                 <div class="auth-body">
@@ -56,8 +44,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                     <?php else: ?>
 
                         <?php if (isset($reset_step) && $reset_step == 0): ?>
-                            <!-- Step 1: User Information -->
-                            <form class="auth-form" method="post" action="">
+                            <form id="registerForm" class="auth-form" method="post" action="">
                                 <?= Security::csrfField() ?>
                                 
                                 <div class="form-row">
@@ -104,8 +91,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
 
                                 <div class="form-group">
                                     <label for="mail"><i class="fas fa-envelope"></i> Adresse e-mail</label>
-                                    <input type="email" id="mail" name="mail" class="form-control" required placeholder="votre.email@eilco.univ-littoral.fr" value="<?= htmlspecialchars($_POST['mail'] ?? '') ?>">
-                                    <small class="form-hint">Utilisez votre adresse email EILCO</small>
+                                    <input type="email" id="mail" name="mail" class="form-control" required placeholder="votre.nom@etu.eilco.univ-littoral.fr" value="<?= htmlspecialchars($_POST['mail'] ?? '') ?>">
+                                    <small id="mailError" class="form-hint" style="color: #dc3545; display: none; font-weight: bold;">Veuillez utiliser une adresse @etu.eilco.univ-littoral.fr ou @eilco.univ-littoral.fr</small>
+                                    <small class="form-hint">Utilisez votre adresse email EILCO académique</small>
                                 </div>
 
                                 <div class="form-row">
@@ -125,20 +113,15 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                             </form>
 
                         <?php elseif (isset($reset_step) && $reset_step == 1): ?>
-                            <!-- Step 2: Verify Code -->
                             <form class="auth-form" method="post" action="">
                                 <?= Security::csrfField() ?>
-                                
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle"></i> Un code de vérification a été envoyé à votre adresse email.
                                 </div>
-                                
                                 <div class="form-group">
                                     <label for="verification_code"><i class="fas fa-key"></i> Code de vérification</label>
                                     <input type="text" id="verification_code" name="verification_code" class="form-control form-control-lg text-center" required placeholder="000000" maxlength="6" style="letter-spacing: 5px; font-size: 1.5rem;">
-                                    <small class="form-hint">Entrez le code à 6 chiffres reçu par email</small>
                                 </div>
-
                                 <button type="submit" name="verify_code" class="btn btn-success btn-block btn-lg">
                                     <i class="fas fa-check-circle"></i> Valider et s'inscrire
                                 </button>
@@ -148,7 +131,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                         <div class="auth-footer">
                             <p>Vous avez déjà un compte? <a href="/?page=login">Se connecter</a></p>
                         </div>
-
                     <?php endif; ?>
                 </div>
             </div>
@@ -159,20 +141,23 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Dynamic field display for promotion
         const promoSelect = document.getElementById("promo-select");
         const champPromo = document.getElementById("champ_promo");
         const niveauSelect = document.getElementById("niveau-select");
         const champNiveau = document.getElementById("champ_niveau");
+        
+        const registerForm = document.getElementById("registerForm");
+        const mailInput = document.getElementById("mail");
+        const mailError = document.getElementById("mailError");
 
         if (promoSelect) {
             promoSelect.addEventListener("change", function() {
                 if (this.value === "etu") {
                     champPromo.style.display = "block";
-                    niveauSelect.required = true;
+                    if(niveauSelect) niveauSelect.required = true;
                 } else {
                     champPromo.style.display = "none";
-                    niveauSelect.required = false;
+                    if(niveauSelect) niveauSelect.required = false;
                     champNiveau.style.display = "none";
                 }
             });
@@ -180,15 +165,30 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
 
         if (niveauSelect) {
             niveauSelect.addEventListener("change", function() {
-                if (this.value === "ING2") {
-                    champNiveau.style.display = "block";
-                } else {
-                    champNiveau.style.display = "none";
-                }
+                champNiveau.style.display = (this.value === "ING2") ? "block" : "none";
             });
         }
 
-        // Password validation with icons
+        // Validation du domaine (autorise @etu.eilco... OU @eilco...)
+        if (registerForm && mailInput) {
+            registerForm.addEventListener("submit", function(e) {
+                // Regex mise à jour : le (etu\.)? rend la partie "etu." optionnelle
+                const re = /^[A-Za-z0-9._%+-]+@(etu\.)?eilco\.univ-littoral\.fr$/i;
+                const v = (mailInput.value || '').trim();
+                
+                if (!re.test(v)) {
+                    e.preventDefault();
+                    if (mailError) mailError.style.display = 'block';
+                    mailInput.focus();
+                    return false;
+                }
+            });
+
+            mailInput.addEventListener('input', function() {
+                if (mailError) mailError.style.display = 'none';
+            });
+        }
+
         const password = document.getElementById("password");
         const cpassword = document.getElementById("cpassword");
         const passwordIcon = document.getElementById("password-check-icon");
@@ -196,11 +196,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
 
         if (password) {
             function validatePassword() {
-                const pwdValue = password.value;
-                const isValid = pwdValue.length >= 8 && /[\W_]/.test(pwdValue);
+                const isValid = password.value.length >= 8;
                 passwordIcon.className = "check-icon " + (isValid ? "valid" : "invalid");
                 passwordIcon.innerHTML = isValid ? "✓" : "✗";
-                return isValid;
             }
 
             function validateCPassword() {
@@ -209,14 +207,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                 cpasswordIcon.innerHTML = match ? "✓" : "✗";
             }
 
-            password.addEventListener("input", () => {
-                validatePassword();
-                validateCPassword();
-            });
-
-            if (cpassword) {
-                cpassword.addEventListener("input", validateCPassword);
-            }
+            password.addEventListener("input", () => { validatePassword(); validateCPassword(); });
+            if (cpassword) cpassword.addEventListener("input", validateCPassword);
         }
     });
     </script>

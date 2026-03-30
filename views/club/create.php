@@ -123,7 +123,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                         </div>
                         
                         <!-- Projet Associatif Section -->
-                        <div class="form-section">
+                        <!-- <div class="form-section">
                             <h4>
                                 <i class="fas fa-project-diagram"></i> Soutenance
                                 <span class="tooltip-trigger" title="La création d'un club nécessite au moins 3 personnes (vous + 2 autres membres). La soutenance est obligatoire pour certains clubs.">
@@ -144,7 +144,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 <label><i class="fas fa-calendar-alt"></i> Date de soutenance</label>
                                 <input type="date" name="soutenance_date" class="form-control">
                             </div>
-                        </div>
+                        </div> -->
                         
                         <!-- Section Membres Fondateurs -->
                         <div class="form-section" id="membersSection">

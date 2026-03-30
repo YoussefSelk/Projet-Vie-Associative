@@ -44,6 +44,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
             <?php endif; ?>
 
             <?php if ($club): ?>
+                <?php
+                $isEditPost = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['update_club']);
+                $formNomClub = $isEditPost ? ($_POST['nom_club'] ?? '') : ($club['nom_club'] ?? '');
+                $formTypeClub = $isEditPost ? ($_POST['type_club'] ?? '') : ($club['type_club'] ?? '');
+                $formCampus = $isEditPost ? ($_POST['campus'] ?? '') : ($club['campus'] ?? '');
+                $formDescription = $isEditPost ? ($_POST['description'] ?? '') : ($club['description'] ?? '');
+                ?>
                 <div class="edit-container">
                     <div class="warning-box" style="background: #e8f4fd; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 20px;">
                         <h5 style="margin-top: 0; color: #1e3a8a;"><i class="fas fa-info-circle"></i> Information importante</h5>
@@ -62,7 +69,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 id="nom_club" 
                                 name="nom_club" 
                                 class="form-control"
-                                value="<?= htmlspecialchars($club['nom_club'] ?? '') ?>" 
+                                value="<?= htmlspecialchars($formNomClub) ?>" 
                                 required
                                 placeholder="Entrez le nom de votre club"
                             >
@@ -73,13 +80,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 <label for="type_club">Type de club <span style="color: red;">*</span></label>
                                 <select id="type_club" name="type_club" class="form-control" required>
                                     <option value="">-- Sélectionnez un type --</option>
-                                    <option value="Culturel" <?= ($club['type_club'] === 'Culturel') ? 'selected' : '' ?>>Culturel</option>
-                                    <option value="Sportif" <?= ($club['type_club'] === 'Sportif') ? 'selected' : '' ?>>Sportif</option>
-                                    <option value="Artistique" <?= ($club['type_club'] === 'Artistique') ? 'selected' : '' ?>>Artistique</option>
-                                    <option value="Gastronomique" <?= ($club['type_club'] === 'Gastronomique') ? 'selected' : '' ?>>Gastronomique</option>
-                                    <option value="Humanitaire" <?= ($club['type_club'] === 'Humanitaire') ? 'selected' : '' ?>>Humanitaire</option>
-                                    <option value="Professionnel" <?= ($club['type_club'] === 'Professionnel') ? 'selected' : '' ?>>Professionnel</option>
-                                    <option value="Autre" <?= ($club['type_club'] === 'Autre') ? 'selected' : '' ?>>Autre</option>
+                                    <option value="Culturel" <?= ($formTypeClub === 'Culturel') ? 'selected' : '' ?>>Culturel</option>
+                                    <option value="Sportif" <?= ($formTypeClub === 'Sportif') ? 'selected' : '' ?>>Sportif</option>
+                                    <option value="Artistique" <?= ($formTypeClub === 'Artistique') ? 'selected' : '' ?>>Artistique</option>
+                                    <option value="Gastronomique" <?= ($formTypeClub === 'Gastronomique') ? 'selected' : '' ?>>Gastronomique</option>
+                                    <option value="Humanitaire" <?= ($formTypeClub === 'Humanitaire') ? 'selected' : '' ?>>Humanitaire</option>
+                                    <option value="Professionnel" <?= ($formTypeClub === 'Professionnel') ? 'selected' : '' ?>>Professionnel</option>
+                                    <option value="Autre" <?= ($formTypeClub === 'Autre') ? 'selected' : '' ?>>Autre</option>
                                 </select>
                             </div>
 
@@ -87,10 +94,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 <label for="campus">Campus <span style="color: red;">*</span></label>
                                 <select id="campus" name="campus" class="form-control" required>
                                     <option value="">-- Sélectionnez un campus --</option>
-                                    <option value="Calais" <?= ($club['campus'] === 'Calais') ? 'selected' : '' ?>>Calais</option>
-                                    <option value="Longuenesse" <?= ($club['campus'] === 'Longuenesse') ? 'selected' : '' ?>>Longuenesse</option>
-                                    <option value="Dunkerque" <?= ($club['campus'] === 'Dunkerque') ? 'selected' : '' ?>>Dunkerque</option>
-                                    <option value="Boulogne" <?= ($club['campus'] === 'Boulogne') ? 'selected' : '' ?>>Boulogne</option>
+                                    <option value="Calais" <?= ($formCampus === 'Calais') ? 'selected' : '' ?>>Calais</option>
+                                    <option value="Longuenesse" <?= ($formCampus === 'Longuenesse') ? 'selected' : '' ?>>Longuenesse</option>
+                                    <option value="Dunkerque" <?= ($formCampus === 'Dunkerque') ? 'selected' : '' ?>>Dunkerque</option>
+                                    <option value="Boulogne" <?= ($formCampus === 'Boulogne') ? 'selected' : '' ?>>Boulogne</option>
                                 </select>
                             </div>
                         </div>
@@ -104,7 +111,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 rows="4"
                                 required
                                 placeholder="Décrivez les objectifs et activités de votre club"
-                            ><?= htmlspecialchars($club['description'] ?? '') ?></textarea>
+                            ><?= htmlspecialchars($formDescription) ?></textarea>
                             <small style="color: #666;">Décrivez les objectifs, les activités et l'impact de votre club.</small>
                         </div>
 

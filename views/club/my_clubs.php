@@ -58,8 +58,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                 <div class="search-box">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="myClubSearch" class="search-input" 
-                           placeholder="Rechercher un club..." 
-                           autocomplete="off">
+                        placeholder="Rechercher un club..." 
+                        autocomplete="off">
                     <button type="button" class="search-clear" aria-label="Effacer">
                         <i class="fas fa-times"></i>
                     </button>

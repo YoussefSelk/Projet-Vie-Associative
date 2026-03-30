@@ -186,6 +186,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 </div>
                             </div>
 
+                            <div id="soutenanceQuotaNotif" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:12px 15px;margin-bottom:15px;">
+                                <p id="soutenanceQuotaMsg" style="margin:0;font-weight:600;color:#1e3a8a;">
+                                    <i class="fas fa-graduation-cap"></i> Soutenance : 0 / 5
+                                </p>
+                                <small style="color:#1d4ed8;">La soutenance est autorisée uniquement pour les rôles principaux (pas pour Membre).</small>
+                            </div>
+
                             <p class="text-muted" id="memberRequirement" style="display: none;">
                                 <i class="fas fa-exclamation-triangle"></i> <span id="memberRequirementText">Ajoutez au moins 2 autres membres fondateurs (vous + 2 autres minimum).</span>
                             </p>
@@ -317,8 +324,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
         // ─────────────────────────────────────────────────────────────
         // Rôles uniques : un seul membre autorisé par rôle dans le club
         // ─────────────────────────────────────────────────────────────
+        var MAX_SOUTENANCE_MEMBERS = 5;
+
         /** Liste des rôles qui ne peuvent être attribués qu'une seule fois */
         var UNIQUE_ROLES = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
+
+        /** Rôles autorisés à avoir la soutenance */
+        var PRINCIPAL_ROLES = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
 
         /** { 'Président': true } si le rôle est déjà pris */
         var usedUniqueRoles = {};
@@ -416,6 +428,18 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 }
                 syncRoleDropdown();
                 updateRequiredRoles();
+                updateSoutenanceQuotaStatus();
+            });
+        }
+
+        var creatorSoutenanceCheckbox = document.getElementById('creatorSoutenance');
+        if (creatorSoutenanceCheckbox) {
+            creatorSoutenanceCheckbox.addEventListener('change', function() {
+                if (getTotalSoutenanceCount() > MAX_SOUTENANCE_MEMBERS) {
+                    this.checked = false;
+                    alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
+                }
+                updateSoutenanceQuotaStatus();
             });
         }
         
@@ -464,6 +488,53 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 notif.style.background  = '#fff3cd';
                 notif.style.borderColor = '#ffc107';
                 msg.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Rôles obligatoires — chacun doit être attribué à un membre :';
+            }
+        }
+
+        function getCreatorSoutenanceCount() {
+            var creatorSoutenance = document.getElementById('creatorSoutenance');
+            if (!creatorRoleSelect || !creatorSoutenance) {
+                return 0;
+            }
+
+            var creatorRole = creatorRoleSelect.value;
+            var creatorCanSoutenance = PRINCIPAL_ROLES.indexOf(creatorRole) !== -1;
+            return (creatorCanSoutenance && creatorSoutenance.checked) ? 1 : 0;
+        }
+
+        function getMembersSoutenanceCount() {
+            var count = 0;
+            var soutenanceInputs = membersList.querySelectorAll('input[name$="[soutenance]"]');
+            for (var i = 0; i < soutenanceInputs.length; i++) {
+                if (parseInt(soutenanceInputs[i].value, 10) === 1) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        function getTotalSoutenanceCount() {
+            return getCreatorSoutenanceCount() + getMembersSoutenanceCount();
+        }
+
+        function updateSoutenanceQuotaStatus() {
+            var notif = document.getElementById('soutenanceQuotaNotif');
+            var msg = document.getElementById('soutenanceQuotaMsg');
+            if (!notif || !msg) {
+                return;
+            }
+
+            var total = getTotalSoutenanceCount();
+            msg.innerHTML = '<i class="fas fa-graduation-cap"></i> Soutenance : ' + total + ' / ' + MAX_SOUTENANCE_MEMBERS;
+
+            if (total >= MAX_SOUTENANCE_MEMBERS) {
+                notif.style.background = '#fef2f2';
+                notif.style.borderColor = '#fca5a5';
+                msg.style.color = '#991b1b';
+            } else {
+                notif.style.background = '#eff6ff';
+                notif.style.borderColor = '#93c5fd';
+                msg.style.color = '#1e3a8a';
             }
         }
 
@@ -545,8 +616,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 }
                 // ──────────────────────────────────────────────────────────
 
-                // On lit si la case est cochée (ignorée si rôle = Membre)
-                var isSoutenance = (role !== 'Membre') && document.getElementById('newMemberSoutenance').checked;
+                // On lit si la case est cochée (autorisée uniquement pour rôles principaux)
+                var isSoutenance = (PRINCIPAL_ROLES.indexOf(role) !== -1) && document.getElementById('newMemberSoutenance').checked;
+                if (isSoutenance && getTotalSoutenanceCount() >= MAX_SOUTENANCE_MEMBERS) {
+                    alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
+                    return;
+                }
                 var soutenanceValue = isSoutenance ? 1 : 0;
                 
                 // On prépare un joli badge visuel si l'étudiant a une soutenance
@@ -600,6 +675,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 suggestionsDiv.style.display = 'none';
                 
                 updateMemberCount();
+                updateSoutenanceQuotaStatus();
             }
         
         // Fonction pour supprimer un membre
@@ -616,6 +692,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 memberDiv.remove();
                 delete addedMembers[userId];
                 updateMemberCount();
+                updateSoutenanceQuotaStatus();
             }
         }
         
@@ -724,6 +801,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 if (notif) notif.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return false;
             }
+
+            if (getTotalSoutenanceCount() > MAX_SOUTENANCE_MEMBERS) {
+                e.preventDefault();
+                alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
+                var soutenanceNotif = document.getElementById('soutenanceQuotaNotif');
+                if (soutenanceNotif) soutenanceNotif.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
         });
 
         // Masquer la case soutenance si le rôle initial est "Membre"
@@ -745,6 +830,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
         updateMemberCount();
         updateMemberRequirement(0);
         updateRequiredRoles();
+        updateSoutenanceQuotaStatus();
         
         // Event: Touche Entrée sur le champ de recherche
         searchInput.addEventListener('keydown', function(e) {

@@ -419,14 +419,46 @@ class ValidationController {
 
         // Événements en attente
         if ($is_admin) {
-            $pending_events = $this->db->query("SELECT fe.*, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fe.validation_finale IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+            $pending_events = $this->db->query("
+                SELECT fe.*, fc.nom_club, fc.logo_club,
+                    u.prenom AS responsable_prenom,
+                    u.nom    AS responsable_nom,
+                    u.mail   AS responsable_mail,
+                    u.promo  AS responsable_promo
+                FROM fiche_event fe
+                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                LEFT JOIN users u ON fe.id_responsable = u.id
+                WHERE fe.validation_finale IS NULL
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
         } elseif ($is_bde) {
-            $pending_events = $this->db->query("SELECT fe.*, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fe.validation_bde IS NULL")->fetchAll(PDO::FETCH_ASSOC);
+            $pending_events = $this->db->query("
+                SELECT fe.*, fc.nom_club, fc.logo_club,
+                    u.prenom AS responsable_prenom,
+                    u.nom    AS responsable_nom,
+                    u.mail   AS responsable_mail,
+                    u.promo  AS responsable_promo
+                FROM fiche_event fe
+                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                LEFT JOIN users u ON fe.id_responsable = u.id
+                WHERE fe.validation_bde IS NULL
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
         } elseif ($is_tutor) {
-            $stmt = $this->db->prepare("SELECT fe.*, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fc.tuteur = ? AND fe.validation_tuteur IS NULL ");
+            $stmt = $this->db->prepare("
+                SELECT fe.*, fc.nom_club, fc.logo_club,
+                    u.prenom AS responsable_prenom,
+                    u.nom    AS responsable_nom,
+                    u.mail   AS responsable_mail,
+                    u.promo  AS responsable_promo
+                FROM fiche_event fe
+                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+                LEFT JOIN users u ON fe.id_responsable = u.id
+                WHERE fc.tuteur = ? AND fe.validation_tuteur IS NULL
+            ");
             $stmt->execute([$user_id]);
             $pending_events = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } else { $pending_events = []; }
+        }else { $pending_events = []; }
 
             return [
                 'is_admin' => $is_admin,

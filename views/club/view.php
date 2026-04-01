@@ -40,6 +40,12 @@ $can_view_soutenance = ($user_permission >= 2);
                     <i class="fas fa-check-circle"></i> Club créé avec succès ! Il est maintenant en attente de validation. Les membres apparaissent ci-dessous.
                 </div>
             <?php endif; ?>
+            <?php if (!empty($_SESSION['flash_success'])): ?>
+                <div class="alert alert-success" role="alert">
+                    <i class="fas fa-shield-alt"></i> <?= htmlspecialchars($_SESSION['flash_success']) ?>
+                </div>
+                <?php unset($_SESSION['flash_success']); ?>
+            <?php endif; ?>
             
             <?php if (!empty($error_msg)): ?>
                 <div class="alert alert-danger">
@@ -228,6 +234,11 @@ $can_view_soutenance = ($user_permission >= 2);
                             <?php if (isset($_SESSION['id'])): ?>
                                 <a href="?page=event-list" class="btn btn-primary">
                                     <i class="fas fa-calendar-alt"></i> Voir les événements
+                                </a>
+                            <?php endif; ?>
+                            <?php if (($_SESSION['permission'] ?? 0) >= 4): ?>
+                                <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-outline" style="border-color:#0066cc;color:#0066cc;">
+                                    <i class="fas fa-shield-alt"></i> Modifier (Admin)
                                 </a>
                             <?php endif; ?>
                             <a href="?page=home" class="btn btn-outline">

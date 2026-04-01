@@ -42,25 +42,55 @@ class ClubController {
      * 
      * @return array Données pour la vue
      */
+    public function browseClubs() {
+        $stmt = $this->db->prepare("
+            SELECT fc.*, COUNT(mc.membre_id) AS membres_count
+            FROM fiche_club fc
+            LEFT JOIN membres_club mc ON mc.club_id = fc.club_id AND mc.valide = 1
+            WHERE fc.validation_finale = 1
+            GROUP BY fc.club_id
+            ORDER BY fc.nom_club ASC
+        ");
+        $stmt->execute();
+        $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return ['clubs' => $clubs];
+    }
+
     public function listClubs() {
-        checkPermission(2); // Tuteurs (2), BDE (3) et admins (4+) peuvent voir tous les clubs
-        
-        $clubs = $this->clubModel->getAllValidatedClubs();
+        checkPermission(2);
+
+        $user_id = (int)($_SESSION['id'] ?? 0);
+        $userPermission = (int)($_SESSION['permission'] ?? 0);
+        $isTuteurOnly = ($userPermission === 2);
+
+        // Tuteurs : seulement leurs clubs. BDE/Admin : tous les clubs validés.
+        if ($isTuteurOnly) {
+            $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE validation_finale = 1 AND tuteur = ? ORDER BY nom_club ASC");
+            $stmt->execute([$user_id]);
+            $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $clubs = $this->clubModel->getAllValidatedClubs();
+        }
+
         $req_club = null;
         $update_msg = '';
         $error_msg = '';
         $success_msg = '';
 
-        // Recherche d'un club par nom
-        if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['club'])) {
+        // Recherche d'un club par nom (BDE/Admin uniquement)
+        if (!$isTuteurOnly && $_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['club'])) {
             $club = $this->clubModel->getClubByName($_POST['club']);
             if ($club) {
                 $req_club = $club;
             }
         }
 
-        $stmt = $this->db->query("SELECT id, nom, prenom FROM users WHERE permission = 2 ORDER BY nom ASC");
-        $tuteurs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $tuteurs = [];
+        if (!$isTuteurOnly) {
+            $stmt = $this->db->query("SELECT id, nom, prenom FROM users WHERE permission = 2 ORDER BY nom ASC");
+            $tuteurs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
 
         // Mise à jour d'un club
         if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_club'])) {
@@ -110,12 +140,13 @@ class ClubController {
         }
 
         return [
-            'clubs' => $clubs,
-            'tuteurs' => $tuteurs,
-            'req_club' => $req_club,
-            'error_msg' => $error_msg,
-            'success_msg' => $success_msg,
-            'update_msg' => $update_msg
+            'clubs'         => $clubs,
+            'tuteurs'       => $tuteurs,
+            'req_club'      => $req_club,
+            'error_msg'     => $error_msg,
+            'success_msg'   => $success_msg,
+            'update_msg'    => $update_msg,
+            'is_tuteur_only' => $isTuteurOnly,
         ];
     }
 
@@ -380,7 +411,9 @@ class ClubController {
     public function editClub() {
         $user_id = $_SESSION['id'] ?? null;
         $club_id = $_GET['id'] ?? null;
-        
+        $userPermission = (int)($_SESSION['permission'] ?? 0);
+        $isAdmin = $userPermission >= 4;
+
         if (!$user_id) {
             redirect('index.php?page=login');
         }
@@ -392,6 +425,10 @@ class ClubController {
         $club = $this->clubModel->getClubById($club_id);
         $error_msg = '';
         $success_msg = '';
+        $currentMembers = [];
+        $users = [];
+        $is_admin_force = false;
+        $presidentSoutenance = 0;
 
         if (!$club) {
             $error_msg = "Club non trouvé.";
@@ -404,23 +441,26 @@ class ClubController {
             if (!$canEdit) {
                 ErrorHandler::renderHttpError(403, "Accès refusé. Seuls le Président, le Secrétaire du club ou un Administrateur peuvent modifier ce club.");
                 return [];
-            } elseif ($club['validation_finale'] == 1) {
+            } elseif ($club['validation_finale'] == 1 && !$isAdmin) {
                 $error_msg = "Vous ne pouvez pas modifier un club déjà validé.";            
             } else {
+                // Flag : admin forçant la modification d'un club déjà validé
+                $is_admin_force = $isAdmin && ($club['validation_finale'] == 1);
+
                 // Récupérer les membres actuels du club (sauf le Président)
-                $currentMembers = $this->db->prepare("
+                $memberStmt = $this->db->prepare("
                     SELECT u.id, u.nom, u.prenom, mc.fonction, mc.soutenance 
                     FROM membres_club mc 
                     INNER JOIN users u ON mc.membre_id = u.id 
                     WHERE mc.club_id = ? AND mc.fonction != 'Président'
                 ");
-                $currentMembers->execute([$club_id]);
-                $currentMembers = $currentMembers->fetchAll(PDO::FETCH_ASSOC);
-                
+                $memberStmt->execute([$club_id]);
+                $currentMembers = $memberStmt->fetchAll(PDO::FETCH_ASSOC);
+
                 // Récupérer tous les utilisateurs disponibles (sauf l'utilisateur actuel)
                 $stmtUsers = $this->db->prepare("
-                    SELECT id, nom, prenom, mail, promo 
-                    FROM users 
+                    SELECT id, nom, prenom, mail, promo
+                    FROM users
                     WHERE id != ?
                     ORDER BY nom ASC, prenom ASC
                 ");
@@ -518,7 +558,9 @@ class ClubController {
                                 'campus' => $campus
                             ];
 
-                            if ($this->clubModel->updateClub($club_id, $data, true)) {
+                            // Admin keeps validation state; non-admin resubmits for validation.
+                            $resetValidation = !$isAdmin;
+                            if ($this->clubModel->updateClub($club_id, $data, $resetValidation)) {
                                 // Ne pas supprimer le Président (créateur)
                                 $this->db->prepare("DELETE FROM membres_club WHERE club_id = ? AND fonction != 'Président'")->execute([$club_id]);
                                 
@@ -526,8 +568,13 @@ class ClubController {
                                     $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, ?, 1)")
                                              ->execute([$club_id, $member['user_id'], $member['role'], $member['soutenance']]);
                                 }
-                                
-                                redirect('index.php?page=my-clubs&success=1');
+
+                                if ($isAdmin) {
+                                    $_SESSION['flash_success'] = 'Modification administrateur enregistrée avec succès.';
+                                    redirect('index.php?page=club-view&id=' . $club_id);
+                                } else {
+                                    redirect('index.php?page=my-clubs&success=1');
+                                }
                             } else {
                                 $error_msg = "Erreur lors de la modification du club.";
                             }
@@ -709,43 +756,54 @@ class ClubController {
      * @return void (sortie directe du fichier CSV)
      */
     public function exportMembers() {
-        checkPermission(3);
-        
+        checkPermission(2);
+
+        $user_id = (int)($_SESSION['id'] ?? 0);
+        $userPermission = (int)($_SESSION['permission'] ?? 0);
         $club_id = $_GET['club_id'] ?? null;
-        
+
         if (!$club_id) {
             redirect('index.php?page=club-list');
         }
-        
+
         $club = $this->clubModel->getClubById($club_id);
         if (!$club) {
             redirect('index.php?page=club-list');
         }
+
+        // Tuteurs : vérifier que ce club leur est bien assigné
+        if ($userPermission === 2 && (string)($club['tuteur'] ?? '') !== (string)$user_id) {
+            ErrorHandler::renderHttpError(403, "Vous n'êtes pas le tuteur de ce club.");
+        }
         
-        // Récupérer les membres avec tous les détails
+        // Récupérer les membres avec tous les détails (incl. soutenance et tuteur via JOIN)
         $stmt = $this->db->prepare("
-            SELECT 
+            SELECT
+                mc.membre_id,
                 u.nom,
                 u.prenom,
                 u.mail,
                 u.promo,
-                mc.fonction,
-                t.nom as tuteur_nom,
-                t.prenom as tuteur_prenom
+                COALESCE(NULLIF(TRIM(mc.fonction), ''), 'Membre') AS fonction,
+                mc.soutenance,
+                CONCAT(t.prenom, ' ', t.nom) AS tuteur_fullname
             FROM membres_club mc
-            JOIN users u ON mc.membre_id = u.id
-            LEFT JOIN fiche_club fc ON mc.club_id = fc.club_id
-            LEFT JOIN users t ON fc.tuteur = t.id
+            JOIN  users u  ON u.id  = mc.membre_id
+            JOIN  fiche_club fc ON fc.club_id = mc.club_id
+            LEFT JOIN users t  ON t.id = CAST(fc.tuteur AS UNSIGNED)
             WHERE mc.club_id = ? AND mc.valide = 1
-            ORDER BY u.nom ASC
+            ORDER BY u.nom ASC, u.prenom ASC
         ");
         $stmt->execute([$club_id]);
         $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Récupérer le nom du tuteur
-        // Note: 'tuteur' is VARCHAR in DB, stores user ID as string
+        // Le tuteur est désormais extrait directement dans la requête principale (tuteur_fullname).
+        // On conserve néanmoins un fallback en cas de LEFT JOIN NULL.
         $tutor_name = '';
-        if (!empty($club['tuteur'])) {
+        if (!empty($members)) {
+            $tutor_name = trim($members[0]['tuteur_fullname'] ?? '');
+        }
+        if ($tutor_name === '' && !empty($club['tuteur'])) {
             $tutorStmt = $this->db->prepare("SELECT nom, prenom FROM users WHERE id = ?");
             $tutorStmt->execute([$club['tuteur']]);
             $tutor = $tutorStmt->fetch(PDO::FETCH_ASSOC);
@@ -756,40 +814,66 @@ class ClubController {
         
         // Générer le CSV avec BOM pour compatibilité Excel UTF-8
         $filename = 'membres_' . preg_replace('/[^a-zA-Z0-9]/', '_', $club['nom_club']) . '_' . date('Y-m-d') . '.csv';
-        
-        header('Content-Type: text/csv; charset=UTF-8');
+
+        // Nettoyage du buffer de sortie avant d'émettre les headers
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/csv; charset=UTF-16LE');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-cache, no-store, must-revalidate');
         header('Pragma: no-cache');
         header('Expires: 0');
-        
-        // BOM UTF-8 pour Excel
-        echo "\xEF\xBB\xBF";
-        
-        $output = fopen('php://output', 'w');
-        
+
+        // Étape 1 : construire le CSV UTF-8 en mémoire
+        $tmp = fopen('php://temp', 'r+b');
+
         // En-tête des colonnes
-        fputcsv($output, [
+        fputcsv($tmp, [
             'Nom',
             'Prénom',
             'Email',
-            'Promotion',
-            'Fonction',
+            'Promotion / Spécialité',
+            'Rôle',
+            'Soutenance',
             'Tuteur du club'
-        ], ';', '"', '\\'); // Point-virgule pour Excel français
-        
+        ], "\t", '"', "\0");
+
         // Lignes de données
         foreach ($members as $member) {
-            fputcsv($output, [
-                $member['nom'] ?? '',
-                $member['prenom'] ?? '',
-                $member['mail'] ?? '',
-                $member['promo'] ?? '',
-                $member['fonction'] ?? '',
-                $tutor_name
-            ], ';', '"', '\\');
+            $soutenance = !empty($member['soutenance']) ? 'Oui' : 'Non';
+            $memberTutor = trim($member['tuteur_fullname'] ?? '');
+            if ($memberTutor === '') {
+                $memberTutor = $tutor_name;
+            }
+            if ($memberTutor === ' ' || $memberTutor === '') {
+                $memberTutor = 'Non assigné';
+            }
+            $row = [
+                $member['nom']      ?? '',
+                $member['prenom']   ?? '',
+                $member['mail']     ?? '',
+                $member['promo']    ?? '',
+                $member['fonction'] ?? 'Membre',
+                $soutenance,
+                $memberTutor,
+            ];
+            $row = array_map(static function($v) {
+                return str_replace(["\r\n", "\r", "\n"], ' ', trim((string)$v));
+            }, $row);
+            fputcsv($tmp, $row, "\t", '"', "\0");
         }
-        
-        fclose($output);
+
+        // Étape 2 : lire le CSV UTF-8 depuis le buffer
+        rewind($tmp);
+        $csv = stream_get_contents($tmp);
+        fclose($tmp);
+
+        // Étape 3 : BOM UTF-16 LE + conversion UTF-8 → UTF-16 LE
+        // Excel (toutes versions, toutes locales) détecte automatiquement le BOM
+        // et interprète la tabulation comme séparateur de colonnes.
+        echo "\xFF\xFE" . mb_convert_encoding($csv, 'UTF-16LE', 'UTF-8');
         exit;
     }
 }

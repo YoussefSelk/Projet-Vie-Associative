@@ -121,8 +121,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
                                     <li class="ranking-item">
                                         <span class="rank-badge <?= $rankClass ?>"><?= $i + 1 ?></span>
                                         <div class="rank-info">
-                                            <h4><?= htmlspecialchars(html_entity_decode($event['titre'], ENT_QUOTES, 'UTF-8')) ?></h4>
-                                            <p><?= htmlspecialchars(html_entity_decode($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8')) ?> • <?= htmlspecialchars($event['campus']) ?></p>
+                                            <h4><?= htmlspecialchars($event['titre'], ENT_QUOTES, 'UTF-8') ?></h4>
+                                            <p><?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?> • <?= htmlspecialchars($event['campus']) ?></p>
                                         </div>
                                         <span class="rank-count"><?= $event['subscription_count'] ?> <i class="fas fa-users"></i></span>
                                     </li>
@@ -152,7 +152,7 @@ $pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
                                     <li class="ranking-item">
                                         <span class="rank-badge <?= $rankClass ?>"><?= $i + 1 ?></span>
                                         <div class="rank-info">
-                                            <h4><?= htmlspecialchars(html_entity_decode($club['nom_club'], ENT_QUOTES, 'UTF-8')) ?></h4>
+                                            <h4><?= htmlspecialchars($club['nom_club'], ENT_QUOTES, 'UTF-8') ?></h4>
                                             <p><?= htmlspecialchars($club['campus']) ?></p>
                                         </div>
                                         <span class="rank-count"><?= $club['event_count'] ?> événements</span>
@@ -188,9 +188,9 @@ $pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
                                             <div class="month"><?= $months_fr[date('n', $date) - 1] ?></div>
                                         </div>
                                         <div class="event-row-info">
-                                            <h4><?= htmlspecialchars(html_entity_decode($event['titre'], ENT_QUOTES, 'UTF-8')) ?></h4>
+                                            <h4><?= htmlspecialchars($event['titre'], ENT_QUOTES, 'UTF-8') ?></h4>
                                             <p>
-                                                <i class="fas fa-building"></i> <?= htmlspecialchars(html_entity_decode($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8')) ?>
+                                                <i class="fas fa-building"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?>
                                                 &bull;
                                                 <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus']) ?>
                                             </p>
@@ -228,8 +228,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
                                         <div class="month"><?= $months_fr[date('n', $date) - 1] ?></div>
                                     </div>
                                     <div class="event-row-info">
-                                        <h4><?= htmlspecialchars(html_entity_decode($event['titre'], ENT_QUOTES, 'UTF-8')) ?></h4>
-                                        <p><i class="fas fa-building"></i> <?= htmlspecialchars(html_entity_decode($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8')) ?></p>
+                                        <h4><?= htmlspecialchars($event['titre'], ENT_QUOTES, 'UTF-8') ?></h4>
+                                        <p><i class="fas fa-building"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?></p>
                                     </div>
                                     <span class="alert-badge">
                                         <i class="fas fa-file-alt"></i> Rapport manquant
@@ -278,10 +278,10 @@ $pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
             new Chart(monthlyCtx, {
                 type: 'bar',
                 data: {
-                    labels: <?= json_encode($monthLabels) ?>,
+                    labels: <?= json_encode($monthLabels, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                     datasets: [{
                         label: 'Événements',
-                        data: <?= json_encode($monthData) ?>,
+                        data: <?= json_encode($monthData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                         backgroundColor: 'rgba(0, 102, 204, 0.8)',
                         borderRadius: 8,
                         borderSkipped: false
@@ -324,9 +324,9 @@ $pageCss = ['shared', 'buttons', 'tables', 'events', 'dashboard'];
             new Chart(campusCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: <?= json_encode($campusLabels) ?>,
+                    labels: <?= json_encode($campusLabels, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                     datasets: [{
-                        data: <?= json_encode($campusData) ?>,
+                        data: <?= json_encode($campusData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
                         backgroundColor: [
                             colors.primary,
                             colors.success,

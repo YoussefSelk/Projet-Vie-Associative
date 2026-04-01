@@ -376,12 +376,16 @@
     button.classList.add("cal-sub-loading");
 
     try {
-      const resp = await fetch(
-        `index.php?page=subscribe-ajax&event_id=${eventId}`,
-        {
-          headers: { "X-Requested-With": "XMLHttpRequest" },
-        },
-      );
+      const calApp = document.getElementById("calendarApp");
+      const csrfToken = calApp ? calApp.dataset.csrf : "";
+      const formData = new FormData();
+      formData.append("event_id", eventId);
+      formData.append("csrf_token", csrfToken);
+      const resp = await fetch("index.php?page=subscribe-ajax", {
+        method: "POST",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        body: formData,
+      });
       const result = await resp.json();
 
       if (result.success) {

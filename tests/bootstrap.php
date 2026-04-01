@@ -44,6 +44,23 @@ require_once MODELS_PATH . '/EventReport.php';
 // Load Security class
 require_once CONFIG_PATH . '/Security.php';
 
+// Load controller classes
+require_once CONTROLLERS_PATH . '/ExportController.php';
+
+// ─── Stubs des fonctions globales de l'application ───────────────────────────
+// Ces fonctions sont définies dans config/bootstrap.php de l'application ;
+// les stubs ci-dessous permettent de tester les contrôleurs sans charger
+// l'intégralité du bootstrap (qui nécessite une connexion DB réelle).
+if (!function_exists('checkPermission')) {
+    function checkPermission(int $level): void {}
+}
+if (!function_exists('validateSession')) {
+    function validateSession(): void {}
+}
+if (!function_exists('redirect')) {
+    function redirect(string $url): void {}
+}
+
 // Autoloader for test helpers
 spl_autoload_register(function (string $class): void {
     $prefix = 'Tests\\';

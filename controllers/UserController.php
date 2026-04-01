@@ -123,13 +123,16 @@ class UserController {
         // Résumé d'activité
         $stats['events_attended'] = count($past_events);
         
+        $months_fr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+
         return [
             'user' => $user,
             'stats' => $stats,
             'my_clubs' => $my_clubs,
             'upcoming_events' => array_slice($upcoming_events, 0, 5),
             'past_events' => array_slice($past_events, 0, 3),
-            'recommended_events' => $recommended_events
+            'recommended_events' => $recommended_events,
+            'months_fr' => $months_fr
         ];
     }
 

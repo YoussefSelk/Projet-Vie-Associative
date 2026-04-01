@@ -220,8 +220,13 @@ class EventController {
                 // Upload fiche sanitaire (PDF)
                 if (isset($_FILES['fiche_sanitaire']) && $_FILES['fiche_sanitaire']['error'] === UPLOAD_ERR_OK) {
                     $ext = strtolower(pathinfo($_FILES['fiche_sanitaire']['name'], PATHINFO_EXTENSION));
-                    if ($ext !== 'pdf') {
-                        $error_msg = "La fiche sanitaire doit être un fichier PDF.";
+                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                    $detected_mime = $finfo->file($_FILES['fiche_sanitaire']['tmp_name']);
+                    $max_fiche_size = 10 * 1024 * 1024; // 10 MB
+                    if ($ext !== 'pdf' || $detected_mime !== 'application/pdf') {
+                        $error_msg = "La fiche sanitaire doit être un fichier PDF valide.";
+                    } elseif ($_FILES['fiche_sanitaire']['size'] > $max_fiche_size) {
+                        $error_msg = "La fiche sanitaire ne doit pas dépasser 10 Mo.";
                     } else {
                         $upload_dir = ROOT_PATH . '/uploads/fiches_sanitaires/';
                         if (!is_dir($upload_dir)) {
@@ -241,8 +246,14 @@ class EventController {
                 if (empty($error_msg) && isset($_FILES['affiche']) && $_FILES['affiche']['error'] === UPLOAD_ERR_OK) {
                     $ext = strtolower(pathinfo($_FILES['affiche']['name'], PATHINFO_EXTENSION));
                     $allowed_ext = ['jpg', 'jpeg', 'png', 'pdf'];
-                    if (!in_array($ext, $allowed_ext)) {
-                        $error_msg = "L'affiche doit être un fichier JPG, PNG ou PDF.";
+                    $allowed_affiche_mimes = ['image/jpeg', 'image/png', 'application/pdf'];
+                    $finfo_affiche = new \finfo(FILEINFO_MIME_TYPE);
+                    $detected_affiche_mime = $finfo_affiche->file($_FILES['affiche']['tmp_name']);
+                    $max_affiche_size = 5 * 1024 * 1024; // 5 MB
+                    if (!in_array($ext, $allowed_ext) || !in_array($detected_affiche_mime, $allowed_affiche_mimes)) {
+                        $error_msg = "L'affiche doit être un fichier JPG, PNG ou PDF valide.";
+                    } elseif ($_FILES['affiche']['size'] > $max_affiche_size) {
+                        $error_msg = "L'affiche ne doit pas dépasser 5 Mo.";
                     } else {
                         $upload_dir = ROOT_PATH . '/uploads/affiches_event/';
                         if (!is_dir($upload_dir)) {
@@ -429,6 +440,8 @@ class EventController {
         $uploaded_paths = [];
         $max_size = 512000; // 500 Ko
         $allowed_exts = ['jpg', 'jpeg', 'png', 'webp'];
+        $allowed_image_mimes = ['image/jpeg', 'image/png', 'image/webp'];
+        $finfo_img = new \finfo(FILEINFO_MIME_TYPE);
 
         // Nettoyage des noms pour les fichiers
         $clean_club = preg_replace('/[^A-Za-z0-9]/', '', $club_name);
@@ -438,8 +451,9 @@ class EventController {
             if ($i >= 1) break;
 
             $ext = strtolower(pathinfo($files['name'][$i], PATHINFO_EXTENSION));
-            
-            if ($files['error'][$i] === UPLOAD_ERR_OK && $files['size'][$i] <= $max_size && in_array($ext, $allowed_exts)) {
+            $detected_img_mime = $finfo_img->file($files['tmp_name'][$i]);
+
+            if ($files['error'][$i] === UPLOAD_ERR_OK && $files['size'][$i] <= $max_size && in_array($ext, $allowed_exts) && in_array($detected_img_mime, $allowed_image_mimes)) {
                 
                 // Format : NomClub_TitreEvent_timestamp_index.ext
                 $new_name = $clean_club . '_' . $clean_event . '_' . time() . '_' . $i . '.' . $ext;
@@ -499,9 +513,14 @@ class EventController {
                 $error_msg = "Veuillez télécharger un fichier de rapport (PDF).";
             } else {
                 $ext = strtolower(pathinfo($_FILES['rapport_file']['name'], PATHINFO_EXTENSION));
-                
-                if ($ext !== 'pdf') {
-                    $error_msg = "Seuls les fichiers PDF sont acceptés.";
+                $finfo_rapport = new \finfo(FILEINFO_MIME_TYPE);
+                $detected_rapport_mime = $finfo_rapport->file($_FILES['rapport_file']['tmp_name']);
+                $max_rapport_size = 20 * 1024 * 1024; // 20 MB
+
+                if ($ext !== 'pdf' || $detected_rapport_mime !== 'application/pdf') {
+                    $error_msg = "Seuls les fichiers PDF valides sont acceptés.";
+                } elseif ($_FILES['rapport_file']['size'] > $max_rapport_size) {
+                    $error_msg = "Le rapport ne doit pas dépasser 20 Mo.";
                 } else {
                     // Récupération des infos pour le nommage
                     $stmtEvent = $this->db->prepare("SELECT fe.titre, fc.nom_club FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fe.event_id = ?");

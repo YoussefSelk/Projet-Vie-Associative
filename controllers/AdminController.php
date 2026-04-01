@@ -512,20 +512,35 @@ class AdminController {
         }
         
         // En-tetes HTTP pour le telechargement CSV
-        header('Content-Type: text/csv; charset=UTF-8');
+        // Nettoyage du buffer avant les headers
+        if (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: text/csv; charset=UTF-16LE');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Cache-Control: no-cache, no-store, must-revalidate');
         header('Pragma: no-cache');
         header('Expires: 0');
-        
-        // BOM UTF-8 pour compatibilite Excel
-        echo "\xEF\xBB\xBF";
-        
-        $output = fopen('php://output', 'w');
-        fputcsv($output, $headers, ';');
-        
+
+        // Étape 1 : construire le CSV UTF-8 en mémoire
+        $tmp = fopen('php://temp', 'r+b');
+        fputcsv($tmp, $headers, "\t", '"', "\0");
+
         foreach ($data as $row) {
-            fputcsv($output, array_values($row), ';');
+            $cleaned = array_map(static function ($v) {
+                return str_replace(["\r\n", "\r", "\n"], ' ', trim((string)($v ?? '')));
+            }, array_values($row));
+            fputcsv($tmp, $cleaned, "\t", '"', "\0");
         }
+
+        // Étape 2 : lire le CSV UTF-8 depuis le buffer
+        rewind($tmp);
+        $csv = stream_get_contents($tmp);
+        fclose($tmp);
+
+        // Étape 3 : BOM UTF-16 LE + conversion UTF-8 → UTF-16 LE
+        echo "\xFF\xFE" . mb_convert_encoding($csv, 'UTF-16LE', 'UTF-8');
         
         fclose($output);
         exit;

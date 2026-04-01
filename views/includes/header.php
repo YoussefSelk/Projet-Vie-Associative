@@ -193,10 +193,10 @@ else {
                     </div>
                 </div>
             <?php else: ?>
-                <a href="/?page=login" class="header-btn header-btn-outline">
+                <a href="?page=login" class="header-btn header-btn-outline">
                     <i class="fas fa-sign-in-alt"></i> Connexion
                 </a>
-                <a href="/?page=register" class="header-btn header-btn-primary">
+                <a href="?page=register" class="header-btn header-btn-primary">
                     <i class="fas fa-user-plus"></i> Inscription
                 </a>
             <?php endif; ?>

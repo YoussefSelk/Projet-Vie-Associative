@@ -116,7 +116,7 @@ class SubscriptionController {
         validateSession();
         
         try {
-            $event_id = $_GET['event_id'] ?? $_POST['event_id'] ?? null;
+            $event_id = $_POST['event_id'] ?? null;
             if (!$event_id) {
                 echo json_encode(['success' => false, 'error' => 'ID événement manquant']);
                 exit;

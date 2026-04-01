@@ -187,11 +187,19 @@ return [
     // ==========================================
     
     'club-list' => [
-        'permission' => 2,
+        'permission' => 1,
         'auth' => true,
         'controller' => 'ClubController',
         'method' => 'listClubs',
         'view' => '/club/list.php'
+    ],
+
+    'clubs-browse' => [
+        'permission' => null,
+        'auth' => false,
+        'controller' => 'ClubController',
+        'method' => 'browseClubs',
+        'view' => '/club/browse.php'
     ],
 
     'my-clubs' => [
@@ -227,7 +235,7 @@ return [
     ],
     
     'export-members' => [
-        'permission' => 3,
+        'permission' => 2,
         'auth' => true,
         'controller' => 'ClubController',
         'method' => 'exportMembers',
@@ -300,6 +308,74 @@ return [
         'view' => '/admin/event_reports.php'
     ],
     
+    // ==========================================
+    // ROUTES EXPORT CSV (Tuteur et supérieur)
+    // ==========================================
+
+    'export' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'index',
+        'view' => '/export/index.php'
+    ],
+
+    'export-clubs' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportClubs',
+        'view' => null
+    ],
+
+    'export-club-members' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportClubMembers',
+        'view' => null
+    ],
+
+    'export-soutenance-members' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportSoutenanceMembers',
+        'view' => null
+    ],
+
+    'export-club-events' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportClubEvents',
+        'view' => null
+    ],
+
+    'export-events-period' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportEventsByPeriod',
+        'view' => null
+    ],
+
+    'export-past-events' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportPastEvents',
+        'view' => null
+    ],
+
+    'export-upcoming-events' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportUpcomingEvents',
+        'view' => null
+    ],
+
     // ==========================================
     // ROUTES SUPER ADMIN (Permission 5 uniquement)
     // ==========================================

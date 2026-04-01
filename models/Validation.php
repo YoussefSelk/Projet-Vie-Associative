@@ -39,12 +39,26 @@ class Validation {
     // =========================================================================
 
     /**
-     * Récupère tous les clubs en attente de validation
+     * Récupère les clubs en attente de validation BDE (première étape)
+     * Utilisé par le BDE (permission 3) pour voir les clubs qui n'ont pas encore été validés par le BDE
      * 
-     * @return array Liste des clubs non validés
+     * @return array Liste des clubs en attente de validation BDE
+     */
+    public function getPendingClubsForBDE() {
+        $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND (validation_bde IS NULL OR validation_bde = 0)");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupère les clubs en attente de validation (après validation BDE)
+     * Filtre par validation_bde = 1 pour respecter le flux strict :
+     * BDE d'abord, puis tuteur/admin
+     * 
+     * @return array Liste des clubs validés par le BDE mais en attente de validation finale
      */
     public function getPendingClubs() {
-        $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND (validation_admin IS NULL OR validation_admin = 0)");
+        $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_bde = 1 AND (validation_admin IS NULL OR validation_admin = 0)");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -73,10 +87,14 @@ class Validation {
      * @param string|null $remarques Commentaires/motif de refus
      * @return bool Succès de l'opération
      */
-    public function validateClub($club_id, $admin_validation = null, $tuteur_validation = null, $final_validation = null, $remarques = null) {
+    public function validateClub($club_id, $admin_validation = null, $tuteur_validation = null, $final_validation = null, $remarques = null, $bde_validation = null) {
         $updates = [];
         $values = [];
 
+        if ($bde_validation !== null) {
+            $updates[] = "validation_bde = ?";
+            $values[] = $bde_validation;
+        }
         if ($admin_validation !== null) {
             $updates[] = "validation_admin = ?";
             $values[] = $admin_validation;
@@ -112,7 +130,7 @@ class Validation {
      * @return bool Succès de l'opération
      */
     public function rejectClub($club_id, $motif_refus = '') {
-        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?");
+        $stmt = $this->db->prepare("UPDATE fiche_club SET validation_bde = 0, validation_admin = 0, validation_tuteur = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?");
         return $stmt->execute([$motif_refus, $club_id]);
     }
 

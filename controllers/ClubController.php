@@ -100,6 +100,18 @@ class ClubController {
             $new_description = trim($_POST['description'] ?? '');
             $new_campus = trim($_POST['campus'] ?? '');
 
+
+             // Vérification d'accès : seuls le Président, le Secrétaire du club ou un Admin (permission >= 4) peuvent modifier
+            if ($club_id) {
+                $memberModel = new ClubMember($this->db);
+                $current_user_id = $_SESSION['id'] ?? null;
+                $current_user_permission = $_SESSION['permission'] ?? 0;
+                if (!$memberModel->canEditClub((int)$club_id, (int)$current_user_id, (int)$current_user_permission)) {
+                    ErrorHandler::renderHttpError(403, "Accès refusé. Seuls le Président, le Secrétaire du club ou un Administrateur peuvent modifier ce club.");
+                    return [];
+                }
+            }
+
             if (!$club_id) {
                 $error_msg = "ID du club manquant.";
             } elseif (!$new_nom) {
@@ -176,38 +188,86 @@ class ClubController {
             $campus = trim($_POST['campus'] ?? '');
             $tuteur_id = !empty($_POST['tuteur_id']) ? intval($_POST['tuteur_id']) : null;
             $projet_associatif = isset($_POST['projet_associatif']) ? 1 : 0;
-            $soutenance = isset($_POST['soutenance']) ? 1 : 0;
-            $soutenance_date = !empty($_POST['soutenance_date']) ? $_POST['soutenance_date'] : null;
+            $creator_soutenance = isset($_POST['creator_soutenance']) ? 1 : 0;
             $creator_role = trim($_POST['creator_role'] ?? 'Président');
             $members = $_POST['members'] ?? [];
+            $maxSoutenanceMembers = 5;
 
-            // Validation serveur: minimum 3 fondateurs (vous + 2 autres)
-            // + normalisation (IDs uniques, rôles autorisés) pour éviter les contournements.
+            // Rôles autorisés et règles
+            $allowedRoles = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication", 'Membre'];
+            $uniqueRoles = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
+            $requiredRoles = ['Président', 'Trésorier', 'Secrétaire'];
+            $principalRoles = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
+            
+            $assignedRoles = []; // Pour suivre les rôles uniques et obligatoires
+            
             $creatorId = $_SESSION['id'] ?? null;
-            $allowedRoles = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', 'Membre'];
+            
             if (!in_array($creator_role, $allowedRoles, true)) {
                 $creator_role = 'Président';
             }
+            // Ajouter le rôle du créateur aux rôles assignés
+            $assignedRoles[] = $creator_role;
+            // La soutenance n'est autorisée que pour les rôles principaux
+            if (!in_array($creator_role, $principalRoles, true)) {
+                $creator_soutenance = 0;
+            }
+
+            $soutenanceCount = ($creator_soutenance === 1) ? 1 : 0;
 
             $memberIds = [];
             $normalizedMembers = [];
+            
             if (is_array($members)) {
                 foreach ($members as $member) {
                     $memberId = !empty($member['user_id']) ? intval($member['user_id']) : 0;
-                    if ($memberId <= 0) continue;
-                    if ($creatorId && $memberId === intval($creatorId)) continue;
-                    if (isset($memberIds[$memberId])) continue;
+                    if ($memberId <= 0 || ($creatorId && $memberId === intval($creatorId)) || isset($memberIds[$memberId])) {
+                        continue;
+                    }
 
                     $memberIds[$memberId] = true;
                     $role = trim($member['role'] ?? 'Membre');
+                    
                     if (!in_array($role, $allowedRoles, true)) {
                         $role = 'Membre';
                     }
 
+                    // --- Vérification Backend : Rôles uniques ---
+                    if (in_array($role, $uniqueRoles, true)) {
+                        if (in_array($role, $assignedRoles, true)) {
+                            $error_msg = "Erreur de sécurité : Le rôle '{$role}' ne peut être attribué qu'à une seule personne.";
+                            break;
+                        }
+                    }
+                    $assignedRoles[] = $role;
+
+                    // Soutenance autorisée uniquement pour les rôles principaux
+                    $requestedSoutenance = (intval($member['soutenance'] ?? 0) === 1 ? 1 : 0);
+                    $soutenance_membre = in_array($role, $principalRoles, true) ? $requestedSoutenance : 0;
+
+                    if ($soutenance_membre === 1) {
+                        $soutenanceCount++;
+                        if ($soutenanceCount > $maxSoutenanceMembers) {
+                            $error_msg = "Le quota de soutenance est dépassé : maximum {$maxSoutenanceMembers} membres en soutenance par club.";
+                            break;
+                        }
+                    }
+
                     $normalizedMembers[] = [
                         'user_id' => $memberId,
-                        'role' => $role
+                        'role' => $role,
+                        'soutenance' => $soutenance_membre
                     ];
+                }
+            }
+
+            // --- Vérification Backend : Rôles obligatoires ---
+            if (empty($error_msg)) {
+                foreach ($requiredRoles as $reqRole) {
+                    if (!in_array($reqRole, $assignedRoles, true)) {
+                        $error_msg = "Erreur : Le rôle de '{$reqRole}' est obligatoire pour créer le club.";
+                        break;
+                    }
                 }
             }
 
@@ -222,116 +282,59 @@ class ClubController {
                 $checkUsersStmt = $this->db->prepare("SELECT id FROM users WHERE id IN ($placeholders)");
                 $checkUsersStmt->execute($uniqueMemberIds);
                 $existingIds = $checkUsersStmt->fetchAll(PDO::FETCH_COLUMN, 0);
-                $existingIds = array_map('intval', $existingIds);
-                sort($existingIds);
-                $submittedIds = array_map('intval', $uniqueMemberIds);
-                sort($submittedIds);
-                if ($existingIds !== $submittedIds) {
-                    $error_msg = "Un ou plusieurs membres sélectionnés sont invalides. Veuillez les re-sélectionner depuis la liste.";
+                if (count($existingIds) !== count($uniqueMemberIds)) {
+                    $error_msg = "Un ou plusieurs membres sélectionnés sont invalides.";
                 }
             }
 
-            if (!$nom_club || !$type_club || !$description || !$campus) {
-                $error_msg = "Tous les champs sont obligatoires.";
-            } 
-            // Check for duplicate club name
-            elseif ($this->clubModel->getClubByName($nom_club)) {
-                $error_msg = "Un club avec ce nom existe déjà. Veuillez choisir un autre nom.";
-            }
-            else {
-                try {
-                    // Handle logo upload
-                    $logo_filename = null;
-                    if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
-                        $file = $_FILES['logo'];
-                        $allowed_types = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-                        $max_size = 2 * 1024 * 1024; // 2MB
-                        $finfo_logo = new \finfo(FILEINFO_MIME_TYPE);
-                        $detected_logo_mime = $finfo_logo->file($file['tmp_name']);
+            if (empty($error_msg)) {
+                if (!$nom_club || !$type_club || !$description || !$campus) {
+                    $error_msg = "Tous les champs de base sont obligatoires.";
+                } elseif ($this->clubModel->getClubByName($nom_club)) {
+                    $error_msg = "Un club avec ce nom existe déjà. Veuillez choisir un autre nom.";
+                } else {
+                    try {
+                        // LOGO UPLOAD LOGIC... (Garde ta logique d'upload ici)
+                        $logo_filename = null;
+                        if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+                            $file = $_FILES['logo'];
+                            $allowed_types = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+                            $max_size = 2 * 1024 * 1024;
+                            if (in_array($file['type'], $allowed_types) && $file['size'] <= $max_size) {
+                                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                                $just_filename = 'club_' . uniqid() . '_' . time() . '.' . $extension;
+                                $upload_path = ROOT_PATH . '/uploads/logos/' . $just_filename;
+                                $logo_filename = '../uploads/logos/' . $just_filename;
+                                if (!is_dir(ROOT_PATH . '/uploads/logos')) mkdir(ROOT_PATH . '/uploads/logos', 0755, true);
+                                if (!move_uploaded_file($file['tmp_name'], $upload_path)) $logo_filename = null;
+                            }
+                        }
 
-                        if (!in_array($detected_logo_mime, $allowed_types)) {
-                            $error_msg = "Format de logo non supporté. Utilisez PNG, JPG, GIF ou WebP.";
-                        } elseif ($file['size'] > $max_size) {
-                            $error_msg = "Le logo est trop volumineux. Taille maximale : 2 Mo.";
-                        } else {
-                            // Generate unique filename
-                            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                            $just_filename = 'club_' . uniqid() . '_' . time() . '.' . $extension;
-                            $upload_path = ROOT_PATH . '/uploads/logos/' . $just_filename;
-                            // Store relative path for database (matching existing format)
-                            $logo_filename = '../uploads/logos/' . $just_filename;
+                        $stmt = $this->db->prepare("INSERT INTO fiche_club (nom_club, type_club, description, campus, tuteur, logo_club) VALUES (?, ?, ?, ?, ?, ?)");
+                        if ($stmt->execute([$nom_club, $type_club, $description, $campus, $tuteur_id ? (string)$tuteur_id : '', $logo_filename])) {
+                            $club_id = $this->db->lastInsertId();
                             
-                            // Ensure upload directory exists
-                            if (!is_dir(ROOT_PATH . '/uploads/logos')) {
-                                mkdir(ROOT_PATH . '/uploads/logos', 0755, true);
+                            // Insertion du créateur
+                            if ($creatorId) {
+                                $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, ?, 1)")
+                                         ->execute([$club_id, $creatorId, $creator_role, $creator_soutenance]);
                             }
                             
-                            if (!move_uploaded_file($file['tmp_name'], $upload_path)) {
-                                $error_msg = "Erreur lors de l'upload du logo.";
-                                $logo_filename = null;
-                            }
-                        }
-                    }
-                    
-                    if (empty($error_msg)) {
-                        // Create the club - respect actual DB structure
-                        // Table fiche_club: club_id, nom_club, type_club, description, logo_club, tuteur, campus,
-                        //                   validation_admin, validation_tuteur, motif_refus, validation_finale
-                        $stmt = $this->db->prepare("
-                            INSERT INTO fiche_club (nom_club, type_club, description, campus, tuteur, logo_club, validation_admin, validation_tuteur, validation_finale) 
-                            VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
-                        ");
-                        $result = $stmt->execute([
-                            $nom_club,
-                            $type_club,
-                            $description,
-                            $campus,
-                            $tuteur_id ? (string)$tuteur_id : '', // tuteur is VARCHAR in DB, empty string if no tutor
-                            $logo_filename
-                        ]);
-                    
-                    if ($result) {
-                        $club_id = $this->db->lastInsertId();
-                        
-                        // Add the creator as a member with their chosen role
-                        if ($creatorId) {
-                            $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
-                            $insertStmt->execute([$club_id, $creatorId, $creator_role]);
-                        }
-                        
-                        // Add selected members
-                        if (!empty($normalizedMembers)) {
+                            // Insertion des membres
                             foreach ($normalizedMembers as $member) {
-                                $memberId = intval($member['user_id']);
-                                if (!$memberId || ($creatorId && $memberId === intval($creatorId))) continue;
-
-                                // Check if member already exists
-                                $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
-                                $checkStmt->execute([$club_id, $memberId]);
-                                if (!$checkStmt->fetch()) {
-                                    $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
-                                    $insertStmt->execute([$club_id, $memberId, $member['role']]);
-                                }
+                                $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, ?, 1)")
+                                         ->execute([$club_id, $member['user_id'], $member['role'], $member['soutenance']]);
                             }
+                            
+                            if ($tuteur_id) $this->notifyTutor($tuteur_id, $nom_club, 'club');
+                            redirect('index.php?page=club-view&id=' . $club_id . '&created=1');
+                        } else {
+                            $error_msg = "Erreur lors de la création du club.";
                         }
-                        
-                        // Send notification to tutor if assigned
-                        if ($tuteur_id) {
-                            $this->notifyTutor($tuteur_id, $nom_club, 'club');
-                        }
-                        
-                        // Redirection vers la page de détails du club pour afficher immédiatement les membres
-                        redirect('index.php?page=club-view&id=' . $club_id . '&created=1');
-                    } else {
-                        $error_msg = "Erreur lors de la création du club.";
+                    } catch (PDOException $e) {
+                        ErrorHandler::logError("Club creation error: " . $e->getMessage(), 'ERROR');
+                        $error_msg = "Erreur système lors de la création du club.";
                     }
-                    } // End of if (empty($error_msg))
-                } catch (PDOException $e) {
-                    ErrorHandler::logError("Club creation error: " . $e->getMessage(), 'ERROR', [
-                        'club_name' => $nom_club,
-                        'user_id' => $_SESSION['id'] ?? null
-                    ]);
-                    $error_msg = "Erreur lors de la création du club.";
                 }
             }
         }
@@ -425,32 +428,30 @@ class ClubController {
         $currentMembers = [];
         $users = [];
         $is_admin_force = false;
+        $presidentSoutenance = 0;
 
         if (!$club) {
             $error_msg = "Club non trouvé.";
         } else {
-            // Vérifier que l'utilisateur est bien un membre du bureau (Président ou Secrétaire)
-            $stmt = $this->db->prepare("
-                SELECT mc.fonction FROM membres_club mc
-                WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.fonction IN ('Président', 'Secrétaire')
-            ");
-            $stmt->execute([$club_id, $user_id]);
-            $isBureau = (bool)$stmt->fetch();
-
-            // Les admins (≥4) peuvent modifier n'importe quel club, validé ou non
-            if (!$isBureau && !$isAdmin) {
-                $error_msg = "Vous n'avez pas la permission de modifier ce club. Seuls le Président et le Secrétaire peuvent modifier le club.";
+            // Vérifier que l'utilisateur est Président/Secrétaire du club OU Admin (permission >= 4)
+            $memberModel = new ClubMember($this->db);
+            $current_user_permission = (int)($_SESSION['permission'] ?? 0);
+            $canEdit = $memberModel->canEditClub((int)$club_id, (int)$user_id, $current_user_permission);
+            
+            if (!$canEdit) {
+                ErrorHandler::renderHttpError(403, "Accès refusé. Seuls le Président, le Secrétaire du club ou un Administrateur peuvent modifier ce club.");
+                return [];
             } elseif ($club['validation_finale'] == 1 && !$isAdmin) {
-                $error_msg = "Vous ne pouvez pas modifier un club déjà validé.";
+                $error_msg = "Vous ne pouvez pas modifier un club déjà validé.";            
             } else {
                 // Flag : admin forçant la modification d'un club déjà validé
                 $is_admin_force = $isAdmin && ($club['validation_finale'] == 1);
 
                 // Récupérer les membres actuels du club (sauf le Président)
                 $memberStmt = $this->db->prepare("
-                    SELECT u.id, u.nom, u.prenom, mc.fonction
-                    FROM membres_club mc
-                    INNER JOIN users u ON mc.membre_id = u.id
+                    SELECT u.id, u.nom, u.prenom, mc.fonction, mc.soutenance 
+                    FROM membres_club mc 
+                    INNER JOIN users u ON mc.membre_id = u.id 
                     WHERE mc.club_id = ? AND mc.fonction != 'Président'
                 ");
                 $memberStmt->execute([$club_id]);
@@ -466,6 +467,12 @@ class ClubController {
                 $stmtUsers->execute([(int)$user_id]);
                 $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
 
+                // Le président est conservé en base, sa soutenance compte dans le quota global.
+                $stmtPresidentSoutenance = $this->db->prepare("SELECT COALESCE(MAX(soutenance), 0) FROM membres_club WHERE club_id = ? AND fonction = 'Président'");
+                $stmtPresidentSoutenance->execute([$club_id]);
+                $presidentSoutenance = (int)$stmtPresidentSoutenance->fetchColumn();
+                
+                // Traiter la soumission du formulaire
                 // Traiter la soumission du formulaire
                 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_club'])) {
                     $nom_club = trim($_POST['nom_club'] ?? '');
@@ -473,13 +480,75 @@ class ClubController {
                     $description = trim($_POST['description'] ?? '');
                     $campus = trim($_POST['campus'] ?? '');
                     $members = $_POST['members'] ?? [];
+                    $maxSoutenanceMembers = 5;
 
-                    if (!$nom_club || !$type_club || !$description || !$campus) {
-                        $error_msg = "Tous les champs sont obligatoires.";
-                    } elseif (!in_array($campus, ["Calais", "Longuenesse", "Dunkerque", "Boulogne"])) {
-                        $error_msg = "Campus invalide.";
-                    } else {
-                        if ($this->clubModel->clubNameExists($nom_club, $club_id)) {
+                    $allowedRoles = ['Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication", 'Membre'];
+                    $uniqueRoles = ['Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
+                    $requiredRoles = ['Trésorier', 'Secrétaire']; // Président est déjà ignoré et conservé en base
+                    $principalRoles = ['Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
+
+                    $soutenanceCount = $presidentSoutenance;
+
+                    $assignedRoles = [];
+                    $normalizedMembers = [];
+                    $memberIds = [];
+
+                    if (is_array($members)) {
+                        foreach ($members as $member) {
+                            $memberId = !empty($member['user_id']) ? intval($member['user_id']) : 0;
+                            if ($memberId <= 0 || $memberId == $user_id || isset($memberIds[$memberId])) continue;
+
+                            $memberIds[$memberId] = true;
+                            $role = trim($member['role'] ?? 'Membre');
+                            
+                            if (!in_array($role, $allowedRoles, true)) {
+                                $role = 'Membre';
+                            }
+
+                            // --- Vérification Backend : Rôles uniques ---
+                            if (in_array($role, $uniqueRoles, true)) {
+                                if (in_array($role, $assignedRoles, true)) {
+                                    $error_msg = "Le rôle '{$role}' doit être attribué à une seule personne.";
+                                    break;
+                                }
+                            }
+                            $assignedRoles[] = $role;
+
+                            $requestedSoutenance = (intval($member['soutenance'] ?? 0) === 1 ? 1 : 0);
+                            $soutenance_membre = in_array($role, $principalRoles, true) ? $requestedSoutenance : 0;
+
+                            if ($soutenance_membre === 1) {
+                                $soutenanceCount++;
+                                if ($soutenanceCount > $maxSoutenanceMembers) {
+                                    $error_msg = "Le quota de soutenance est dépassé : maximum {$maxSoutenanceMembers} membres en soutenance par club.";
+                                    break;
+                                }
+                            }
+
+                            $normalizedMembers[] = [
+                                'user_id' => $memberId,
+                                'role' => $role,
+                                'soutenance' => $soutenance_membre
+                            ];
+                        }
+                    }
+
+                    // --- Vérification Backend : Rôles obligatoires ---
+                    if (empty($error_msg)) {
+                        foreach ($requiredRoles as $reqRole) {
+                            if (!in_array($reqRole, $assignedRoles, true)) {
+                                $error_msg = "Erreur : Le rôle de '{$reqRole}' est obligatoire pour ce club.";
+                                break;
+                            }
+                        }
+                    }
+
+                    if (empty($error_msg)) {
+                        if (!$nom_club || !$type_club || !$description || !$campus) {
+                            $error_msg = "Tous les champs sont obligatoires.";
+                        } elseif (!in_array($campus, ["Calais", "Longuenesse", "Dunkerque", "Boulogne"])) {
+                            $error_msg = "Campus invalide.";
+                        } elseif ($this->clubModel->clubNameExists($nom_club, $club_id)) {
                             $error_msg = "Un club avec ce nom existe déjà.";
                         } else {
                             $data = [
@@ -489,27 +558,15 @@ class ClubController {
                                 'campus' => $campus
                             ];
 
-                            // Admin : ne pas réinitialiser la validation (modification directe)
-                            // Utilisateur normal : réinitialise la validation pour resoumission
+                            // Admin keeps validation state; non-admin resubmits for validation.
                             $resetValidation = !$isAdmin;
-
                             if ($this->clubModel->updateClub($club_id, $data, $resetValidation)) {
-                                // Supprimer tous les membres non-Président puis réinsérer
-                                $deleteStmt = $this->db->prepare("DELETE FROM membres_club WHERE club_id = ? AND fonction != 'Président'");
-                                $deleteStmt->execute([$club_id]);
-
-                                if (!empty($members)) {
-                                    foreach ($members as $member) {
-                                        $memberId = !empty($member['user_id']) ? intval($member['user_id']) : null;
-                                        if ($memberId && $memberId != $user_id) {
-                                            $checkStmt = $this->db->prepare("SELECT id FROM membres_club WHERE club_id = ? AND membre_id = ?");
-                                            $checkStmt->execute([$club_id, $memberId]);
-                                            if (!$checkStmt->fetch()) {
-                                                $insertStmt = $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, 0, 1)");
-                                                $insertStmt->execute([$club_id, $memberId, $member['role'] ?? 'Membre']);
-                                            }
-                                        }
-                                    }
+                                // Ne pas supprimer le Président (créateur)
+                                $this->db->prepare("DELETE FROM membres_club WHERE club_id = ? AND fonction != 'Président'")->execute([$club_id]);
+                                
+                                foreach ($normalizedMembers as $member) {
+                                    $this->db->prepare("INSERT INTO membres_club (club_id, membre_id, fonction, soutenance, valide) VALUES (?, ?, ?, ?, 1)")
+                                             ->execute([$club_id, $member['user_id'], $member['role'], $member['soutenance']]);
                                 }
 
                                 if ($isAdmin) {
@@ -528,13 +585,12 @@ class ClubController {
         }
 
         return [
-            'club'           => $club,
-            'error_msg'      => $error_msg,
-            'success_msg'    => $success_msg,
-            'currentMembers' => $currentMembers,
-            'users'          => $users,
-            'is_admin_force' => $is_admin_force,
-            'is_admin'       => $isAdmin,
+            'club' => $club,
+            'error_msg' => $error_msg,
+            'success_msg' => $success_msg,
+            'presidentSoutenance' => $presidentSoutenance ?? 0,
+            'currentMembers' => $currentMembers ?? [],
+            'users' => $users ?? []
         ];
     }
 
@@ -589,6 +645,17 @@ class ClubController {
                         $tutor = null;
                     }
                 }
+
+                // Vérifier si l'utilisateur connecté peut modifier ce club
+                $canEditClub = false;
+                if (isset($_SESSION['id'])) {
+                    $memberModel = new ClubMember($this->db);
+                    $canEditClub = $memberModel->canEditClub(
+                        (int)$club_id,
+                        (int)$_SESSION['id'],
+                        (int)($_SESSION['permission'] ?? 0)
+                    );
+                }
             }
         }
         
@@ -596,6 +663,7 @@ class ClubController {
             'id' => $club_id,
             'club' => $club,
             'members' => $members,
+            'canEditClub' => $canEditClub ?? false,
             'events' => $events,
             'tutor' => $tutor,
             'error_msg' => $error_msg

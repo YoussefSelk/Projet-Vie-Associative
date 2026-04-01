@@ -58,8 +58,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                 <div class="search-box">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="myClubSearch" class="search-input" 
-                           placeholder="Rechercher un club..." 
-                           autocomplete="off">
+                        placeholder="Rechercher un club..." 
+                        autocomplete="off">
                     <button type="button" class="search-clear" aria-label="Effacer">
                         <i class="fas fa-times"></i>
                     </button>
@@ -139,6 +139,11 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                             <?php endif; ?>
 
                             <div class="club-actions">
+                                <?php if (!empty($canEditClub)): ?>
+                                <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-warning">
+                                    <i class="fas fa-edit"></i> Modifier le club
+                                </a>
+                                <?php endif; ?>
                                 <?php if ($club['validation_finale'] != 1): ?>
                                     <!-- Club non validé: affiche Modifier et Supprimer -->
                                     <a href="?page=club-edit&id=<?= $club['club_id'] ?>" class="btn btn-primary btn-sm">

@@ -41,7 +41,45 @@ class EventController {
      */
     public function listEvents() {
         $events = $this->eventModel->getAllValidatedEvents();
-        
+
+        // Normaliser et injecter les infos du club (logo, nom) pour l'affichage en liste
+        if (!empty($events)) {
+            $stmtClub = $this->db->prepare("SELECT logo_club, nom_club FROM fiche_club WHERE club_id = ?");
+            foreach ($events as &$ev) {
+                $clubId = $ev['club_orga'] ?? null;
+                $logoPath = null;
+                $clubName = $ev['nom_club'] ?? 'Club inconnu';
+
+                if ($clubId) {
+                    $stmtClub->execute([$clubId]);
+                    $clubInfo = $stmtClub->fetch(PDO::FETCH_ASSOC);
+                    if ($clubInfo) {
+                        $rawLogo = $clubInfo['logo_club'] ?? null;
+                        $clubName = $clubInfo['nom_club'] ?? $clubName;
+
+                        if (!empty($rawLogo)) {
+                            if (preg_match('#^https?://#i', $rawLogo)) {
+                                $logoPath = $rawLogo;
+                            } else {
+                                $clean = ltrim(str_replace(['../', './'], '', $rawLogo), '/');
+                                $candidate = '/' . $clean;
+                                if (defined('ROOT_PATH') && file_exists(ROOT_PATH . $candidate)) {
+                                    $logoPath = $candidate;
+                                } elseif (!defined('ROOT_PATH')) {
+                                    // Sans ROOT_PATH, on retourne le chemin préfixé (sera servi par le webroot)
+                                    $logoPath = $candidate;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $ev['logo_club'] = $logoPath;
+                $ev['nom_club']  = $clubName;
+            }
+            unset($ev);
+        }
+
         return [
             'events' => $events
         ];
@@ -64,12 +102,14 @@ class EventController {
 
         // 2. On cherche qui est le tuteur du club organisateur de cet event
         // club_orga est bien dans $event
-        $stmt = $this->db->prepare("SELECT tuteur FROM fiche_club WHERE club_id = ?");
+        $stmt = $this->db->prepare("SELECT tuteur, logo_club, nom_club FROM fiche_club WHERE club_id = ?");
         $stmt->execute([$event['club_orga']]);
         $clubInfo = $stmt->fetch(PDO::FETCH_ASSOC);
 
         // 3. On ajoute l'ID du tuteur au tableau $event pour la vue
         $event['tuteur_id'] = $clubInfo['tuteur'] ?? 0;
+        $event['logo_club'] = $clubInfo['logo_club'] ?? null;
+        $event['nom_club'] = $clubInfo['nom_club'] ?? 'Club inconnu';
 
         return [
             'event' => $event
@@ -97,14 +137,34 @@ class EventController {
         $error_msg = '';
         $success_msg = '';
 
-        // Passer les clubs validés à la vue (au lieu de global $db dans la vue)
-        $stmtClubs = $this->db->query("SELECT club_id, nom_club FROM fiche_club WHERE validation_finale = 1 ORDER BY nom_club ASC");
+        // 1. Détermination de la liste des clubs selon le profil
+        if ($user_permission === 1) {
+            // UTILISATEUR NORMAL (P1) : Ne voit QUE ses clubs où il est membre validé
+            $stmtClubs = $this->db->prepare("
+                SELECT fc.club_id, fc.nom_club 
+                FROM fiche_club fc
+                INNER JOIN membres_club mc ON fc.club_id = mc.club_id
+                WHERE fc.validation_finale = 1 
+                AND mc.membre_id = ? 
+                AND mc.valide = 1
+                ORDER BY fc.nom_club ASC
+            ");
+            $stmtClubs->execute([$_SESSION['id']]);
+        } else {
+            // BDE / PERSONNEL / TUTEURS (P3, P4, P5) : Voient TOUS les clubs validés
+            $stmtClubs = $this->db->query("
+                SELECT club_id, nom_club 
+                FROM fiche_club 
+                WHERE validation_finale = 1 
+                ORDER BY nom_club ASC
+            ");
+        }
         $clubs = $stmtClubs->fetchAll(PDO::FETCH_ASSOC);
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_event'])) {
-            // Get form data - respect actual DB column names
             $nom_event = trim($_POST['nom_event'] ?? '');
             $description = trim($_POST['description'] ?? '');
+            $type_event = trim($_POST['type_event'] ?? 'event'); // Récupère 'event' ou 'activity'
             $date_ev = trim($_POST['date_ev'] ?? '');
             $horaire_debut = trim($_POST['horaire_debut'] ?? '13:30');
             $horaire_fin = trim($_POST['horaire_fin'] ?? '17:30');
@@ -121,6 +181,9 @@ class EventController {
                 $error_msg = "Veuillez sélectionner un club organisateur.";
             } elseif (strtotime($date_ev) < strtotime('+15 days midnight')) {
                 $error_msg = "La date de l'événement doit être au minimum dans 15 jours.";
+            } elseif ($type_event === 'event' && (!isset($_FILES['doc_organisation']) || $_FILES['doc_organisation']['error'] !== UPLOAD_ERR_OK)) {
+                // Le document est obligatoire seulement pour un EVENT
+                $error_msg = "Le dossier d'organisation (Gantt, Budget, Com) est obligatoire pour un événement.";
             } else {
                 // Récupérer le nom du club pour le nommage des fichiers
                 $stmtClub = $this->db->prepare("SELECT nom_club FROM fiche_club WHERE club_id = ?");
@@ -132,6 +195,27 @@ class EventController {
                 
                 $fiche_sanitaire_path = null;
                 $affiche_path = null;
+                $doc_organisation_path = null;
+
+                // Upload du dossier d'organisation (Gantt, Budget, Com)
+                if (isset($_FILES['doc_organisation']) && $_FILES['doc_organisation']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['doc_organisation']['name'], PATHINFO_EXTENSION));
+                    if ($ext !== 'pdf') {
+                        $error_msg = "Le dossier d'organisation doit être au format PDF.";
+                    } else {
+                        $upload_dir = ROOT_PATH . '/uploads/docs_organisation/';
+                        if (!is_dir($upload_dir)) {
+                            mkdir($upload_dir, 0755, true);
+                        }
+                        $new_filename = $club_name . '_dossier_' . $event_title_clean . '_' . $timestamp . '.pdf';
+                        $upload_path = $upload_dir . $new_filename;
+                        if (move_uploaded_file($_FILES['doc_organisation']['tmp_name'], $upload_path)) {
+                            $doc_organisation_path = '../uploads/docs_organisation/' . $new_filename;
+                        } else {
+                            $error_msg = "Erreur lors de l'upload du dossier d'organisation.";
+                        }
+                    }
+                }
 
                 // Upload fiche sanitaire (PDF)
                 if (isset($_FILES['fiche_sanitaire']) && $_FILES['fiche_sanitaire']['error'] === UPLOAD_ERR_OK) {
@@ -188,6 +272,7 @@ class EventController {
                 if (empty($error_msg)) {
                     $data = [
                         'nom_event' => $nom_event,
+                        'type_event' => $type_event,
                         'description' => $description,
                         'date_ev' => $date_ev,
                         'horaire_debut' => $horaire_debut,
@@ -199,13 +284,19 @@ class EventController {
                         'financement_bde' => $financement_bde,
                         'montant' => $montant,
                         'fiche_sanitaire' => $fiche_sanitaire_path,
-                        'affiche' => $affiche_path
+                        'affiche' => $affiche_path,
+                        'doc_organisation' => $doc_organisation_path
                     ];
 
                     if ($this->eventModel->createEvent($data)) {
-                        $success_msg = "Événement créé avec succès. Il est en attente de validation.";
+                        if ($type_event === 'activity') {
+                            $success_msg = "L'activité a été créée avec succès. Elle est en attente de validation.";
+                        } else {
+                            $success_msg = "L'événement a été créé avec succès. Il est en attente de validation (BDE & Tuteur).";
+                        }
                     } else {
-                        $error_msg = "Erreur lors de la création de l'événement.";
+                        $label = ($type_event === 'activity') ? "de l'activité" : "de l'événement";
+                        $error_msg = "Erreur lors de la création " . $label . ".";
                     }
                 }
             }

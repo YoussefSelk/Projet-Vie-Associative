@@ -250,6 +250,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                                             <span><?= htmlspecialchars($event['lieu']) ?></span>
                                         </div>
                                         <?php endif; ?>
+
+                                        <?php if (isset($event['type_event'])): ?>
+                                            <span class="type-badge <?= (!empty($event['type_event']) && $event['type_event'] == 'event') ? 'event' : 'activity' ?>">
+                                                <?= htmlspecialchars((!empty($event['type_event']) && $event['type_event'] == 'event') ? 'Événement' : 'Activité') ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    
                                     </div>
                                     <?php if (!empty($event['description'])): ?>
                                         <p class="card-description"><?= htmlspecialchars($event['description']) ?></p>
@@ -603,60 +610,88 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
         document.querySelectorAll('.btn-swal-event-details').forEach(btn => {
             btn.addEventListener('click', function() {
                 const ev = JSON.parse(this.dataset.event);
-                let dateStr = '-';
-                if (ev.date_ev) {
-                    const d = new Date(ev.date_ev);
-                    dateStr = d.toLocaleDateString('fr-FR', {
-                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                    });
-                }
-                const timeStr = (ev.horaire_debut ? ev.horaire_debut.substring(0,5) : '?') + ' - ' + (ev.horaire_fin ? ev.horaire_fin.substring(0,5) : '?');
 
-                function statusBadge(label, val) {
+                // --- Fonctions utilitaires (identiques à validation_bde.php) ---
+                function formatDate(dateStr) {
+                    if (!dateStr) return 'N/A';
+                    const d = new Date(dateStr);
+                    if (isNaN(d)) return dateStr;
+                    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                }
+                function formatTime(timeStr) {
+                    if (!timeStr) return '?';
+                    return String(timeStr).substring(0, 5);
+                }
+                function formatDatetime(dtStr) {
+                    if (!dtStr) return 'N/A';
+                    const d = new Date(dtStr);
+                    if (isNaN(d)) return dtStr;
+                    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                        + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                }
+                function valBadge(label, val) {
                     if (val == 1) return '<span class="swal-badge swal-badge-success"><i class="fas fa-check-circle"></i> ' + label + '</span>';
-                    if (val == -1 || val === '0' || val === 0) return '<span class="swal-badge swal-badge-danger"><i class="fas fa-times-circle"></i> ' + label + '</span>';
-                    return '<span class="swal-badge swal-badge-pending"><i class="fas fa-hourglass-half"></i> ' + label + '</span>';
+                    if (val === null || val === undefined || val === '') return '<span class="swal-badge swal-badge-pending"><i class="fas fa-hourglass-half"></i> ' + label + '</span>';
+                    return '<span class="swal-badge swal-badge-danger"><i class="fas fa-times-circle"></i> ' + label + '</span>';
                 }
 
-                let financeHtml = '<span class="swal-muted">Non demandé</span>';
+                // Logo
+                let logoHtml = '';
+                if (ev.logo_club) {
+                    const lp = ev.logo_club.match(/^https?:\/\//i) ? ev.logo_club : '/' + String(ev.logo_club).replace(/^\/+/, '');
+                    logoHtml = '<div style="text-align:center;margin-bottom:10px;"><img src="' + esc(lp) + '" alt="Logo" class="swal-detail-logo" /></div>';
+                }
+
+                // Responsable
+                let resp = '<span class="swal-muted">N/A</span>';
+                if (ev.responsable_prenom) {
+                    resp = esc(ev.responsable_prenom + ' ' + (ev.responsable_nom || ''));
+                    if (ev.responsable_mail) resp += ' <span style="color:#64748b;">(' + esc(ev.responsable_mail) + ')</span>';
+                    if (ev.responsable_promo) resp += ' · ' + esc(ev.responsable_promo);
+                }
+
+                // Financement
+                let finHtml = '<span class="swal-muted">Non demandé</span>';
                 if (ev.financement_bde == 1) {
-                    financeHtml = '<span class="swal-finance-highlight"><i class="fas fa-check-circle"></i> Oui — ' + parseInt(ev.montant || 0) + ' €</span>';
+                    finHtml = '<span class="swal-finance-highlight"><i class="fas fa-check-circle"></i> Oui — ' + parseInt(ev.montant || 0) + ' €</span>';
                 }
 
+                // Fichiers
                 let filesHtml = '';
-                if (ev.fiche_sanitaire || ev.affiche) {
+                if (ev.fiche_sanitaire || ev.affiche || ev.doc_organisation) {
                     filesHtml = '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-paperclip"></i> Documents joints</div><div class="swal-files-row">';
-                    if (ev.fiche_sanitaire) filesHtml += '<a href="' + esc(ev.fiche_sanitaire) + '" target="_blank" class="swal-file-link"><i class="fas fa-file-medical"></i> Fiche sanitaire</a>';
-                    if (ev.affiche) filesHtml += '<a href="' + esc(ev.affiche) + '" target="_blank" class="swal-file-link"><i class="fas fa-image"></i> Affiche</a>';
+                    if (ev.doc_organisation) filesHtml += '<a href="' + esc(ev.doc_organisation) + '" target="_blank" class="swal-file-link" style="display:inline-block;margin-right:10px;"><i class="fas fa-file-alt"></i> Document d&apos;organisation</a>';
+                    if (ev.fiche_sanitaire)  filesHtml += '<a href="' + esc(ev.fiche_sanitaire)  + '" target="_blank" class="swal-file-link" style="display:inline-block;margin-right:10px;"><i class="fas fa-file-medical"></i> Fiche sanitaire</a>';
+                    if (ev.affiche)          filesHtml += '<a href="' + esc(ev.affiche)          + '" target="_blank" class="swal-file-link"><i class="fas fa-image"></i> Affiche</a>';
                     filesHtml += '</div></div>';
                 }
 
+                const html =
+                    '<div class="swal-detail-content">' + logoHtml +
+                    '<div class="swal-detail-grid">' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-building"></i> Club</div><div class="swal-detail-value">' + esc(ev.nom_club || 'N/A') + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-tag"></i> Type</div><div class="swal-detail-value">' + (ev.is_event == 1 ? 'Événement' : 'Activité') + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-user"></i> Responsable</div><div class="swal-detail-value">' + resp + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-calendar"></i> Date</div><div class="swal-detail-value">' + formatDate(ev.date_ev) + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-clock"></i> Horaires</div><div class="swal-detail-value">' + formatTime(ev.horaire_debut) + ' - ' + formatTime(ev.horaire_fin) + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (ev.campus || 'calais').toLowerCase() + '">' + esc(ev.campus || 'N/A') + '</span></div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-pin"></i> Lieu</div><div class="swal-detail-value">' + esc(ev.lieu || 'N/A') + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-euro-sign"></i> Financement BDE</div><div class="swal-detail-value">' + finHtml + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-inbox"></i> Dépôt</div><div class="swal-detail-value">' + formatDatetime(ev.date_depot) + '</div></div>' +
+                    '</div>' +
+                    (ev.description ? '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-align-left"></i> Description</div><div class="swal-detail-description">' + esc(ev.description) + '</div></div>' : '') +
+                    filesHtml +
+                    '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div><div class="swal-badges-row">' +
+                        valBadge('BDE', ev.validation_bde) + valBadge('Tuteur', ev.validation_tuteur) + valBadge('Admin', ev.validation_admin) +
+                    '</div></div>' +
+                    (ev.motif_refus ? '<div class="swal-detail-section swal-reject-box"><div class="swal-detail-label"><i class="fas fa-comment-alt"></i> Motif de rejet</div><div class="swal-detail-description">' + esc(ev.motif_refus) + '</div></div>' : '') +
+                    '</div>';
+
                 Swal.fire({
                     title: '<i class="fas fa-calendar-alt" style="color:var(--color-primary, #0066cc);"></i> ' + esc(ev.titre || 'Événement sans titre'),
-                    html:
-                        '<div class="swal-detail-content">' +
-                        '<div class="swal-detail-grid">' +
-                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-building"></i> Club</div><div class="swal-detail-value">' + esc(ev.nom_club || '-') + '</div></div>' +
-                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-calendar"></i> Date</div><div class="swal-detail-value">' + esc(dateStr) + '</div></div>' +
-                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-clock"></i> Horaires</div><div class="swal-detail-value">' + esc(timeStr) + '</div></div>' +
-                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (ev.campus || 'calais').toLowerCase() + '">' + esc(ev.campus || '-') + '</span></div></div>' +
-                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-location-dot"></i> Lieu</div><div class="swal-detail-value">' + esc(ev.lieu || 'Non renseigné') + '</div></div>' +
-                            '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-euro-sign"></i> Financement BDE</div><div class="swal-detail-value">' + financeHtml + '</div></div>' +
-                        '</div>' +
-                        (ev.description ? '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-align-left"></i> Description</div><div class="swal-detail-description">' + esc(ev.description) + '</div></div>' : '') +
-                        filesHtml +
-                        '<div class="swal-detail-section">' +
-                            '<div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div>' +
-                            '<div class="swal-badges-row">' +
-                                statusBadge('BDE', ev.validation_bde) +
-                                statusBadge('Tuteur', ev.validation_tuteur) +
-                                statusBadge('Admin', ev.validation_admin) +
-                                statusBadge('Finale', ev.validation_finale) +
-                            '</div>' +
-                        '</div>' +
-                        (ev.motif_refus ? '<div class="swal-detail-section swal-reject-box"><div class="swal-detail-label"><i class="fas fa-comment-alt"></i> Motif de rejet</div><div class="swal-detail-description">' + esc(ev.motif_refus) + '</div></div>' : '') +
-                        '</div>',
+                    html: html,
                     width: 700,
+                    showCloseButton: true,
                     confirmButtonText: 'Fermer',
                     confirmButtonColor: '#6c757d',
                     customClass: { popup: 'swal-detail-popup' }

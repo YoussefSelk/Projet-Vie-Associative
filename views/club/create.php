@@ -79,10 +79,21 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 <input type="text" name="nom_club" class="form-control" placeholder="Ex: Club Robotique" required>
                             </div>
                             <div class="form-group">
-                                <label><i class="fas fa-tag"></i> Type de club</label>
-                                <input type="text" name="type_club" class="form-control" placeholder="Ex: Tech, Sport, Culture..." required>
+                                <label for="type_club">Type de club <span style="color: red;">*</span></label>
+                                <select id="type_club" name="type_club" required>
+                                    <option value="">-- Sélectionnez un type --</option>
+                                    <option value="Culturel" <?= ($club['type_club'] === 'Culturel') ? 'selected' : '' ?>>Culturel</option>
+                                    <option value="Sportif" <?= ($club['type_club'] === 'Sportif') ? 'selected' : '' ?>>Sportif</option>
+                                    <option value="Artistique" <?= ($club['type_club'] === 'Artistique') ? 'selected' : '' ?>>Artistique</option>
+                                    <option value="Gastronomique" <?= ($club['type_club'] === 'Gastronomique') ? 'selected' : '' ?>>Gastronomique</option>
+                                    <option value="Humanitaire" <?= ($club['type_club'] === 'Humanitaire') ? 'selected' : '' ?>>Humanitaire</option>
+                                    <option value="Professionnel" <?= ($club['type_club'] === 'Professionnel') ? 'selected' : '' ?>>Professionnel</option>
+                                    <option value="Autre" <?= ($club['type_club'] === 'Autre') ? 'selected' : '' ?>>Autre</option>
+                                </select>
                             </div>
                         </div>
+
+
 
                         <div class="form-group">
                             <label><i class="fas fa-align-left"></i> Description</label>
@@ -112,7 +123,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                         </div>
                         
                         <!-- Projet Associatif Section -->
-                        <div class="form-section">
+                        <!-- <div class="form-section">
                             <h4>
                                 <i class="fas fa-project-diagram"></i> Soutenance
                                 <span class="tooltip-trigger" title="La création d'un club nécessite au moins 3 personnes (vous + 2 autres membres). La soutenance est obligatoire pour certains clubs.">
@@ -133,7 +144,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 <label><i class="fas fa-calendar-alt"></i> Date de soutenance</label>
                                 <input type="date" name="soutenance_date" class="form-control">
                             </div>
-                        </div>
+                        </div> -->
                         
                         <!-- Section Membres Fondateurs -->
                         <div class="form-section" id="membersSection">
@@ -150,11 +161,38 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                     <option value="Vice-Président">Vice-Président</option>
                                     <option value="Trésorier">Trésorier</option>
                                     <option value="Secrétaire">Secrétaire</option>
+                                    <option value="Charge d'événement / communication" selected>Charge d'événement / communication</option>
                                     <option value="Membre">Membre</option>
                                 </select>
+                                <div id="creatorSoutenanceContainer" style="margin-top: 10px;">
+                                    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-weight:500;">
+                                        <input type="checkbox" name="creator_soutenance" id="creatorSoutenance" value="1">
+                                        <i class="fas fa-graduation-cap" style="color:#6366f1;"></i> Soutenance
+                                    </label>
+                                </div>
                                 <small class="text-muted"><i class="fas fa-info-circle"></i> Vous serez automatiquement ajouté avec ce rôle.</small>
                             </div>
                             
+                            <!-- Rôles obligatoires -->
+                            <div id="requiredRolesNotif" style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 15px;margin-bottom:15px;">
+                                <p style="margin:0 0 8px;font-weight:600;" id="requiredRolesMsg">
+                                    <i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i>
+                                    Rôles obligatoires — chacun doit être attribué à un membre :
+                                </p>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                    <span id="badge_President"  style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:.85em;font-weight:600;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;"><i class="fas fa-times-circle"></i> Président</span>
+                                    <span id="badge_Tresorier"  style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:.85em;font-weight:600;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;"><i class="fas fa-times-circle"></i> Trésorier</span>
+                                    <span id="badge_Secretaire" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:.85em;font-weight:600;background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;"><i class="fas fa-times-circle"></i> Secrétaire</span>
+                                </div>
+                            </div>
+
+                            <div id="soutenanceQuotaNotif" style="background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:12px 15px;margin-bottom:15px;">
+                                <p id="soutenanceQuotaMsg" style="margin:0;font-weight:600;color:#1e3a8a;">
+                                    <i class="fas fa-graduation-cap"></i> Soutenance : 0 / 5
+                                </p>
+                                <small style="color:#1d4ed8;">La soutenance est autorisée uniquement pour les rôles principaux (pas pour Membre).</small>
+                            </div>
+
                             <p class="text-muted" id="memberRequirement" style="display: none;">
                                 <i class="fas fa-exclamation-triangle"></i> <span id="memberRequirementText">Ajoutez au moins 2 autres membres fondateurs (vous + 2 autres minimum).</span>
                             </p>
@@ -170,21 +208,31 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                             <div class="member-add-row">
                                 <div class="member-search-container">
                                     <input type="text" 
-                                           id="memberSearchInput" 
-                                           class="form-control" 
-                                           placeholder="Rechercher un membre par nom..." 
-                                           autocomplete="off">
+                                        id="memberSearchInput" 
+                                        class="form-control" 
+                                        placeholder="Rechercher un membre par nom..." 
+                                        autocomplete="off">
                                     <div id="memberSuggestions" class="autocomplete-suggestions"></div>
                                 </div>
+                                
                                 <div class="role-select-container">
                                     <select id="newMemberRole" class="form-control role-select">
                                         <option value="Membre">Membre</option>
                                         <option value="Président">Président</option>
                                         <option value="Vice-Président">Vice-Président</option>
                                         <option value="Trésorier">Trésorier</option>
+                                        <option value="Charge d'événement / communication">Charge d'événement / communication</option>
                                         <option value="Secrétaire">Secrétaire</option>
                                     </select>
                                 </div>
+
+                                <div class="soutenance-check-container">
+                                    <label>
+                                        <input type="checkbox" id="newMemberSoutenance" value="1">
+                                        <i class="fas fa-graduation-cap"></i> Soutenance
+                                    </label>
+                                </div>
+                                
                                 <button type="button" class="btn btn-primary btn-add-disabled" id="addMemberBtn" disabled>
                                     <i class="fas fa-plus"></i> Ajouter
                                 </button>
@@ -273,6 +321,23 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
             });
         }
         
+        // ─────────────────────────────────────────────────────────────
+        // Rôles uniques : un seul membre autorisé par rôle dans le club
+        // ─────────────────────────────────────────────────────────────
+        var MAX_SOUTENANCE_MEMBERS = 5;
+
+        /** Liste des rôles qui ne peuvent être attribués qu'une seule fois */
+        var UNIQUE_ROLES = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
+
+        /** Rôles autorisés à avoir la soutenance */
+        var PRINCIPAL_ROLES = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
+
+        /** { 'Président': true } si le rôle est déjà pris */
+        var usedUniqueRoles = {};
+
+        /** Rôle unique actuellement tenu par le créateur (null sinon) */
+        var creatorUniqueRole = null;
+
         // Variables d'état
         var memberCount = 0;
         var addedMembers = {};
@@ -285,11 +350,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
         var membersList = document.getElementById('membersList');
         var roleSelect = document.getElementById('newMemberRole');
         var memberCountSpan = document.getElementById('memberCount');
+        var soutenanceContainer = document.querySelector('.soutenance-check-container');
         var clubForm = document.getElementById('clubForm');
         var projetAssociatifCheck = document.getElementById('projetAssociatif');
         var soutenanceCheck = document.querySelector('input[name="soutenance"]');
         var soutenanceDateGroup = document.getElementById('soutenanceDateGroup');
         var memberRequirement = document.getElementById('memberRequirement');
+        var creatorRoleSelect = document.querySelector('select[name="creator_role"]');
         
         // Fonction pour activer/désactiver le bouton Ajouter
         function setAddButtonEnabled(enabled) {
@@ -300,9 +367,175 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 addBtn.classList.add('btn-add-disabled');
             }
         }
+
+        // ─────────────────────────────────────────────────────────────
+        // Synchronisation du dropdown des rôles
+        // Désactive les options dont le rôle unique est déjà attribué.
+        // ─────────────────────────────────────────────────────────────
+        function syncRoleDropdown() {
+            for (var i = 0; i < roleSelect.options.length; i++) {
+                var opt = roleSelect.options[i];
+                if (UNIQUE_ROLES.indexOf(opt.value) !== -1) {
+                    var isTaken = !!usedUniqueRoles[opt.value];
+                    opt.disabled = isTaken;
+                    opt.text    = isTaken ? opt.value + ' (déjà attribué)' : opt.value;
+                }
+            }
+            // Si l'option sélectionnée est maintenant désactivée → revenir à "Membre"
+            if (roleSelect.options[roleSelect.selectedIndex] &&
+                roleSelect.options[roleSelect.selectedIndex].disabled) {
+                roleSelect.value = 'Membre';
+            }
+        }
+
+        // — Marquer le rôle initial du créateur puis écouter ses changements
+        if (creatorRoleSelect) {
+            var initCreatorRole = creatorRoleSelect.value;
+            if (UNIQUE_ROLES.indexOf(initCreatorRole) !== -1) {
+                usedUniqueRoles[initCreatorRole] = true;
+                creatorUniqueRole = initCreatorRole;
+            }
+            syncRoleDropdown();
+
+            // Masquer/afficher la case soutenance du créateur selon son rôle
+            var creatorSoutenanceContainer = document.getElementById('creatorSoutenanceContainer');
+            if (creatorSoutenanceContainer) {
+                if (creatorRoleSelect.value === 'Membre') {
+                    creatorSoutenanceContainer.style.display = 'none';
+                }
+            }
+
+            creatorRoleSelect.addEventListener('change', function () {
+                // Libérer l'ancien rôle unique du créateur
+                if (creatorUniqueRole) {
+                    delete usedUniqueRoles[creatorUniqueRole];
+                    creatorUniqueRole = null;
+                }
+                // Réserver le nouveau rôle si c'est un rôle unique
+                var newRole = this.value;
+                if (UNIQUE_ROLES.indexOf(newRole) !== -1) {
+                    usedUniqueRoles[newRole] = true;
+                    creatorUniqueRole = newRole;
+                }
+                // Masquer/afficher la case soutenance du créateur
+                if (creatorSoutenanceContainer) {
+                    if (newRole === 'Membre') {
+                        creatorSoutenanceContainer.style.display = 'none';
+                        document.getElementById('creatorSoutenance').checked = false;
+                    } else {
+                        creatorSoutenanceContainer.style.display = '';
+                    }
+                }
+                syncRoleDropdown();
+                updateRequiredRoles();
+                updateSoutenanceQuotaStatus();
+            });
+        }
+
+        var creatorSoutenanceCheckbox = document.getElementById('creatorSoutenance');
+        if (creatorSoutenanceCheckbox) {
+            creatorSoutenanceCheckbox.addEventListener('change', function() {
+                if (getTotalSoutenanceCount() > MAX_SOUTENANCE_MEMBERS) {
+                    this.checked = false;
+                    alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
+                }
+                updateSoutenanceQuotaStatus();
+            });
+        }
         
         function getRequiredOtherMembers() {
             return 2; // Toujours 2 autres membres minimum (3 personnes au total)
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Rôles obligatoires : Président, Trésorier, Secrétaire
+        // ─────────────────────────────────────────────────────────────
+        var REQUIRED_ROLES = [
+            { key: 'Président',  badgeId: 'badge_President',  label: 'Président'  },
+            { key: 'Trésorier', badgeId: 'badge_Tresorier',  label: 'Trésorier'  },
+            { key: 'Secrétaire', badgeId: 'badge_Secretaire', label: 'Secrétaire' }
+        ];
+
+        function updateRequiredRoles() {
+            var notif = document.getElementById('requiredRolesNotif');
+            var msg   = document.getElementById('requiredRolesMsg');
+            if (!notif) return;
+
+            var allFilled = true;
+            for (var ri = 0; ri < REQUIRED_ROLES.length; ri++) {
+                var r     = REQUIRED_ROLES[ri];
+                var badge = document.getElementById(r.badgeId);
+                if (!badge) continue;
+                if (usedUniqueRoles[r.key]) {
+                    badge.style.background = '#d1fae5';
+                    badge.style.color      = '#065f46';
+                    badge.style.borderColor= '#6ee7b7';
+                    badge.innerHTML = '<i class="fas fa-check-circle"></i> ' + r.label;
+                } else {
+                    badge.style.background = '#fee2e2';
+                    badge.style.color      = '#dc2626';
+                    badge.style.borderColor= '#fca5a5';
+                    badge.innerHTML = '<i class="fas fa-times-circle"></i> ' + r.label;
+                    allFilled = false;
+                }
+            }
+
+            if (allFilled) {
+                notif.style.background   = '#d1fae5';
+                notif.style.borderColor  = '#6ee7b7';
+                msg.innerHTML = '<i class="fas fa-check-circle" style="color:#10b981;"></i> Tous les rôles obligatoires sont attribués.';
+            } else {
+                notif.style.background  = '#fff3cd';
+                notif.style.borderColor = '#ffc107';
+                msg.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i> Rôles obligatoires — chacun doit être attribué à un membre :';
+            }
+        }
+
+        function getCreatorSoutenanceCount() {
+            var creatorSoutenance = document.getElementById('creatorSoutenance');
+            if (!creatorRoleSelect || !creatorSoutenance) {
+                return 0;
+            }
+
+            var creatorRole = creatorRoleSelect.value;
+            var creatorCanSoutenance = PRINCIPAL_ROLES.indexOf(creatorRole) !== -1;
+            return (creatorCanSoutenance && creatorSoutenance.checked) ? 1 : 0;
+        }
+
+        function getMembersSoutenanceCount() {
+            var count = 0;
+            var soutenanceInputs = membersList.querySelectorAll('input[name$="[soutenance]"]');
+            for (var i = 0; i < soutenanceInputs.length; i++) {
+                if (parseInt(soutenanceInputs[i].value, 10) === 1) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        function getTotalSoutenanceCount() {
+            return getCreatorSoutenanceCount() + getMembersSoutenanceCount();
+        }
+
+        function updateSoutenanceQuotaStatus() {
+            var notif = document.getElementById('soutenanceQuotaNotif');
+            var msg = document.getElementById('soutenanceQuotaMsg');
+            if (!notif || !msg) {
+                return;
+            }
+
+            var total = getTotalSoutenanceCount();
+            msg.innerHTML = '<i class="fas fa-graduation-cap"></i> Soutenance : ' + total + ' / ' + MAX_SOUTENANCE_MEMBERS;
+
+            if (total >= MAX_SOUTENANCE_MEMBERS) {
+                notif.style.background = '#fef2f2';
+                notif.style.borderColor = '#fca5a5';
+                msg.style.color = '#991b1b';
+            } else {
+                notif.style.background = '#eff6ff';
+                notif.style.borderColor = '#93c5fd';
+                msg.style.color = '#1e3a8a';
+            }
         }
 
         // Fonction pour mettre à jour le compteur de membres et vérifier les conditions
@@ -312,6 +545,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
             memberCountSpan.textContent = '(' + totalCount + ' membre' + (totalCount > 1 ? 's' : '') + ' au total)';
 
             updateMemberRequirement(count);
+            updateRequiredRoles();
         }
         
         // Fonction pour mettre à jour l'affichage du requirement
@@ -361,61 +595,104 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
         }
         
         // Fonction pour ajouter un membre
-        function addMember() {
-            if (!selectedUser) {
-                alert('Veuillez sélectionner un membre dans les suggestions.');
-                return;
+        // Fonction pour ajouter un membre
+            function addMember() {
+                if (!selectedUser) {
+                    alert('Veuillez sélectionner un membre dans les suggestions.');
+                    return;
+                }
+                
+                if (addedMembers[selectedUser.id]) {
+                    alert('Ce membre a déjà été ajouté.');
+                    return;
+                }
+                
+                var role = roleSelect.value;
+
+                // ── Vérification rôle unique ─────────────────────────────
+                if (UNIQUE_ROLES.indexOf(role) !== -1 && usedUniqueRoles[role]) {
+                    alert('Le rôle "' + role + '" est déjà attribué dans ce club.\nChaque rôle unique ne peut être assigné qu\'à une seule personne.');
+                    return;
+                }
+                // ──────────────────────────────────────────────────────────
+
+                // On lit si la case est cochée (autorisée uniquement pour rôles principaux)
+                var isSoutenance = (PRINCIPAL_ROLES.indexOf(role) !== -1) && document.getElementById('newMemberSoutenance').checked;
+                if (isSoutenance && getTotalSoutenanceCount() >= MAX_SOUTENANCE_MEMBERS) {
+                    alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
+                    return;
+                }
+                var soutenanceValue = isSoutenance ? 1 : 0;
+                
+                // On prépare un joli badge visuel si l'étudiant a une soutenance
+                var soutenanceBadge = isSoutenance 
+                    ? '<span class="member-role-badge" style="background-color: #10b981; margin-left: 5px;"><i class="fas fa-graduation-cap"></i> Soutenance</span>' 
+                    : '';
+
+                memberCount++;
+                addedMembers[selectedUser.id] = true;
+                
+                var memberDiv = document.createElement('div');
+                memberDiv.className = 'member-form-row';
+                memberDiv.id = 'member_' + memberCount;
+                memberDiv.setAttribute('data-user-id', selectedUser.id);
+                
+                // On génère la ligne avec un input HIDDEN pour le PHP
+                memberDiv.innerHTML = 
+                    '<input type="hidden" name="members[' + memberCount + '][user_id]" value="' + selectedUser.id + '">' +
+                    '<input type="hidden" name="members[' + memberCount + '][email]" value="' + escapeHtml(selectedUser.email) + '">' +
+                    '<input type="hidden" name="members[' + memberCount + '][role]" value="' + escapeHtml(role) + '">' +
+                    '<input type="hidden" name="members[' + memberCount + '][soutenance]" value="' + soutenanceValue + '">' +
+                    '<div class="member-avatar">' +
+                        '<i class="fas fa-user"></i>' +
+                    '</div>' +
+                    '<div class="member-details">' +
+                        '<span class="member-name">' + escapeHtml(selectedUser.name) + '</span>' +
+                        '<small>' + escapeHtml(selectedUser.promo || 'N/A') + ' • ' + escapeHtml(selectedUser.email) + '</small>' +
+                    '</div>' +
+                    '<span class="member-role-badge">' + escapeHtml(role) + '</span>' +
+                    soutenanceBadge + // Le badge apparaît ici
+                    '<button type="button" class="btn btn-danger btn-sm btn-remove-member" data-member-id="' + memberCount + '" data-user-id="' + selectedUser.id + '">' +
+                        '<i class="fas fa-trash"></i>' +
+                    '</button>';
+                
+                membersList.appendChild(memberDiv);
+
+                // ── Réserver le rôle unique si nécessaire ───────────────
+                if (UNIQUE_ROLES.indexOf(role) !== -1) {
+                    usedUniqueRoles[role] = true;
+                    memberDiv.setAttribute('data-unique-role', role);
+                    syncRoleDropdown();
+                }
+                // ──────────────────────────────────────────────────────────
+                
+                // Reset complet de la barre d'ajout
+                searchInput.value = '';
+                roleSelect.value = 'Membre';
+                document.getElementById('newMemberSoutenance').checked = false; // On décoche la case
+                selectedUser = null;
+                setAddButtonEnabled(false);
+                suggestionsDiv.style.display = 'none';
+                
+                updateMemberCount();
+                updateSoutenanceQuotaStatus();
             }
-            
-            if (addedMembers[selectedUser.id]) {
-                alert('Ce membre a déjà été ajouté.');
-                return;
-            }
-            
-            var role = roleSelect.value;
-            memberCount++;
-            addedMembers[selectedUser.id] = true;
-            
-            var memberDiv = document.createElement('div');
-            memberDiv.className = 'member-form-row';
-            memberDiv.id = 'member_' + memberCount;
-            memberDiv.setAttribute('data-user-id', selectedUser.id);
-            
-            memberDiv.innerHTML = 
-                '<input type="hidden" name="members[' + memberCount + '][user_id]" value="' + selectedUser.id + '">' +
-                '<input type="hidden" name="members[' + memberCount + '][email]" value="' + escapeHtml(selectedUser.email) + '">' +
-                '<input type="hidden" name="members[' + memberCount + '][role]" value="' + escapeHtml(role) + '">' +
-                '<div class="member-avatar">' +
-                    '<i class="fas fa-user"></i>' +
-                '</div>' +
-                '<div class="member-details">' +
-                    '<span class="member-name">' + escapeHtml(selectedUser.name) + '</span>' +
-                    '<small>' + escapeHtml(selectedUser.promo || 'N/A') + ' • ' + escapeHtml(selectedUser.email) + '</small>' +
-                '</div>' +
-                '<span class="member-role-badge">' + escapeHtml(role) + '</span>' +
-                '<button type="button" class="btn btn-danger btn-sm btn-remove-member" data-member-id="' + memberCount + '" data-user-id="' + selectedUser.id + '">' +
-                    '<i class="fas fa-trash"></i>' +
-                '</button>';
-            
-            membersList.appendChild(memberDiv);
-            
-            // Reset
-            searchInput.value = '';
-            roleSelect.value = 'Membre';
-            selectedUser = null;
-            setAddButtonEnabled(false);
-            suggestionsDiv.style.display = 'none';
-            
-            updateMemberCount();
-        }
         
         // Fonction pour supprimer un membre
         function removeMember(memberId, userId) {
             var memberDiv = document.getElementById('member_' + memberId);
             if (memberDiv) {
+                // ── Libérer le rôle unique associé si nécessaire ────────
+                var uniqueRole = memberDiv.getAttribute('data-unique-role');
+                if (uniqueRole) {
+                    delete usedUniqueRoles[uniqueRole];
+                    syncRoleDropdown();
+                }
+                // ──────────────────────────────────────────────────────────
                 memberDiv.remove();
                 delete addedMembers[userId];
                 updateMemberCount();
+                updateSoutenanceQuotaStatus();
             }
         }
         
@@ -508,11 +785,52 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 alert("La création d'un club nécessite au moins 3 personnes (vous + 2 autres membres fondateurs). ");
                 return false;
             }
+
+            // Vérifier que les rôles obligatoires sont tous attribués
+            var missingRoles = [];
+            for (var ri = 0; ri < REQUIRED_ROLES.length; ri++) {
+                if (!usedUniqueRoles[REQUIRED_ROLES[ri].key]) {
+                    missingRoles.push(REQUIRED_ROLES[ri].label);
+                }
+            }
+            if (missingRoles.length > 0) {
+                e.preventDefault();
+                alert('Les rôles suivants sont obligatoires et non attribués :\n• ' + missingRoles.join('\n• ') + '\n\nVeuillez les assigner avant de créer le club.');
+                // Faire défiler vers la notification
+                var notif = document.getElementById('requiredRolesNotif');
+                if (notif) notif.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+
+            if (getTotalSoutenanceCount() > MAX_SOUTENANCE_MEMBERS) {
+                e.preventDefault();
+                alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
+                var soutenanceNotif = document.getElementById('soutenanceQuotaNotif');
+                if (soutenanceNotif) soutenanceNotif.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
         });
+
+        // Masquer la case soutenance si le rôle initial est "Membre"
+        if (soutenanceContainer) {
+            if (roleSelect.value === 'Membre') {
+                soutenanceContainer.style.display = 'none';
+            }
+            roleSelect.addEventListener('change', function() {
+                if (this.value === 'Membre') {
+                    soutenanceContainer.style.display = 'none';
+                    document.getElementById('newMemberSoutenance').checked = false;
+                } else {
+                    soutenanceContainer.style.display = '';
+                }
+            });
+        }
 
         // Initial UI state
         updateMemberCount();
         updateMemberRequirement(0);
+        updateRequiredRoles();
+        updateSoutenanceQuotaStatus();
         
         // Event: Touche Entrée sur le champ de recherche
         searchInput.addEventListener('keydown', function(e) {

@@ -1,20 +1,16 @@
 <?php
 /**
  * Formulaire de creation d'un evenement
- * 
- * Permet aux membres de clubs de proposer des evenements :
+ * * Permet aux membres de clubs de proposer des evenements :
  * - Selection du club organisateur
  * - Details (titre, description, lieu)
  * - Date et horaires
  * - Nombre de places (optionnel)
- * 
- * L'evenement sera soumis a validation BDE puis tuteur.
- * 
- * Variables attendues :
+ * * L'evenement sera soumis a validation BDE puis tuteur.
+ * * Variables attendues :
  * - $clubs : Liste des clubs dont l'utilisateur est membre
  * - $error_msg / $success_msg : Messages de feedback
- * 
- * @package Views/Event
+ * * @package Views/Event
  */
 $pageTitle = 'Créer un événement - EILCO';
 $pageCss = ['shared', 'buttons', 'forms', 'events'];
@@ -43,20 +39,50 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                         <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?></div>
                     <?php endif; ?>
                     
-                    <!-- BDE Guide Info Box -->
-                    <div class="info-box info-box-primary" style="margin-bottom: 20px;">
-                        <h4><i class="fas fa-info-circle"></i> Guide BDE - Événements & Activités</h4>
+                    <div class="info-box info-box-primary" style="margin-bottom: 25px; border-left: 5px solid #0056b3;">
+                        <h4><i class="fas fa-info-circle"></i> Guide de soumission BDE</h4>
                         <div class="info-content">
-                            <p><strong>Événement</strong> : Soirée, gala, tournoi sportif, concert... Nécessite une validation complète et un budget.</p>
-                            <p><strong>Activité</strong> : Réunion de club, atelier, entraînement... Plus simple, certains champs sont optionnels.</p>
-                            <details>
-                                <summary><i class="fas fa-book"></i> Règles du BDE</summary>
-                                <ul style="margin-top: 10px; padding-left: 20px;">
-                                    <li>Les événements doivent être soumis au moins 2 semaines à l'avance</li>
-                                    <li>Le budget doit être détaillé pour obtenir un financement</li>
-                                    <li>La réservation de salle se fait via le secrétariat</li>
-                                    <li>Les événements avec alcool nécessitent une autorisation spéciale</li>
-                                    <li>Un rapport doit être rédigé après chaque événement</li>
+                            <div style="display: flex; gap: 20px; margin-bottom: 15px; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 250px;">
+                                    <p><strong><i class="fas fa-calendar-star" style="color: #e67e22;"></i> Événement</strong><br>
+                                    <small>Soirée, gala, tournoi... Validation complète requise.</small></p>
+                                </div>
+                                <div style="flex: 1; min-width: 250px;">
+                                    <p><strong><i class="fas fa-users" style="color: #27ae60;"></i> Activité</strong><br>
+                                    <small>Réunion, atelier, entraînement... Processus simplifié.</small></p>
+                                </div>
+                            </div>
+
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
+                                <h5 style="margin-top: 0; color: #333;"><i class="fas fa-file-import"></i> Le dossier d'organisation</h5>
+                                <p style="font-size: 0.9em; margin-bottom: 10px;">
+                                    Obligatoire pour les <strong>Événements</strong> / Facultatif pour les <strong>Activités</strong>.
+                                </p>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                                    <div style="font-size: 0.85em;">
+                                        <i class="fas fa-sitemap"></i> <strong>Organisation</strong><br>
+                                        Gantt, répartition tâches.
+                                    </div>
+                                    <div style="font-size: 0.85em;">
+                                        <i class="fas fa-coins"></i> <strong>Budget</strong><br>
+                                        Recettes/Dépenses, financements.
+                                    </div>
+                                    <div style="font-size: 0.85em;">
+                                        <i class="fas fa-bullhorn"></i> <strong>Communication</strong><br>
+                                        Canaux, visuels des affiches.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <details style="margin-top: 15px;">
+                                <summary style="cursor: pointer; color: #0056b3; font-weight: bold;">
+                                    <i class="fas fa-chevron-right"></i> Rappel des règles générales
+                                </summary>
+                                <ul style="margin-top: 10px; padding-left: 20px; font-size: 0.9em;">
+                                    <li>Dépôt au moins <strong>2 semaines à l'avance</strong>.</li>
+                                    <li>Réservation de salle via le secrétariat uniquement.</li>
+                                    <li>Autorisation spéciale requise pour les événements avec alcool.</li>
+                                    <li>Rapport d'événement obligatoire après réalisation.</li>
                                 </ul>
                             </details>
                         </div>
@@ -65,7 +91,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                     <form method="POST" enctype="multipart/form-data" class="form-modern" id="eventForm">
                         <?= Security::csrfField() ?>
                         
-                        <!-- Type Selection -->
                         <div class="form-section">
                             <h4><i class="fas fa-tags"></i> Type</h4>
                             <div class="type-selector">
@@ -128,7 +153,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                             </div>
                         </div>
                         
-                        <!-- Event-specific fields -->
                         <div id="eventFields" class="form-section">
                             <h4><i class="fas fa-clipboard-list"></i> Détails de l'événement</h4>
                             
@@ -154,6 +178,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                     <input type="number" name="montant" class="form-control" placeholder="Ex: 100" min="0" value="0">
                                 </div>
                             </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label><i class="fas fa-file-archive"></i> Dossier d'organisation (Gantt, Budget, Communication) <span class="required event-required" id="asterisque-doc">*</span></label>
+                                    <input type="file" name="doc_organisation" id="doc_organisation" class="form-control" accept=".pdf" required>
+                                    <small class="form-help">Obligatoire pour les événements (Gantt, budget prévisionnel et affiches).</small>
+                                </div>
+                            </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
@@ -167,6 +199,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                     <small class="form-help">Formats acceptés : JPG, PNG, PDF</small>
                                 </div>
                             </div>
+                            
                         </div>
 
                         <div class="form-actions">
@@ -187,17 +220,23 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
         // Type selector logic
         document.querySelectorAll('.type-option').forEach(option => {
             option.addEventListener('click', function() {
+                // Style visuel des boutons
                 document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
                 this.classList.add('selected');
                 this.querySelector('input').checked = true;
                 
+                // Logique de distinction
                 const isEvent = this.dataset.type === 'event';
-                document.getElementById('eventFields').style.display = isEvent ? 'block' : 'none';
+                const docInput = document.getElementById('doc_organisation');
+                const asterisque = document.getElementById('asterisque-doc');
                 
-                // Toggle required for event-specific fields
-                document.querySelectorAll('.event-required').forEach(el => {
-                    el.style.display = isEvent ? 'inline' : 'none';
-                });
+                if (isEvent) {
+                    docInput.setAttribute('required', 'required');
+                    asterisque.style.display = 'inline';
+                } else {
+                    docInput.removeAttribute('required');
+                    asterisque.style.display = 'none';
+                }
             });
         });
         

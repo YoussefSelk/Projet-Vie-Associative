@@ -162,7 +162,8 @@ class Club {
         // - Le club était rejeté (validation_admin = 0)
         // - Ou si resetValidation est demandé (modification pendant le cycle de validation)
         if ($club && ($club['validation_admin'] === 0 || $resetValidation)) {
-            // Remettre le club en attente de validation
+            // Remettre le club en attente de validation (BDE en premier)
+            $fields[] = "validation_bde = NULL";
             $fields[] = "validation_admin = NULL";
             $fields[] = "validation_tuteur = NULL";
             $fields[] = "validation_finale = NULL";

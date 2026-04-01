@@ -59,8 +59,17 @@ $pageCss = ['shared', 'buttons', 'forms', 'profiles'];
                         </div>
 
                         <div class="form-group">
-                            <label><i class="fas fa-envelope"></i> Email</label>
-                            <input type="email" name="mail" class="form-control" value="<?= htmlspecialchars($user['mail']) ?>" required>
+                            <label for="mail"><i class="fas fa-envelope"></i> Adresse e-mail</label>
+                            <input type="email" id="mail" name="mail" class="form-control" 
+                                required 
+                                placeholder="votre.nom@etu.eilco.univ-littoral.fr" 
+                                value="<?= htmlspecialchars($user['mail']) ?>">
+                            
+                            <small id="mailError" class="form-hint" style="color: #dc3545; display: none; font-weight: bold; margin-top: 5px;">
+                                <i class="fas fa-exclamation-triangle"></i> Veuillez utiliser une adresse @etu.eilco.univ-littoral.fr ou @eilco.univ-littoral.fr
+                            </small>
+                            
+                            <small class="form-hint">Utilisez votre adresse email EILCO académique</small>
                         </div>
 
                         <div class="form-actions">
@@ -74,5 +83,38 @@ $pageCss = ['shared', 'buttons', 'forms', 'profiles'];
     </main>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const editForm = document.querySelector(".form-modern");
+            const mailInput = document.getElementById("mail");
+            const mailError = document.getElementById("mailError");
+
+            if (editForm && mailInput) {
+                editForm.addEventListener("submit", function(e) {
+                    // Regex identique à l'inscription : autorise @etu.eilco... OU @eilco...
+                    const re = /^[A-Za-z0-9._%+-]+@(etu\.)?eilco\.univ-littoral\.fr$/i;
+                    const v = (mailInput.value || '').trim();
+                    
+                    if (!re.test(v)) {
+                        e.preventDefault(); // Bloque l'envoi du formulaire
+                        if (mailError) mailError.style.display = 'block';
+                        mailInput.style.borderColor = '#dc3545';
+                        mailInput.focus();
+                        return false;
+                    }
+                });
+
+                // Cache l'erreur dès que l'utilisateur recommence à taper
+                mailInput.addEventListener('input', function() {
+                    if (mailError) mailError.style.display = 'none';
+                    mailInput.style.borderColor = '';
+                });
+            }
+        });
+        </script>
+
+
 </body>
 </html>

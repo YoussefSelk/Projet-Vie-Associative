@@ -85,6 +85,12 @@ $pageCss = ['shared', 'buttons', 'events'];
                                 <span class="badge badge-light">
                                     <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
                                 </span>
+
+                                <?php if (!empty($event['type_event'])): ?>
+                                    <span class="badge badge-light" style="text-transform: uppercase; letter-spacing: 0.5px;">
+                                        <?= ($event['type_event'] === 'activity') ? '<i class="fas fa-tools"></i> Activité' : '<i class="fas fa-star"></i> Événement' ?>
+                                    </span>
+                                <?php endif; ?>
                                 
                                 <?php if (!empty($event['horaire_debut'])): ?>
                                     <span class="badge badge-light">
@@ -143,10 +149,6 @@ $pageCss = ['shared', 'buttons', 'events'];
                                     </div>
 
                                     <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
-                                        <div style="background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; flex: 1; min-width: 150px;">
-                                            <small style="color: #64748b; text-transform: uppercase; font-weight: 700; font-size: 0.7rem;">Type de projet</small>
-                                            <p style="margin: 5px 0 0 0; font-weight: 600;"><?= ($event['type_event'] === 'activity') ? '🛠️ Activité' : '🎉 Événement' ?></p>
-                                        </div>
                                         <?php if ($event['financement_bde']): ?>
                                         <div style="background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; flex: 1; min-width: 150px;">
                                             <small style="color: #64748b; text-transform: uppercase; font-weight: 700; font-size: 0.7rem;">Budget BDE</small>

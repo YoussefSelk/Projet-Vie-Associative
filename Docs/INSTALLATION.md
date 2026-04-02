@@ -27,7 +27,9 @@ This setup guide is aligned with the current codebase behavior and environment k
 cp .env.example .env
 
 # Windows PowerShell
+
 Copy-Item .env.example .env</code></pre>
+
   </li>
   <li>Edit .env:
     <pre><code>APP_ENV=development
@@ -54,6 +56,7 @@ COOKIE_SECURE=false
 COOKIE_HTTPONLY=true
 COOKIE_SAMESITE=Strict
 SERVER_TYPE=auto</code></pre>
+
   </li>
   <li>Create database:
     <pre><code>CREATE DATABASE vieasso_local CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;</code></pre>

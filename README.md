@@ -18,7 +18,9 @@ validation workflows, exports, and administration.
 cp .env.example .env
 
 # Windows PowerShell
+
 Copy-Item .env.example .env</code></pre>
+
   </li>
   <li>Edit .env with your local credentials and URLs (see sample below)</li>
   <li>Create database:

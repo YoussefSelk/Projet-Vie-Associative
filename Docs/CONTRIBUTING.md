@@ -21,9 +21,11 @@ Contributions are expected to be production-grade: safe, minimal, testable, and 
 <pre><code>composer install
 
 # Linux/macOS
+
 cp .env.example .env
 
 # Windows PowerShell
+
 Copy-Item .env.example .env</code></pre>
 
 <p>
@@ -68,22 +70,27 @@ docs: update routing matrix for tutor export routes</code></pre>
 
 <h2>PR Checklist Template</h2>
 <pre><code>## What changed
-- 
+-
 
 ## Why
-- 
+
+-
 
 ## Routes/permissions impacted
-- 
+
+-
 
 ## Tests executed
+
 - composer test
 - manual checks: ...
 
 ## Docs updated
+
 - Docs/...
 
 ## Screenshots
+
 - Docs/screenshots/... (if UI changed)</code></pre>
 
 <hr>

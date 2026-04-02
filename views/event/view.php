@@ -129,12 +129,21 @@ $pageCss = ['shared', 'buttons', 'events'];
                             // On récupère l'ID du tuteur que vous avez injecté dans le contrôleur
                             $id_tuteur_responsable = (int)($event['tuteur_id'] ?? 0);
 
+                            // On vérifie si l'utilisateur est membre du club_orga de l'événement
+                            // Note : Cette information doit être présente dans votre base de données (table membres_club)
+                            $stmtMembre = $this->db->prepare("
+                                SELECT 1 FROM membres_club 
+                                WHERE membre_id = ? AND club_id = ? AND valide = 1
+                            ");
+                            $stmtMembre->execute([$user_id_session, $event['club_orga']]);
+                            $est_membre_du_club = (bool)$stmtMembre->fetch();
+
                             /**
                              * Accès autorisé si :
                              * - Admin ou SuperAdmin (perm > 2)
                              * - OU Tuteur spécifique (perm == 2) ET son ID match avec celui du club organisateur
                              */
-                            $est_autorise = ($user_permission > 2) || ($user_permission === 2 && $user_id_session === $id_tuteur_responsable);
+                            $est_autorise = ($user_permission > 2) || ($user_permission === 2 && $user_id_session === $id_tuteur_responsable) || ($est_membre_du_club);
 
                             if ($est_autorise): ?>
                                 <div class="event-section" style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">

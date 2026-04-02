@@ -153,6 +153,14 @@ return [
         'method' => 'myEvents',
         'view' => '/event/my_list.php'
     ],
+
+    'update-event' => [
+        'permission' => null,
+        'auth' => true,
+        'controller' => 'EventController',
+        'method' => 'updateEvent',
+        'view' => '/event/edit.php'
+    ],
     
     // ==========================================
     // ROUTES INSCRIPTIONS (Protegees)

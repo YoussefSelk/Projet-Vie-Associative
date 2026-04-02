@@ -187,34 +187,42 @@ public function getAllValidatedEvents() {
      * @param array $data Données à mettre à jour
      * @return bool Succès de l'opération
      */
+    /**
+     * Met à jour les informations d'un événement et réinitialise les validations
+     * * @param int $id Identifiant de l'événement
+     * @param array $data Données à mettre à jour
+     * @return bool Succès de l'opération
+     */
     public function updateEvent($id, $data) {
-        // Mapping des noms de champs vers les colonnes de la base de données
+        // 1. Définition des colonnes autorisées pour la mise à jour dynamique
         $field_mapping = [
-            'nom_event' => 'titre',
-            'date_event' => 'date_ev', // Will be processed specially
-            'club_id' => 'club_orga'
+            'nom_event'        => 'titre',
+            'type_event'       => 'type_event',
+            'description'      => 'description',
+            'date_ev'          => 'date_ev',
+            'horaire_debut'    => 'horaire_debut',
+            'horaire_fin'      => 'horaire_fin',
+            'campus'           => 'campus',
+            'lieu'             => 'lieu',
+            'financement_bde'  => 'financement_bde',
+            'montant'          => 'montant',
+            'affiche'          => 'affiche',
+            'doc_organisation' => 'doc_organisation',
+            'fiche_sanitaire'  => 'fiche_sanitaire'
         ];
         
-        $allowed_fields = ['titre', 'description', 'date_ev', 'horaire_debut', 'horaire_fin', 'campus', 'lieu'];
         $fields = [];
         $values = [];
 
-        // Handle date_event specially - parse datetime into date + time
-        if (!empty($data['date_event'])) {
-            $datetime = new DateTime($data['date_event']);
-            $fields[] = "date_ev = ?";
-            $values[] = $datetime->format('Y-m-d');
-            $fields[] = "horaire_debut = ?";
-            $values[] = $datetime->format('H:i:s');
-            unset($data['date_event']);
-        }
-
+        // 2. Construction dynamique de la requête pour les champs modifiables
         foreach ($data as $key => $value) {
-            // Mapper le nom du champ si nécessaire
-            $db_field = $field_mapping[$key] ?? $key;
-            
-            if (in_array($db_field, $allowed_fields) && !in_array("$db_field = ?", $fields)) {
-                $fields[] = "$db_field = ?";
+            if (isset($field_mapping[$key])) {
+                // PROTECTION : Si c'est un champ de fichier et qu'il est vide/null, 
+                // on ne l'ajoute pas à la requête pour garder l'ancien chemin en BDD.
+                if (in_array($key, ['affiche', 'doc_organisation', 'fiche_sanitaire']) && empty($value)) {
+                    continue;
+                }
+                $fields[] = $field_mapping[$key] . " = ?";
                 $values[] = $value;
             }
         }
@@ -223,8 +231,19 @@ public function getAllValidatedEvents() {
             return false;
         }
 
+        // AJOUT FORCÉ : Réinitialisation des validations
+        // Ces colonnes repassent à NULL systématiquement lors d'une modification
+        $fields[] = "validation_bde = NULL";
+        $fields[] = "validation_tuteur = NULL";
+        $fields[] = "validation_admin = NULL";
+        $fields[] = "validation_finale = NULL";
+        $fields[] = "motif_refus = NULL";
+
         $values[] = $id;
-        $stmt = $this->db->prepare("UPDATE fiche_event SET " . implode(", ", $fields) . " WHERE event_id = ?");
+        
+        $sql = "UPDATE fiche_event SET " . implode(", ", $fields) . " WHERE event_id = ?";
+        $stmt = $this->db->prepare($sql);
+        
         return $stmt->execute($values);
     }
 

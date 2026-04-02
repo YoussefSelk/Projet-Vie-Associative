@@ -309,61 +309,117 @@ class EventController {
         ];
     }
 
+
     /**
      * Modification d'un événement existant
-     * Nécessite permission >= 2 (membre de bureau)
-     * 
-     * @return array Données pour la vue [event, error_msg, success_msg]
+     * Gère le changement de type, les fichiers et la réinitialisation des validations
      */
     public function updateEvent() {
-        checkPermission(2);
+        validateSession();
+        $user_id = $_SESSION['id'];
         
-        $event_id = $_GET['id'] ?? null;
-        if (!$event_id) {
-            redirect('index.php');
+        $event_id = $_GET['id'] ?? $_POST['event_id'] ?? null;
+        if (!$event_id) redirect('?page=my-events');
+
+        // 1. Vérification de sécurité : l'utilisateur doit être membre VALIDE du club organisateur
+        $stmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club 
+            FROM fiche_event fe
+            INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
+            INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            WHERE fe.event_id = ? AND mc.membre_id = ? AND mc.valide = 1
+        ");
+        $stmt->execute([$event_id, $user_id]);
+        $event = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$event) {
+            ErrorHandler::renderHttpError(403, "Vous n'avez pas le droit de modifier cet événement.");
         }
 
-        $event = $this->eventModel->getEventById($event_id);
-        if (!$event) {
-            redirect('index.php');
+        // Empêcher la modification si déjà validé
+        if ($event['validation_finale'] == 1) {
+            redirect('?page=my-events&error=Impossible de modifier un événement déjà approuvé.');
         }
 
         $error_msg = '';
         $success_msg = '';
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_event'])) {
-            $nom_event = trim($_POST['nom_event'] ?? '');
-            $description = trim($_POST['description'] ?? '');
-            $date_ev = trim($_POST['date_ev'] ?? '');
-            $horaire_debut = trim($_POST['horaire_debut'] ?? '');
-            $horaire_fin = trim($_POST['horaire_fin'] ?? '');
-            $campus = trim($_POST['campus'] ?? '');
-            $lieu = trim($_POST['lieu'] ?? '');
+            // 2. Extraction des données textuelles
+            $data = [
+                'nom_event'       => trim($_POST['nom_event'] ?? ''),
+                'description'     => trim($_POST['description'] ?? ''),
+                'type_event'      => trim($_POST['type_event'] ?? 'event'),
+                'date_ev'         => trim($_POST['date_ev'] ?? ''),
+                'horaire_debut'   => trim($_POST['horaire_debut'] ?? ''),
+                'horaire_fin'     => trim($_POST['horaire_fin'] ?? ''),
+                'campus'          => trim($_POST['campus'] ?? ''),
+                'lieu'            => trim($_POST['lieu'] ?? ''),
+                'financement_bde' => isset($_POST['financement_bde']) ? 1 : 0,
+                'montant'         => intval($_POST['montant'] ?? 0),
+                // On initialise les fichiers à NULL pour que le Modèle ignore les champs vides
+                'affiche'          => null,
+                'doc_organisation' => null,
+                'fiche_sanitaire'  => null
+            ];
 
-            if (!$nom_event || !$description || !$date_ev || !$campus) {
-                $error_msg = "Tous les champs obligatoires doivent être remplis.";
-            } else {
-                $data = [
-                    'nom_event' => $nom_event,
-                    'description' => $description,
-                    'date_ev' => $date_ev,
-                    'horaire_debut' => $horaire_debut,
-                    'horaire_fin' => $horaire_fin,
-                    'campus' => $campus,
-                    'lieu' => $lieu
-                ];
+            // 3. Validations spécifiques
+            if (empty($data['nom_event']) || empty($data['date_ev'])) {
+                $error_msg = "Le nom et la date sont obligatoires.";
+            } 
+            // Sécurité : Si type = event et PAS de doc en base et PAS d'upload en cours
+            elseif ($data['type_event'] === 'event' && empty($event['doc_organisation']) && (!isset($_FILES['doc_organisation']) || $_FILES['doc_organisation']['error'] !== UPLOAD_ERR_OK)) {
+                $error_msg = "Le dossier d'organisation est obligatoire pour un événement.";
+            } 
+            else {
+                $club_name_clean = preg_replace('/[^A-Za-z0-9]/', '', $event['nom_club']);
+                $timestamp = time();
 
-                if ($this->eventModel->updateEvent($event_id, $data)) {
-                    $success_msg = "Événement mis à jour avec succès.";
-                    $event = $this->eventModel->getEventById($event_id);
+                // 4. GESTION DES UPLOADS (Seulement si de nouveaux fichiers sont fournis)
+                
+                // Dossier Organisation (PDF uniquement)
+                if (isset($_FILES['doc_organisation']) && $_FILES['doc_organisation']['error'] === UPLOAD_ERR_OK) {
+                    $new_filename = $club_name_clean . '_doc_upd_' . $timestamp . '.pdf';
+                    if (move_uploaded_file($_FILES['doc_organisation']['tmp_name'], ROOT_PATH . '/uploads/docs_organisation/' . $new_filename)) {
+                        $data['doc_organisation'] = '../uploads/docs_organisation/' . $new_filename;
+                    }
+                }
+
+                // Affiche (Images ou PDF)
+                if (isset($_FILES['affiche']) && $_FILES['affiche']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['affiche']['name'], PATHINFO_EXTENSION));
+                    $new_filename = $club_name_clean . '_affiche_upd_' . $timestamp . '.' . $ext;
+                    if (move_uploaded_file($_FILES['affiche']['tmp_name'], ROOT_PATH . '/uploads/affiches_event/' . $new_filename)) {
+                        $data['affiche'] = '../uploads/affiches_event/' . $new_filename;
+                    }
+                }
+
+                // Fiche Sanitaire (PDF)
+                if (isset($_FILES['fiche_sanitaire']) && $_FILES['fiche_sanitaire']['error'] === UPLOAD_ERR_OK) {
+                    $new_filename = $club_name_clean . '_sanitaire_upd_' . $timestamp . '.pdf';
+                    if (move_uploaded_file($_FILES['fiche_sanitaire']['tmp_name'], ROOT_PATH . '/uploads/fiches_sanitaires/' . $new_filename)) {
+                        $data['fiche_sanitaire'] = '../uploads/fiches_sanitaires/' . $new_filename;
+                    }
+                }
+
+                // 5. Appel au Modèle pour enregistrer
+                if ($this->eventModel->updateEvent((int)$event_id, $data)) {
+                    $success_msg = "Événement mis à jour. Le processus de validation a été réinitialisé.";
+                    // Rafraîchir les données pour la vue
+                    $stmt->execute([$event_id, $user_id]);
+                    $event = $stmt->fetch(PDO::FETCH_ASSOC);
                 } else {
-                    $error_msg = "Erreur lors de la mise à jour.";
+                    $error_msg = "Erreur lors de la mise à jour technique de la base de données.";
                 }
             }
         }
 
+        // Liste des clubs réduite au club actuel pour la vue de modification
+        $clubs = [[ 'club_id' => $event['club_orga'], 'nom_club' => $event['nom_club'] ]];
+
         return [
             'event' => $event,
+            'clubs' => $clubs,
             'error_msg' => $error_msg,
             'success_msg' => $success_msg
         ];

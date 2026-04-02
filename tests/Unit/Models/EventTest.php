@@ -83,18 +83,20 @@ class EventTest extends BaseTestCase
             ->method('execute')
             ->with($this->callback(function (array $params): bool {
                 return $params[0] === 'Test Event'           // titre
-                    && $params[1] === 'Description'           // description
-                    && $params[2] === '2026-03-15'            // date_ev
-                    && $params[3] === '14:00:00'              // horaire_debut
-                    && $params[4] === '18:00:00'              // horaire_fin
-                    && $params[5] === 1                       // club_orga
-                    && $params[6] === 'Calais'                // campus
-                    && $params[7] === 'Amphi A'               // lieu
-                    && $params[8] === 1                       // id_responsable
-                    && $params[9] === 0                       // financement_bde
-                    && $params[10] === 0                      // montant
-                    && $params[11] === null                   // fiche_sanitaire
-                    && $params[12] === null;                  // affiche
+                    && $params[1] === 'event'                 // type_event
+                    && $params[2] === 'Description'           // description
+                    && $params[3] === '2026-03-15'            // date_ev
+                    && $params[4] === '14:00:00'              // horaire_debut
+                    && $params[5] === '18:00:00'              // horaire_fin
+                    && $params[6] === 1                       // club_orga
+                    && $params[7] === 'Calais'                // campus
+                    && $params[8] === 'Amphi A'               // lieu
+                    && $params[9] === 1                       // id_responsable
+                    && $params[10] === 0                      // financement_bde
+                    && $params[11] === 0                      // montant
+                    && $params[12] === null                   // fiche_sanitaire
+                    && $params[13] === null                   // affiche
+                    && $params[14] === null;                  // doc_organisation
             }))
             ->willReturn(true);
 
@@ -123,9 +125,9 @@ class EventTest extends BaseTestCase
         $stmt->expects($this->once())
             ->method('execute')
             ->with($this->callback(function (array $params): bool {
-                return $params[2] === '2026-06-20'        // date parsed
-                    && $params[3] === '15:30:00'          // horaire_debut parsed
-                    && str_contains($params[4], ':');     // horaire_fin set (2h later)
+                return $params[3] === '2026-06-20'        // date parsed
+                    && $params[4] === '15:30:00'          // horaire_debut parsed
+                    && str_contains($params[5], ':');     // horaire_fin set (2h later)
             }))
             ->willReturn(true);
 
@@ -232,15 +234,17 @@ class EventTest extends BaseTestCase
         $stmt->expects($this->once())
             ->method('execute')
             ->with($this->callback(function (array $params): bool {
-                // Should have date, time fields mapped from date_event
-                return count($params) >= 3; // date + horaire + id at minimum
+                return $params[0] === '2026-06-20'
+                    && $params[1] === '14:00:00'
+                    && $params[count($params) - 1] === 1;
             }))
             ->willReturn(true);
 
         $this->pdo->method('prepare')->willReturn($stmt);
 
         $result = $this->event->updateEvent(1, [
-            'date_event' => '2026-06-20T14:00',
+            'date_ev' => '2026-06-20',
+            'horaire_debut' => '14:00:00',
         ]);
 
         $this->assertTrue($result);

@@ -36,13 +36,13 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
 
             <?php if (!empty($error_msg)): ?>
                 <div class="alert alert-danger" role="alert">
-                    <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg) ?>
+                    <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars(strip_tags((string)$error_msg)) ?>
                 </div>
             <?php endif; ?>
 
             <?php if (!empty($success_msg)): ?>
                 <div class="alert alert-success" role="alert">
-                    <i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?>
+                    <i class="fas fa-check-circle"></i> <?= htmlspecialchars(strip_tags((string)$success_msg)) ?>
                 </div>
             <?php endif; ?>
 

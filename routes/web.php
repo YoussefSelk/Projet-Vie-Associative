@@ -27,6 +27,14 @@ return [
         'method' => 'index',
         'view' => '/home/index.php'
     ],
+
+    'legal' => [
+        'permission' => null,
+        'auth' => false,
+        'controller' => 'HomeController',
+        'method' => 'legal',
+        'view' => '/home/legal.php'
+    ],
     
     'calendar-data' => [
         'permission' => null,
@@ -39,6 +47,7 @@ return [
     'subscribe-ajax' => [
         'permission' => null,
         'auth' => true,
+        'methods' => ['POST'],
         'controller' => 'SubscriptionController',
         'method' => 'toggleSubscriptionAjax',
         'view' => null
@@ -153,6 +162,14 @@ return [
         'method' => 'myEvents',
         'view' => '/event/my_list.php'
     ],
+
+    'update-event' => [
+        'permission' => null,
+        'auth' => true,
+        'controller' => 'EventController',
+        'method' => 'updateEvent',
+        'view' => '/event/edit.php'
+    ],
     
     // ==========================================
     // ROUTES INSCRIPTIONS (Protegees)
@@ -161,6 +178,7 @@ return [
     'subscribe' => [
         'permission' => null,
         'auth' => true,
+        'methods' => ['POST'],
         'controller' => 'SubscriptionController',
         'method' => 'subscribe',
         'view' => null
@@ -169,6 +187,7 @@ return [
     'unsubscribe' => [
         'permission' => null,
         'auth' => true,
+        'methods' => ['POST'],
         'controller' => 'SubscriptionController',
         'method' => 'unsubscribe',
         'view' => null
@@ -431,6 +450,7 @@ return [
     'update-permission' => [
         'permission' => 5,
         'auth' => true,
+        'methods' => ['POST'],
         'controller' => 'AdminController',
         'method' => 'updatePermission',
         'view' => null
@@ -439,6 +459,7 @@ return [
     'delete-user' => [
         'permission' => 5,
         'auth' => true,
+        'methods' => ['POST'],
         'controller' => 'AdminController',
         'method' => 'deleteUser',
         'view' => null

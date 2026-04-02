@@ -33,12 +33,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
 
                 <div class="auth-body">
                     <?php if (!empty($error_message)): ?>
-                        <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_message) ?></div>
+                        <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars(strip_tags((string)$error_message)) ?></div>
                     <?php endif; ?>
 
                     <?php if (!empty($success_message)): ?>
                         <div class="alert alert-success">
-                            <i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_message) ?>
+                            <i class="fas fa-check-circle"></i> <?= htmlspecialchars(strip_tags((string)$success_message)) ?>
                             <p style="margin-top:10px;"><a href="/?page=login" class="btn btn-primary"><i class="fas fa-sign-in-alt"></i> Accéder à la connexion</a></p>
                         </div>
                     <?php else: ?>

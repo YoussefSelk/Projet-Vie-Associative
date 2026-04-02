@@ -147,6 +147,40 @@ class SecurityTest extends BaseTestCase
         $this->assertTrue(Security::checkRateLimit('reset_test', 5, 5));
     }
 
+    public function testIsRateLimitedDoesNotIncrementCounter(): void
+    {
+        Security::hitRateLimit('non_incrementing', 2, 5);
+        $this->assertFalse(Security::isRateLimited('non_incrementing', 2, 5));
+
+        // Calling isRateLimited repeatedly should not consume attempts.
+        $this->assertFalse(Security::isRateLimited('non_incrementing', 2, 5));
+
+        Security::hitRateLimit('non_incrementing', 2, 5);
+        $this->assertTrue(Security::isRateLimited('non_incrementing', 2, 5));
+    }
+
+    public function testGetClientIpUsesForwardedChainFirstIp(): void
+    {
+        $_SERVER['HTTP_X_FORWARDED_FOR'] = '198.51.100.5, 10.0.0.3';
+        $_SERVER['REMOTE_ADDR'] = '203.0.113.8';
+
+        $this->assertSame('198.51.100.5', Security::getClientIp());
+
+        unset($_SERVER['HTTP_X_FORWARDED_FOR'], $_SERVER['REMOTE_ADDR']);
+    }
+
+    public function testGetClientIpFallsBackWhenMissingHeaders(): void
+    {
+        unset(
+            $_SERVER['HTTP_CF_CONNECTING_IP'],
+            $_SERVER['HTTP_X_FORWARDED_FOR'],
+            $_SERVER['HTTP_X_REAL_IP'],
+            $_SERVER['REMOTE_ADDR']
+        );
+
+        $this->assertSame('0.0.0.0', Security::getClientIp());
+    }
+
     // =========================================================================
     // HTTPS Detection
     // =========================================================================

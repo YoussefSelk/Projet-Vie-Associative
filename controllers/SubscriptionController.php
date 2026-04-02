@@ -36,14 +36,17 @@ class SubscriptionController {
 
     /**
      * Inscrit l'utilisateur connecté à un événement
-     * Supporte les requêtes GET et POST
+     * Supporte uniquement les requêtes POST
      * Redirige vers la page de l'événement après inscription
      */
     public function subscribe() {
         validateSession();
-        
-        // Supporter les requêtes GET et POST
-        $event_id = $_GET['event_id'] ?? $_POST['event_id'] ?? null;
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            ErrorHandler::renderHttpError(405, 'Méthode HTTP non autorisée.');
+        }
+
+        $event_id = $_POST['event_id'] ?? null;
         if (!$event_id) {
             redirect('index.php');
         }
@@ -70,14 +73,17 @@ class SubscriptionController {
 
     /**
      * Désinscrit l'utilisateur connecté d'un événement
-     * Supporte les requêtes GET et POST
+     * Supporte uniquement les requêtes POST
      * Redirige vers la page de l'événement après désinscription
      */
     public function unsubscribe() {
         validateSession();
-        
-        // Supporter les requêtes GET et POST
-        $event_id = $_GET['event_id'] ?? $_POST['event_id'] ?? null;
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            ErrorHandler::renderHttpError(405, 'Méthode HTTP non autorisée.');
+        }
+
+        $event_id = $_POST['event_id'] ?? null;
         if (!$event_id) {
             redirect('index.php');
         }

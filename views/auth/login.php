@@ -20,7 +20,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
 <!DOCTYPE html>
 <html lang="fr">
 <?php include VIEWS_PATH . '/includes/head.php'; ?>
-<body>
+<body class="auth-page">
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
     </header>
@@ -51,7 +51,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                 <div class="auth-body">
                     <!-- Affichage des messages d'erreur -->
                     <?php if(!empty($error_message)): ?>
-                        <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_message) ?></div>
+                        <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars(strip_tags((string)$error_message)) ?></div>
                     <?php endif; ?>
                     
                     <!-- Etape 0 : Formulaire de connexion -->
@@ -98,7 +98,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                             <?= Security::csrfField() ?>
                             <div class="form-group">
                                 <label><i class="fas fa-key"></i> Code de vérification</label>
-                                <input type="text" name="reset_code" class="form-control" placeholder="123456" required>
+                                <input type="text" name="reset_code" class="form-control" placeholder="32-character reset code" autocomplete="one-time-code" required>
                             </div>
                             <button type="submit" name="verify_reset_code" class="btn btn-primary btn-lg btn-block">
                                 <i class="fas fa-check"></i> Vérifier

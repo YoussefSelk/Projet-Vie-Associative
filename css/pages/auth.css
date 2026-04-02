@@ -2,6 +2,17 @@
    Login Page Styles
    ================================================ */
 
+/* Dedicated page layout to keep footer at the bottom on auth screens. */
+body.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body.auth-page main {
+  flex: 1 0 auto;
+}
+
 /* Auth Buttons (Connexion & Inscription) */
 .button-container a .login-button,
 .button-container .login-button {

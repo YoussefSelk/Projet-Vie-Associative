@@ -28,6 +28,100 @@ class AuthController {
     private $db;
 
     /**
+     * Construit une cle de rate limiting stable (email + IP).
+     */
+    private function buildLoginRateLimitKey(string $email): string {
+        $normalizedEmail = strtolower(trim($email));
+        $clientIp = $this->resolveClientIp();
+        return 'login_' . hash('sha256', $normalizedEmail . '|' . $clientIp);
+    }
+
+    /**
+     * Resolve client IP deterministically for auth rate limiting.
+     */
+    private function resolveClientIp(): string {
+        $headers = [
+            'HTTP_CF_CONNECTING_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR'
+        ];
+
+        foreach ($headers as $header) {
+            if (empty($_SERVER[$header])) {
+                continue;
+            }
+
+            $value = (string) $_SERVER[$header];
+            $candidate = trim(explode(',', $value)[0]);
+            if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                return $candidate;
+            }
+        }
+
+        return '0.0.0.0';
+    }
+
+    /**
+     * Check lock status without incrementing attempts.
+     */
+    private function isLoginRateLimited(string $key, int $maxAttempts = 5, int $decayMinutes = 15): bool {
+        $sessionKey = 'rate_limit_' . $key;
+        $timeKey = 'rate_limit_time_' . $key;
+        if (!isset($_SESSION[$sessionKey], $_SESSION[$timeKey])) {
+            return false;
+        }
+
+        if (time() - (int)$_SESSION[$timeKey] > ($decayMinutes * 60)) {
+            $_SESSION[$sessionKey] = 0;
+            $_SESSION[$timeKey] = time();
+            return false;
+        }
+
+        return (int)$_SESSION[$sessionKey] >= $maxAttempts;
+    }
+
+    /**
+     * Register a failed login attempt.
+     */
+    private function registerLoginFailureAttempt(string $key, int $maxAttempts = 5, int $decayMinutes = 15): bool {
+        $sessionKey = 'rate_limit_' . $key;
+        $timeKey = 'rate_limit_time_' . $key;
+
+        if (!isset($_SESSION[$sessionKey], $_SESSION[$timeKey])) {
+            $_SESSION[$sessionKey] = 0;
+            $_SESSION[$timeKey] = time();
+        }
+
+        if (time() - (int)$_SESSION[$timeKey] > ($decayMinutes * 60)) {
+            $_SESSION[$sessionKey] = 0;
+            $_SESSION[$timeKey] = time();
+        }
+
+        $_SESSION[$sessionKey]++;
+        return (int)$_SESSION[$sessionKey] <= $maxAttempts;
+    }
+
+    /**
+     * Valide la robustesse d'un mot de passe.
+     */
+    private function validateStrongPassword(string $password): ?string {
+        if (strlen($password) < 8) {
+            return 'Le mot de passe doit contenir au moins 8 caractères.';
+        }
+        if (!preg_match('/[A-Z]/', $password)) {
+            return 'Le mot de passe doit contenir au moins une lettre majuscule.';
+        }
+        if (!preg_match('/\d/', $password)) {
+            return 'Le mot de passe doit contenir au moins un chiffre.';
+        }
+        if (!preg_match('/[\W_]/', $password)) {
+            return 'Le mot de passe doit contenir au moins un caractère spécial.';
+        }
+        return null;
+    }
+
+    /**
      * Constructeur
      * @param PDO $database Instance de connexion PDO
      */
@@ -90,51 +184,70 @@ class AuthController {
 
         // Envoi du code de réinitialisation
         if (isset($_POST['send_reset_code']) && !empty($_POST['mail'])) {
-            $mail = $_POST['mail'];
+            $mail = Security::sanitizeEmail((string)($_POST['mail'] ?? ''));
+            if (!Security::validateEmail($mail)) {
+                $error_message = "Email invalide.";
+                $_SESSION['reset_step'] = 1;
+            } else {
             $user = $this->userModel->getUserByEmail($mail);
 
             if ($user) {
                 $_SESSION['reset_mail'] = $mail;
-                $_SESSION['reset_code'] = random_int(100000, 999999);
-                sendEmail($mail, "Code de réinitialisation", "Votre code : " . $_SESSION['reset_code']);
+                $resetToken = bin2hex(random_bytes(16));
+                $_SESSION['reset_token_hash'] = hash('sha256', $resetToken);
+                $_SESSION['reset_token_expires_at'] = time() + 300;
+                $_SESSION['reset_verification_attempts'] = 0;
+                $_SESSION['reset_verification_attempts_time'] = time();
+                sendEmail($mail, "Code de réinitialisation", "Votre code : " . $resetToken . "\n\nCe code expire dans 5 minutes.");
                 $_SESSION['reset_step'] = 2;
             } else {
-                $error_message = "<p style='color: red;'>Aucun compte trouvé avec cet email.</p>";
+                $error_message = "Aucun compte trouvé avec cet email.";
                 $_SESSION['reset_step'] = 1;
+            }
             }
         }
 
         // Limitation des tentatives de vérification
-        if (!isset($_SESSION['verification_attempts'])) {
-            $_SESSION['verification_attempts'] = 0;
-            $_SESSION['verification_attempts_time'] = time();
+        if (!isset($_SESSION['reset_verification_attempts'])) {
+            $_SESSION['reset_verification_attempts'] = 0;
+            $_SESSION['reset_verification_attempts_time'] = time();
         }
         
         // Réinitialiser après 5 minutes
-        if (time() - $_SESSION['verification_attempts_time'] > 300) {
-            $_SESSION['verification_attempts'] = 0;
+        if (time() - (int)($_SESSION['reset_verification_attempts_time'] ?? time()) > 300) {
+            $_SESSION['reset_verification_attempts'] = 0;
+            $_SESSION['reset_verification_attempts_time'] = time();
         }
         
         // Vérification du code de réinitialisation (unified logic)
-        if (isset($_POST['verify_reset_code']) && isset($_SESSION['reset_code'])) {
-            if (!hash_equals((string)($_SESSION['reset_code'] ?? ''), (string)($_POST['reset_code'] ?? ''))) {
-                $_SESSION['verification_attempts']++;
-                $_SESSION['verification_attempts_time'] = time();
-                if ($_SESSION['verification_attempts'] >= 5) {
+        if (isset($_POST['verify_reset_code']) && isset($_SESSION['reset_token_hash'])) {
+            $submittedToken = trim((string)($_POST['reset_code'] ?? ''));
+            $submittedHash = hash('sha256', $submittedToken);
+            $isExpired = time() > (int)($_SESSION['reset_token_expires_at'] ?? 0);
+
+            if ($isExpired) {
+                unset($_SESSION['reset_token_hash'], $_SESSION['reset_token_expires_at']);
+                $error_message = "Le code a expiré. Veuillez en demander un nouveau.";
+                $_SESSION['reset_step'] = 1;
+            } elseif (!hash_equals((string)($_SESSION['reset_token_hash'] ?? ''), $submittedHash)) {
+                $_SESSION['reset_verification_attempts']++;
+                $_SESSION['reset_verification_attempts_time'] = time();
+                if ($_SESSION['reset_verification_attempts'] >= 5) {
                     ErrorHandler::logSecurity("Rate limit atteint - trop de tentatives de vérification", 'WARN', [
                         'email' => $_SESSION['reset_mail'] ?? 'unknown'
                     ]);
-                    $error_message = "<p style='color: red;'>Trop de tentatives. Veuillez réessayer plus tard.</p>";
+                    $error_message = "Trop de tentatives. Veuillez réessayer plus tard.";
                     $_SESSION['reset_step'] = 1;
+                    unset($_SESSION['reset_token_hash'], $_SESSION['reset_token_expires_at']);
                 } else {
                     ErrorHandler::logSecurity("Code de réinitialisation incorrect", 'FAIL', [
                         'email' => $_SESSION['reset_mail'] ?? 'unknown',
-                        'attempts' => $_SESSION['verification_attempts']
+                        'attempts' => $_SESSION['reset_verification_attempts']
                     ]);
-                    $error_message = "<p style='color: red;'>Code de vérification incorrect.</p>";
+                    $error_message = "Code de vérification incorrect.";
                 }
             } else {
-                unset($_SESSION['verification_attempts']);
+                unset($_SESSION['reset_verification_attempts'], $_SESSION['reset_verification_attempts_time']);
                 $_SESSION['reset_step'] = 3;
             }
         }
@@ -144,33 +257,48 @@ class AuthController {
             $password = $_POST['password'];
             $cpassword = $_POST['cpassword'];
             
-            if (strlen($password) < 8) {
-                $error_message = "<p style='color: red;'>Le mot de passe doit contenir au moins 8 caractères.</p>";
-            } else if (!preg_match('/[\W_]/', $password)) {
-                $error_message = "<p style='color: red;'>Le mot de passe doit contenir au moins un caractère spécial.</p>";
+            $passwordError = $this->validateStrongPassword($password);
+            if ($passwordError !== null) {
+                $error_message = $passwordError;
             } else if ($_POST['password'] == $_POST['cpassword']) {
                 $this->userModel->updatePassword($_SESSION['reset_mail'], $_POST['password']);
-                unset($_SESSION['reset_mail'], $_SESSION['reset_code']);
+                unset($_SESSION['reset_mail'], $_SESSION['reset_token_hash'], $_SESSION['reset_token_expires_at']);
                 session_unset();
                 session_destroy();
                 redirect('index.php?page=login');
             } else {
-                $error_message = "<p style='color: red;'>Les mots de passe ne correspondent pas.</p>";
+                $error_message = "Les mots de passe ne correspondent pas.";
                 $err = 1;
             }
         }
 
         // Gestion de la connexion
         if (isset($_POST['formsend'])) {
-            $mail = $_POST['mail'] ?? '';
+            $mail = Security::sanitizeEmail((string)($_POST['mail'] ?? ''));
             $password = $_POST['password'] ?? '';
 
             if (!empty($mail) && !empty($password)) {
+                $rateLimitKey = $this->buildLoginRateLimitKey($mail);
+                if ($this->isLoginRateLimited($rateLimitKey, 5, 15)) {
+                    ErrorHandler::logSecurity("Rate limit login atteint", 'WARN', [
+                        'email' => $mail,
+                        'ip' => $this->resolveClientIp()
+                    ]);
+                    $error_message = 'Trop de tentatives de connexion. Réessayez dans 15 minutes.';
+                    return [
+                        'error_message' => $error_message,
+                        'reset_step' => $_SESSION['reset_step'],
+                        'err' => $err
+                    ];
+                }
+
                 $user = $this->userModel->authenticate($mail, $password);
 
                 if ($user) {
                     // Régénérer l'ID de session pour prévenir la fixation de session
                     session_regenerate_id(true);
+                    $_SESSION['_created'] = time();
+                    $_SESSION['_last_activity'] = time();
                     
                     // Connexion réussie : stocker les infos en session
                     $_SESSION['id'] = $user['id'];
@@ -185,15 +313,19 @@ class AuthController {
                     ]);
                     
                     // Réinitialiser le rate limit après connexion réussie
-                    Security::resetRateLimit('login_' . $mail);
+                    Security::resetRateLimit($rateLimitKey);
                     
                     redirect('index.php');
                 } else {
+                    $allowed = $this->registerLoginFailureAttempt($rateLimitKey, 5, 15);
                     // Log failed login attempt
                     ErrorHandler::logSecurity("Échec de connexion - identifiants invalides", 'FAIL', [
-                        'email' => $mail
+                        'email' => $mail,
+                        'ip' => $this->resolveClientIp()
                     ]);
-                    $error_message = 'Identifiants invalides';
+                    $error_message = $allowed
+                        ? 'Identifiants invalides'
+                        : 'Trop de tentatives de connexion. Réessayez dans 15 minutes.';
                 }
             } else {
                 $error_message = 'Données manquantes';
@@ -293,10 +425,8 @@ class AuthController {
                 $error_message = 'Veuillez sélectionner votre promotion';
             } elseif ($niveau === 'ING2' && empty($ing2_type)) {
                 $error_message = 'Veuillez sélectionner FISE ou FISEA';
-            } elseif (strlen($password) < 8) {
-                $error_message = 'Le mot de passe doit contenir au moins 8 caractères';
-            } elseif (!preg_match('/[\W_]/', $password)) {
-                $error_message = 'Le mot de passe doit contenir au moins un caractère spécial';
+            } elseif (($passwordError = $this->validateStrongPassword($password)) !== null) {
+                $error_message = $passwordError;
             } elseif ($password !== $cpassword) {
                 $error_message = 'Les mots de passe ne correspondent pas';
             } elseif (!filter_var($mail, FILTER_VALIDATE_EMAIL)) {

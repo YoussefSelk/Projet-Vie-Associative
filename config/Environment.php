@@ -41,6 +41,15 @@ class Environment {
     private static array $variables = [];
 
     /**
+     * Sanitize HTTP host to avoid header-injection and poisoned URL generation.
+     */
+    private static function sanitizeHost(string $host): string
+    {
+        $sanitized = preg_replace('/[^a-zA-Z0-9\.\-:\[\]]/', '', trim($host));
+        return $sanitized !== '' ? $sanitized : 'localhost';
+    }
+
+    /**
      * Charge les variables d'environnement depuis le fichier .env
      * Utilise phpdotenv si disponible, sinon un parser personnalisé
      * 
@@ -188,15 +197,17 @@ class Environment {
     /**
      * Récupère la configuration de la base de données
      * 
-     * @return array Configuration [host, name, user, pass]
+     * @return array Configuration [host, port, name, user, pass, charset]
      */
     public static function getDbConfig(): array
     {
         return [
             'host' => self::get('DB_HOST', 'localhost'),
+            'port' => (int) self::get('DB_PORT', 3306),
             'name' => self::get('DB_NAME', 'test_projet_tech'),
             'user' => self::get('DB_USER', 'root'),
             'pass' => self::get('DB_PASS', ''),
+            'charset' => self::get('DB_CHARSET', 'utf8mb4'),
         ];
     }
     
@@ -316,7 +327,10 @@ class Environment {
         $baseUrl = self::get('APP_URL', '');
         
         if (!empty($baseUrl)) {
-            return rtrim($baseUrl, '/');
+            $validated = filter_var($baseUrl, FILTER_VALIDATE_URL);
+            if ($validated !== false) {
+                return rtrim((string) $validated, '/');
+            }
         }
         
         // Auto-détection de l'URL
@@ -325,7 +339,7 @@ class Environment {
         }
         
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $host = self::sanitizeHost((string)($_SERVER['HTTP_HOST'] ?? 'localhost'));
         
         return $protocol . '://' . $host;
     }

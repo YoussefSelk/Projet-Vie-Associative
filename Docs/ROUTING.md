@@ -352,7 +352,7 @@ public function dispatch(string $page): void {
 
 ```apache
 RewriteEngine On
-RewriteBase /
+# Laisser RewriteBase non défini pour supporter un déploiement en racine ou sous-dossier (/www)
 
 # Ne pas réécrire les fichiers/dossiers existants
 RewriteCond %{REQUEST_FILENAME} !-f

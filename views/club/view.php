@@ -50,7 +50,7 @@ $can_view_soutenance = ($user_permission >= 2);
             <?php if (!empty($error_msg)): ?>
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-circle"></i>
-                    <?= htmlspecialchars($error_msg) ?>
+                    <?= htmlspecialchars(strip_tags((string)$error_msg)) ?>
                 </div>
                 <div class="text-center mt-20">
                     <a href="?page=home" class="btn btn-primary"><i class="fas fa-home"></i> Retour à l'accueil</a>

@@ -99,18 +99,27 @@ class Router
     public function dispatch(): void
     {
         $page = $this->getPage();
-        
-        // Validation CSRF
-        if (!$this->validateCsrf()) {
-            ErrorHandler::renderHttpError(403, 'Token de sécurité invalide.');
-        }
-        
+
         // Vérifier que la route existe
         if (!isset($this->routes[$page])) {
             ErrorHandler::renderHttpError(404, "La page '$page' n'existe pas.");
         }
-        
+
         $route = $this->routes[$page];
+
+        // Vérifier la méthode HTTP autorisée
+        $allowedMethods = $route['methods'] ?? ['GET', 'POST'];
+        $requestMethod = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+        $normalizedAllowedMethods = array_map('strtoupper', (array)$allowedMethods);
+        if (!in_array($requestMethod, $normalizedAllowedMethods, true)) {
+            header('Allow: ' . implode(', ', $normalizedAllowedMethods));
+            ErrorHandler::renderHttpError(405, 'Méthode HTTP non autorisée pour cette route.');
+        }
+
+        // Validation CSRF (uniquement pour les requêtes POST)
+        if ($requestMethod === 'POST' && !$this->validateCsrf()) {
+            ErrorHandler::renderHttpError(403, 'Token de sécurité invalide.');
+        }
         
         // Rediriger si déjà connecté (pour login/register)
         if (isset($route['redirect_if_logged']) && $route['redirect_if_logged'] && isset($_SESSION['id'])) {

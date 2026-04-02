@@ -34,6 +34,54 @@ class EventController {
     }
 
     /**
+     * Sanitise un chemin de logo en le contraignant au dossier uploads.
+     */
+    private function resolveSafeLogoPath(?string $rawLogo): ?string {
+        if (empty($rawLogo)) {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $rawLogo)) {
+            return $rawLogo;
+        }
+
+        $normalized = str_replace('\\', '/', rawurldecode(trim($rawLogo)));
+        $normalized = ltrim($normalized, '/');
+
+        if (str_starts_with($normalized, '../uploads/')) {
+            $normalized = substr($normalized, 3);
+        }
+
+        $segments = array_filter(explode('/', $normalized), static fn ($segment) => $segment !== '');
+        foreach ($segments as $segment) {
+            if ($segment === '.' || $segment === '..') {
+                return null;
+            }
+        }
+
+        if (empty($segments)) {
+            return null;
+        }
+
+        $candidate = ROOT_PATH . '/' . implode('/', $segments);
+        $realCandidate = realpath($candidate);
+        $realUploads = realpath(ROOT_PATH . '/uploads');
+
+        if ($realCandidate === false || $realUploads === false || !is_file($realCandidate)) {
+            return null;
+        }
+
+        $candidateUnix = str_replace('\\', '/', $realCandidate);
+        $uploadsUnix = rtrim(str_replace('\\', '/', $realUploads), '/');
+        if (strpos($candidateUnix, $uploadsUnix . '/') !== 0) {
+            return null;
+        }
+
+        $relative = substr($candidateUnix, strlen(str_replace('\\', '/', ROOT_PATH)));
+        return '/' . ltrim($relative, '/');
+    }
+
+    /**
      * Liste tous les événements validés
      * Route publique accessible à tous
      * 
@@ -57,20 +105,7 @@ class EventController {
                         $rawLogo = $clubInfo['logo_club'] ?? null;
                         $clubName = $clubInfo['nom_club'] ?? $clubName;
 
-                        if (!empty($rawLogo)) {
-                            if (preg_match('#^https?://#i', $rawLogo)) {
-                                $logoPath = $rawLogo;
-                            } else {
-                                $clean = ltrim(str_replace(['../', './'], '', $rawLogo), '/');
-                                $candidate = '/' . $clean;
-                                if (defined('ROOT_PATH') && file_exists(ROOT_PATH . $candidate)) {
-                                    $logoPath = $candidate;
-                                } elseif (!defined('ROOT_PATH')) {
-                                    // Sans ROOT_PATH, on retourne le chemin préfixé (sera servi par le webroot)
-                                    $logoPath = $candidate;
-                                }
-                            }
-                        }
+                        $logoPath = $this->resolveSafeLogoPath($rawLogo);
                     }
                 }
 
@@ -108,7 +143,7 @@ class EventController {
 
         // 3. On ajoute l'ID du tuteur au tableau $event pour la vue
         $event['tuteur_id'] = $clubInfo['tuteur'] ?? 0;
-        $event['logo_club'] = $clubInfo['logo_club'] ?? null;
+        $event['logo_club'] = $this->resolveSafeLogoPath($clubInfo['logo_club'] ?? null);
         $event['nom_club'] = $clubInfo['nom_club'] ?? 'Club inconnu';
 
         return [
@@ -200,8 +235,13 @@ class EventController {
                 // Upload du dossier d'organisation (Gantt, Budget, Com)
                 if (isset($_FILES['doc_organisation']) && $_FILES['doc_organisation']['error'] === UPLOAD_ERR_OK) {
                     $ext = strtolower(pathinfo($_FILES['doc_organisation']['name'], PATHINFO_EXTENSION));
-                    if ($ext !== 'pdf') {
+                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                    $detected_mime = $finfo->file($_FILES['doc_organisation']['tmp_name']);
+                    $max_doc_size = 10 * 1024 * 1024; // 10 MB
+                    if ($ext !== 'pdf' || $detected_mime !== 'application/pdf') {
                         $error_msg = "Le dossier d'organisation doit être au format PDF.";
+                    } elseif ($_FILES['doc_organisation']['size'] > $max_doc_size) {
+                        $error_msg = "Le dossier d'organisation ne doit pas dépasser 10 Mo.";
                     } else {
                         $upload_dir = ROOT_PATH . '/uploads/docs_organisation/';
                         if (!is_dir($upload_dir)) {
@@ -309,61 +349,166 @@ class EventController {
         ];
     }
 
+
     /**
      * Modification d'un événement existant
-     * Nécessite permission >= 2 (membre de bureau)
-     * 
-     * @return array Données pour la vue [event, error_msg, success_msg]
+     * Gère le changement de type, les fichiers et la réinitialisation des validations
      */
     public function updateEvent() {
-        checkPermission(2);
+        validateSession();
+        $user_id = $_SESSION['id'];
         
-        $event_id = $_GET['id'] ?? null;
-        if (!$event_id) {
-            redirect('index.php');
+        $event_id = $_GET['id'] ?? $_POST['event_id'] ?? null;
+        if (!$event_id) redirect('?page=my-events');
+
+        // 1. Vérification de sécurité : l'utilisateur doit être membre VALIDE du club organisateur
+        $stmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club 
+            FROM fiche_event fe
+            INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
+            INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            WHERE fe.event_id = ? AND mc.membre_id = ? AND mc.valide = 1
+        ");
+        $stmt->execute([$event_id, $user_id]);
+        $event = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$event) {
+            ErrorHandler::renderHttpError(403, "Vous n'avez pas le droit de modifier cet événement.");
         }
 
-        $event = $this->eventModel->getEventById($event_id);
-        if (!$event) {
-            redirect('index.php');
+        // Empêcher la modification si déjà validé
+        if ($event['validation_finale'] == 1) {
+            redirect('?page=my-events&error=Impossible de modifier un événement déjà approuvé.');
         }
 
         $error_msg = '';
         $success_msg = '';
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_event'])) {
-            $nom_event = trim($_POST['nom_event'] ?? '');
-            $description = trim($_POST['description'] ?? '');
-            $date_ev = trim($_POST['date_ev'] ?? '');
-            $horaire_debut = trim($_POST['horaire_debut'] ?? '');
-            $horaire_fin = trim($_POST['horaire_fin'] ?? '');
-            $campus = trim($_POST['campus'] ?? '');
-            $lieu = trim($_POST['lieu'] ?? '');
+            // 2. Extraction des données textuelles
+            $data = [
+                'nom_event'       => trim($_POST['nom_event'] ?? ''),
+                'description'     => trim($_POST['description'] ?? ''),
+                'type_event'      => trim($_POST['type_event'] ?? 'event'),
+                'date_ev'         => trim($_POST['date_ev'] ?? ''),
+                'horaire_debut'   => trim($_POST['horaire_debut'] ?? ''),
+                'horaire_fin'     => trim($_POST['horaire_fin'] ?? ''),
+                'campus'          => trim($_POST['campus'] ?? ''),
+                'lieu'            => trim($_POST['lieu'] ?? ''),
+                'financement_bde' => isset($_POST['financement_bde']) ? 1 : 0,
+                'montant'         => intval($_POST['montant'] ?? 0),
+                // On initialise les fichiers à NULL pour que le Modèle ignore les champs vides
+                'affiche'          => null,
+                'doc_organisation' => null,
+                'fiche_sanitaire'  => null
+            ];
 
-            if (!$nom_event || !$description || !$date_ev || !$campus) {
-                $error_msg = "Tous les champs obligatoires doivent être remplis.";
-            } else {
-                $data = [
-                    'nom_event' => $nom_event,
-                    'description' => $description,
-                    'date_ev' => $date_ev,
-                    'horaire_debut' => $horaire_debut,
-                    'horaire_fin' => $horaire_fin,
-                    'campus' => $campus,
-                    'lieu' => $lieu
-                ];
+            // 3. Validations spécifiques
+            if (empty($data['nom_event']) || empty($data['date_ev'])) {
+                $error_msg = "Le nom et la date sont obligatoires.";
+            } 
+            // Sécurité : Si type = event et PAS de doc en base et PAS d'upload en cours
+            elseif ($data['type_event'] === 'event' && empty($event['doc_organisation']) && (!isset($_FILES['doc_organisation']) || $_FILES['doc_organisation']['error'] !== UPLOAD_ERR_OK)) {
+                $error_msg = "Le dossier d'organisation est obligatoire pour un événement.";
+            } 
+            else {
+                $club_name_clean = preg_replace('/[^A-Za-z0-9]/', '', $event['nom_club']);
+                $timestamp = time();
 
-                if ($this->eventModel->updateEvent($event_id, $data)) {
-                    $success_msg = "Événement mis à jour avec succès.";
-                    $event = $this->eventModel->getEventById($event_id);
+                // 4. GESTION DES UPLOADS (Seulement si de nouveaux fichiers sont fournis)
+                
+                // Dossier Organisation (PDF uniquement)
+                if (isset($_FILES['doc_organisation']) && $_FILES['doc_organisation']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['doc_organisation']['name'], PATHINFO_EXTENSION));
+                    $finfoDoc = new \finfo(FILEINFO_MIME_TYPE);
+                    $docMime = $finfoDoc->file($_FILES['doc_organisation']['tmp_name']);
+                    $maxDocSize = 10 * 1024 * 1024;
+                    if ($ext !== 'pdf' || $docMime !== 'application/pdf') {
+                        $error_msg = "Le dossier d'organisation doit être un PDF valide.";
+                    } elseif ($_FILES['doc_organisation']['size'] > $maxDocSize) {
+                        $error_msg = "Le dossier d'organisation ne doit pas dépasser 10 Mo.";
+                    } else {
+                        $uploadDir = ROOT_PATH . '/uploads/docs_organisation/';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        $new_filename = $club_name_clean . '_doc_upd_' . $timestamp . '.pdf';
+                        if (move_uploaded_file($_FILES['doc_organisation']['tmp_name'], $uploadDir . $new_filename)) {
+                            $data['doc_organisation'] = '../uploads/docs_organisation/' . $new_filename;
+                        } else {
+                            $error_msg = "Erreur lors de l'upload du dossier d'organisation.";
+                        }
+                    }
+                }
+
+                // Affiche (Images ou PDF)
+                if (empty($error_msg) && isset($_FILES['affiche']) && $_FILES['affiche']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['affiche']['name'], PATHINFO_EXTENSION));
+                    $allowedExt = ['jpg', 'jpeg', 'png', 'pdf'];
+                    $allowedMimes = ['image/jpeg', 'image/png', 'application/pdf'];
+                    $finfoAffiche = new \finfo(FILEINFO_MIME_TYPE);
+                    $afficheMime = $finfoAffiche->file($_FILES['affiche']['tmp_name']);
+                    $maxAfficheSize = 5 * 1024 * 1024;
+                    if (!in_array($ext, $allowedExt, true) || !in_array($afficheMime, $allowedMimes, true)) {
+                        $error_msg = "L'affiche doit être un fichier JPG, PNG ou PDF valide.";
+                    } elseif ($_FILES['affiche']['size'] > $maxAfficheSize) {
+                        $error_msg = "L'affiche ne doit pas dépasser 5 Mo.";
+                    } else {
+                        $uploadDir = ROOT_PATH . '/uploads/affiches_event/';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        $new_filename = $club_name_clean . '_affiche_upd_' . $timestamp . '.' . $ext;
+                        if (move_uploaded_file($_FILES['affiche']['tmp_name'], $uploadDir . $new_filename)) {
+                            $data['affiche'] = '../uploads/affiches_event/' . $new_filename;
+                        } else {
+                            $error_msg = "Erreur lors de l'upload de l'affiche.";
+                        }
+                    }
+                }
+
+                // Fiche Sanitaire (PDF)
+                if (empty($error_msg) && isset($_FILES['fiche_sanitaire']) && $_FILES['fiche_sanitaire']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['fiche_sanitaire']['name'], PATHINFO_EXTENSION));
+                    $finfoFiche = new \finfo(FILEINFO_MIME_TYPE);
+                    $ficheMime = $finfoFiche->file($_FILES['fiche_sanitaire']['tmp_name']);
+                    $maxFicheSize = 10 * 1024 * 1024;
+                    if ($ext !== 'pdf' || $ficheMime !== 'application/pdf') {
+                        $error_msg = "La fiche sanitaire doit être un PDF valide.";
+                    } elseif ($_FILES['fiche_sanitaire']['size'] > $maxFicheSize) {
+                        $error_msg = "La fiche sanitaire ne doit pas dépasser 10 Mo.";
+                    } else {
+                        $uploadDir = ROOT_PATH . '/uploads/fiches_sanitaires/';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        $new_filename = $club_name_clean . '_sanitaire_upd_' . $timestamp . '.pdf';
+                        if (move_uploaded_file($_FILES['fiche_sanitaire']['tmp_name'], $uploadDir . $new_filename)) {
+                            $data['fiche_sanitaire'] = '../uploads/fiches_sanitaires/' . $new_filename;
+                        } else {
+                            $error_msg = "Erreur lors de l'upload de la fiche sanitaire.";
+                        }
+                    }
+                }
+
+                // 5. Appel au Modèle pour enregistrer
+                if ($this->eventModel->updateEvent((int)$event_id, $data)) {
+                    $success_msg = "Événement mis à jour. Le processus de validation a été réinitialisé.";
+                    // Rafraîchir les données pour la vue
+                    $stmt->execute([$event_id, $user_id]);
+                    $event = $stmt->fetch(PDO::FETCH_ASSOC);
                 } else {
-                    $error_msg = "Erreur lors de la mise à jour.";
+                    $error_msg = "Erreur lors de la mise à jour technique de la base de données.";
                 }
             }
         }
 
+        // Liste des clubs réduite au club actuel pour la vue de modification
+        $clubs = [[ 'club_id' => $event['club_orga'], 'nom_club' => $event['nom_club'] ]];
+
         return [
             'event' => $event,
+            'clubs' => $clubs,
             'error_msg' => $error_msg,
             'success_msg' => $success_msg
         ];

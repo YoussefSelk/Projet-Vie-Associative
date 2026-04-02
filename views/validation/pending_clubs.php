@@ -42,10 +42,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
             </div>
 
             <?php if(!empty($error_msg)): ?>
-                <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg) ?></div>
+                <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars(strip_tags((string)$error_msg)) ?></div>
             <?php endif; ?>
             <?php if(!empty($success_msg)): ?>
-                <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?></div>
+                <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars(strip_tags((string)$success_msg)) ?></div>
             <?php endif; ?>
 
             <?php if (empty($clubs)): ?>

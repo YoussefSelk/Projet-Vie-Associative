@@ -17,6 +17,18 @@ declare(strict_types=1);
  */
 
 class Security {
+
+    /**
+     * Normalise l'URI demandée pour éviter l'injection d'en-tête dans les redirections.
+     */
+    private static function normalizeRequestUri(string $uri): string {
+        $path = parse_url($uri, PHP_URL_PATH) ?? '/';
+        $query = parse_url($uri, PHP_URL_QUERY);
+        if (!is_string($path) || $path === '') {
+            $path = '/';
+        }
+        return $query !== null && $query !== '' ? $path . '?' . $query : $path;
+    }
     
     /**
      * Définit les en-têtes de sécurité HTTP
@@ -103,7 +115,10 @@ class Security {
     public static function enforceHttps() {
         if (Environment::isProduction()) {
             if (!self::isHttps()) {
-                $redirectUrl = 'https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+                $baseUrl = Environment::getBaseUrl();
+                $requestUri = self::normalizeRequestUri((string)($_SERVER['REQUEST_URI'] ?? '/'));
+                $redirectUrl = rtrim($baseUrl, '/') . $requestUri;
+                $redirectUrl = preg_replace('/^http:\/\//i', 'https://', $redirectUrl);
                 header('Location: ' . $redirectUrl, true, 301);
                 exit;
             }
@@ -196,6 +211,73 @@ class Security {
     }
 
     /**
+     * Recupere l'IP client en tenant compte des proxies courants.
+     */
+    public static function getClientIp(): string {
+        $headers = [
+            'HTTP_CF_CONNECTING_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR'
+        ];
+
+        foreach ($headers as $header) {
+            if (empty($_SERVER[$header])) {
+                continue;
+            }
+
+            $value = (string) $_SERVER[$header];
+            $candidate = trim(explode(',', $value)[0]);
+            if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                return $candidate;
+            }
+        }
+
+        return '0.0.0.0';
+    }
+
+    /**
+     * Verifie si la cle est deja verrouillee sans incrementer le compteur.
+     */
+    public static function isRateLimited($key, $maxAttempts = 5, $decayMinutes = 5): bool {
+        $sessionKey = 'rate_limit_' . $key;
+        $timeKey = 'rate_limit_time_' . $key;
+
+        if (!isset($_SESSION[$sessionKey], $_SESSION[$timeKey])) {
+            return false;
+        }
+
+        if (time() - $_SESSION[$timeKey] > ($decayMinutes * 60)) {
+            $_SESSION[$sessionKey] = 0;
+            $_SESSION[$timeKey] = time();
+            return false;
+        }
+
+        return $_SESSION[$sessionKey] >= $maxAttempts;
+    }
+
+    /**
+     * Enregistre une tentative et retourne si l'action reste autorisee.
+     */
+    public static function hitRateLimit($key, $maxAttempts = 5, $decayMinutes = 5): bool {
+        $sessionKey = 'rate_limit_' . $key;
+        $timeKey = 'rate_limit_time_' . $key;
+
+        if (!isset($_SESSION[$sessionKey])) {
+            $_SESSION[$sessionKey] = 0;
+            $_SESSION[$timeKey] = time();
+        }
+
+        if (time() - $_SESSION[$timeKey] > ($decayMinutes * 60)) {
+            $_SESSION[$sessionKey] = 0;
+            $_SESSION[$timeKey] = time();
+        }
+
+        $_SESSION[$sessionKey]++;
+        return $_SESSION[$sessionKey] <= $maxAttempts;
+    }
+
+    /**
      * Vérifie la limitation de taux de requêtes
      * Protège contre les attaques par force brute
      * 
@@ -205,26 +287,7 @@ class Security {
      * @return bool True si l'action est autorisée, False si limite atteinte
      */
     public static function checkRateLimit($key, $maxAttempts = 5, $decayMinutes = 5) {
-        $sessionKey = 'rate_limit_' . $key;
-        $timeKey = 'rate_limit_time_' . $key;
-        
-        if (!isset($_SESSION[$sessionKey])) {
-            $_SESSION[$sessionKey] = 0;
-            $_SESSION[$timeKey] = time();
-        }
-        
-        // Réinitialise si le temps de déclin est passé
-        if (time() - $_SESSION[$timeKey] > ($decayMinutes * 60)) {
-            $_SESSION[$sessionKey] = 0;
-            $_SESSION[$timeKey] = time();
-        }
-        
-        if ($_SESSION[$sessionKey] >= $maxAttempts) {
-            return false;
-        }
-        
-        $_SESSION[$sessionKey]++;
-        return true;
+        return self::hitRateLimit($key, $maxAttempts, $decayMinutes);
     }
 
     /**

@@ -164,4 +164,13 @@ class HomeController {
         }
         exit;
     }
+
+    /**
+     * Page legale publique (mentions legales, confidentialite, cookies).
+     */
+    public function legal() {
+        return [
+            'updated_at' => date('Y-m-d')
+        ];
+    }
 }

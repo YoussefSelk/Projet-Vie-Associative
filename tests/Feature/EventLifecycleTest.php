@@ -38,7 +38,8 @@ class EventLifecycleTest extends BaseTestCase
             ->with($this->callback(function (array $params): bool {
                 // The query contains NULL placeholders for validations in SQL, not params
                 return $params[0] === 'Test Event'
-                    && $params[1] === 'Description du test';
+                    && $params[1] === 'event'
+                    && $params[2] === 'Description du test';
             }))
             ->willReturn(true);
 
@@ -125,16 +126,16 @@ class EventLifecycleTest extends BaseTestCase
         $stmt->expects($this->once())
             ->method('execute')
             ->with($this->callback(function (array $params): bool {
-                // Should have parsed date parts + description + event_id
                 return $params[0] === '2026-07-20'   // date_ev
-                    && $params[1] === '15:00:00';     // horaire_debut
+                    && $params[1] === '15:00:00';   // horaire_debut
             }))
             ->willReturn(true);
 
         $this->pdo->method('prepare')->willReturn($stmt);
 
         $result = $this->eventModel->updateEvent(1, [
-            'date_event' => '2026-07-20T15:00',
+            'date_ev' => '2026-07-20',
+            'horaire_debut' => '15:00:00',
         ]);
 
         $this->assertTrue($result);

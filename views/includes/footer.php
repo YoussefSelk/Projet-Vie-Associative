@@ -46,6 +46,7 @@
                         <li><a href="?page=home"><i class="fas fa-home"></i> Accueil</a></li>
                         <li><a href="?page=event-list"><i class="fas fa-calendar-alt"></i> Événements</a></li>
                         <li><a href="?page=club-list"><i class="fas fa-users"></i> Clubs</a></li>
+                        <li><a href="?page=legal"><i class="fas fa-scale-balanced"></i> Mentions légales</a></li>
                         <li><a href="?page=login"><i class="fas fa-sign-in-alt"></i> Connexion</a></li>
                     </ul>
                 </div>

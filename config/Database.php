@@ -21,6 +21,12 @@ class Database {
     
     /** @var string Nom d'utilisateur */
     private $user;
+
+    /** @var int Port de la base de donnees */
+    private $port;
+
+    /** @var string Charset de connexion */
+    private $charset;
     
     /** @var string Mot de passe */
     private $pass;
@@ -36,6 +42,8 @@ class Database {
         $this->db_name = Environment::get('DB_NAME', 'test_projet_tech');
         $this->user = Environment::get('DB_USER', 'root');
         $this->pass = Environment::get('DB_PASS', '');
+        $this->port = (int) Environment::get('DB_PORT', 3306);
+        $this->charset = Environment::get('DB_CHARSET', 'utf8mb4');
     }
 
     /**
@@ -46,12 +54,12 @@ class Database {
      */
     public function connect() {
         try {
-            $dsn = "mysql:host={$this->host};dbname={$this->db_name};charset=utf8mb4";
+            $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db_name};charset={$this->charset}";
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES {$this->charset} COLLATE {$this->charset}_unicode_ci"
             ];
             
             $this->db = new PDO($dsn, $this->user, $this->pass, $options);
@@ -61,6 +69,7 @@ class Database {
             if (Environment::isProduction()) {
                 ErrorHandler::logError("Erreur de connexion BDD: " . $e->getMessage(), 'CRITICAL', [
                     'host' => $this->host,
+                    'port' => $this->port,
                     'database' => $this->db_name
                 ]);
                 die("Échec de la connexion à la base de données. Veuillez contacter l'administrateur.");

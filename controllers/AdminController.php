@@ -392,15 +392,16 @@ class AdminController {
         $advanced_stats['recent_users'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         // Informations systeme du serveur
+        $isProduction = Environment::isProduction();
         $system_info = [
             'php_version' => phpversion(),
-            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
+            'server_software' => $isProduction ? 'Hidden in production' : ($_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'),
             'memory_limit' => ini_get('memory_limit'),
             'max_upload' => ini_get('upload_max_filesize'),
             'post_max_size' => ini_get('post_max_size'),
             'max_execution_time' => ini_get('max_execution_time') . 's',
             'timezone' => date_default_timezone_get(),
-            'document_root' => $_SERVER['DOCUMENT_ROOT'] ?? 'Unknown',
+            'document_root' => $isProduction ? 'Hidden in production' : ($_SERVER['DOCUMENT_ROOT'] ?? 'Unknown'),
         ];
         
         // Calcul de l'espace disque utilise par les uploads

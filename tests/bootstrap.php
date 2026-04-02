@@ -60,6 +60,11 @@ if (!function_exists('validateSession')) {
 if (!function_exists('redirect')) {
     function redirect(string $url): void {}
 }
+if (!function_exists('sendEmail')) {
+    function sendEmail($to, $subject, $message) {
+        return true;
+    }
+}
 
 // Autoloader for test helpers
 spl_autoload_register(function (string $class): void {

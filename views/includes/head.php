@@ -19,14 +19,8 @@
  * @package Views/Includes
  */
 
-// Use BASE_URL from bootstrap or compute it
-$baseUrl = defined('BASE_URL') ? BASE_URL : (
-    ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
-        || (($_SERVER['HTTP_X_FORWARDED_SSL']   ?? '') === 'on')
-        ? 'https' : 'http')
-    . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
-);
+// Use BASE_URL from bootstrap or fallback to hardened environment helper
+$baseUrl = defined('BASE_URL') ? BASE_URL : Environment::getBaseUrl();
 
 // Current page URL for canonical
 $currentUrl = $baseUrl . ($_SERVER['REQUEST_URI'] ?? '/');

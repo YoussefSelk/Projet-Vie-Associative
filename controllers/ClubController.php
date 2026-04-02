@@ -298,11 +298,18 @@ class ClubController {
                         $logo_filename = null;
                         if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
                             $file = $_FILES['logo'];
-                            $allowed_types = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+                            $allowed_types = [
+                                'image/png' => 'png',
+                                'image/jpeg' => 'jpg',
+                                'image/gif' => 'gif',
+                                'image/webp' => 'webp'
+                            ];
                             $max_size = 2 * 1024 * 1024;
-                            if (in_array($file['type'], $allowed_types) && $file['size'] <= $max_size) {
-                                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                                $just_filename = 'club_' . uniqid() . '_' . time() . '.' . $extension;
+                            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                            $detectedMime = $finfo->file($file['tmp_name']);
+                            if (isset($allowed_types[$detectedMime]) && $file['size'] <= $max_size) {
+                                $extension = $allowed_types[$detectedMime];
+                                $just_filename = 'club_' . uniqid('', true) . '_' . time() . '.' . $extension;
                                 $upload_path = ROOT_PATH . '/uploads/logos/' . $just_filename;
                                 $logo_filename = '../uploads/logos/' . $just_filename;
                                 if (!is_dir(ROOT_PATH . '/uploads/logos')) mkdir(ROOT_PATH . '/uploads/logos', 0755, true);

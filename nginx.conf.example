@@ -32,7 +32,7 @@ server {
     server_tokens off;
     
     # Deny access to sensitive directories
-    location ~ ^/(config|models|controllers|views|routes|logs|vendor)/ {
+    location ~ ^/(config|models|controllers|views|routes|logs|vendor|tests|Docs)/ {
         deny all;
         return 403;
     }
@@ -44,7 +44,7 @@ server {
     }
     
     # Deny access to sensitive files
-    location ~ ^/(\.env|\.env\.example|composer\.json|composer\.lock|README\.md|\.git|\.gitignore) {
+    location ~ ^/(\.env|\.env\.example|composer\.json|composer\.lock|phpunit\.xml|vieasso\.sql|INFOS-PERMISSIONS|README\.md|\.git|\.gitignore|nginx\.conf\.example|web\.config) {
         deny all;
         return 403;
     }
@@ -192,12 +192,12 @@ server {
     server_tokens off;
 
     # ── Blocage des répertoires sensibles ─────────────────────────────────────
-    location ~ ^/(config|models|controllers|views|routes|logs|vendor)/ {
+    location ~ ^/(config|models|controllers|views|routes|logs|vendor|tests|Docs)/ {
         deny all;
         return 403;
     }
     location ~ /\.                        { deny all; return 403; }
-    location ~ ^/(\.env|composer\.(json|lock)|README\.md) { deny all; return 403; }
+    location ~ ^/(\.env|composer\.(json|lock)|phpunit\.xml|vieasso\.sql|INFOS-PERMISSIONS|README\.md|nginx\.conf\.example|web\.config) { deny all; return 403; }
     location ~ ^/uploads/.*\.php$         { deny all; return 403; }
     location ~* \.(log|sql|bak|ini)$      { deny all; return 403; }
 

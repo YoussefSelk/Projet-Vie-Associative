@@ -41,10 +41,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
             </div>
 
             <?php if(!empty($error_msg)): ?>
-                <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg) ?></div>
+                <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars(strip_tags((string)$error_msg)) ?></div>
             <?php endif; ?>
             <?php if(!empty($success_msg)): ?>
-                <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?></div>
+                <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars(strip_tags((string)$success_msg)) ?></div>
             <?php endif; ?>
 
             <!-- Stats Cards -->
@@ -119,30 +119,21 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         $date_ev = !empty($event['date_ev']) ? date('d/m/Y', strtotime($event['date_ev'])) : 'N/A';
                         $horaire = (!empty($event['horaire_debut']) ? substr($event['horaire_debut'], 0, 5) : '?') . ' - ' . (!empty($event['horaire_fin']) ? substr($event['horaire_fin'], 0, 5) : '?');
                     ?>
-                        <?php 
-                            // Prepare logo path (can be full URL or relative like /uploads/...)
-                            $rawLogo = $event['logo_club'] ?? null;
-                            $logoPath = null;
-                            if (!empty($rawLogo)) {
-                                if (preg_match('#^https?://#i', $rawLogo)) {
-                                    $logoPath = $rawLogo;
-                                } else {
-                                    $logoPath = '/' . ltrim($rawLogo, '/');
-                                }
-                            }
-                        ?>
                         <div class="validation-card-advanced event-card" 
                              data-type="<?= $filter_type ?>" 
                              data-search="<?= strtolower(htmlspecialchars(($event['titre'] ?? '') . ' ' . ($event['nom_club'] ?? '') . ' ' . ($event['campus'] ?? '') . ' ' . ($event['lieu'] ?? ''))) ?>">
                             <div class="card-main">
                                 <div class="card-content">
-                                    <div class="card-title-row">
+                                    <div class="card-title-row" style="display: flex; align-items: center; gap: 15px;">
                                         <?php if ($logoPath): ?>
-                                            <img src="<?= htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($event['nom_club'] ?? 'Logo du club', ENT_QUOTES, 'UTF-8') ?>" class="validation-card-logo" loading="lazy" />
+                                            <img src="<?= htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8') ?>" 
+                                                alt="Logo" 
+                                                style="width: 45px; height: 45px; object-fit: contain; border-radius: 8px; background: #f8fafc; padding: 3px; border: 1px solid #e2e8f0;">
+                                        <?php else: ?>
+                                            <div class="card-type-icon" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </div>
                                         <?php endif; ?>
-                                        <div class="card-type-icon">
-                                            <i class="fas fa-calendar-alt"></i>
-                                        </div>
                                         <div class="card-title-info">
                                             <h3><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h3>
                                             <span class="card-subtitle">

@@ -47,14 +47,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
             <?php if (!empty($success_msg)): ?>
             <div class="alert alert-success">
                 <i class="fas fa-check-circle"></i>
-                <?= htmlspecialchars($success_msg) ?>
+                <?= htmlspecialchars(strip_tags((string)$success_msg)) ?>
             </div>
             <?php endif; ?>
             
             <?php if (!empty($error_msg)): ?>
             <div class="alert alert-error">
                 <i class="fas fa-exclamation-circle"></i>
-                <?= htmlspecialchars($error_msg) ?>
+                <?= htmlspecialchars(strip_tags((string)$error_msg)) ?>
             </div>
             <?php endif; ?>
             

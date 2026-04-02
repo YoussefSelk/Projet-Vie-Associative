@@ -230,6 +230,9 @@ else {
                     <i class="fas fa-folder-open"></i> <span>Mes Clubs</span>
                 </a>
                 <?php if($is_membre_club == 1): ?>
+                    <a href="?page=my-events" class="quick-action-item">
+                        <i class="fas fa-calendar-alt"></i> <span>Mes Événements</span>
+                    </a>
                     <a href="?page=event-create" class="quick-action-item">
                         <i class="fas fa-calendar-plus"></i> <span>Créer un événement</span>
                     </a>

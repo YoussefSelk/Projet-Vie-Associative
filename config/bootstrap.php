@@ -30,17 +30,6 @@ define('LOGS_PATH', ROOT_PATH . '/logs');
 define('UPLOADS_PATH', ROOT_PATH . '/uploads');
 
 // =============================================================================
-// DÉFINITION DE L'URL DE BASE
-// =============================================================================
-// Détection HTTPS proxy-agnostique : couvre HTTPS direct, nginx/Apache SSL termination,
-// CloudFlare et AWS ELB (même logique que Security::isHttps(), chargée plus tard).
-$isHttpsConn = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
-    || (($_SERVER['HTTP_X_FORWARDED_SSL']   ?? '') === 'on')
-    || (($_SERVER['SERVER_PORT']            ?? '') == '443');
-define('BASE_URL', ($isHttpsConn ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost'));
-
-// =============================================================================
 // DÉMARRAGE DU BUFFER DE SORTIE
 // =============================================================================
 // Permet de nettoyer tout l'output en cas d'erreur pour afficher
@@ -52,6 +41,9 @@ ob_start();
 // =============================================================================
 require_once CONFIG_PATH . '/Environment.php';
 Environment::load();
+
+// URL de base fiable (priorité APP_URL, fallback auto-détection durcie)
+define('BASE_URL', Environment::getBaseUrl());
 
 // =============================================================================
 // GESTIONNAIRE D'ERREURS
@@ -98,6 +90,21 @@ session_set_cookie_params([
 
 session_start();
 
+// Expiration de session sur inactivite
+if (isset($_SESSION['_last_activity']) && (time() - (int)$_SESSION['_last_activity']) > $sessionLifetime) {
+    $_SESSION = [];
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params['path'], $params['domain'],
+            $params['secure'], $params['httponly']
+        );
+    }
+    session_destroy();
+    session_start();
+}
+$_SESSION['_last_activity'] = time();
+
 // =============================================================================
 // PROTECTION CONTRE LA FIXATION DE SESSION
 // =============================================================================
@@ -108,6 +115,7 @@ if (!isset($_SESSION['_created'])) {
     // Régénération toutes les 30 minutes
     session_regenerate_id(true);
     $_SESSION['_created'] = time();
+    $_SESSION['_last_activity'] = time();
 }
 
 // =============================================================================

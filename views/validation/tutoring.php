@@ -36,6 +36,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
     <main>
         <div class="page-container admin-dashboard">
             <div class="page-header">
+                <div class="header-left">
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                </div>
                <h1>
                    <?php if ($is_admin): ?>
                        Administration - Validations

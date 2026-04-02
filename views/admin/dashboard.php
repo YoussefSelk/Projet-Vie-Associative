@@ -34,6 +34,9 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin', 'dashboard'];
     <main>
         <div class="admin-dashboard">
             <div class="admin-header">
+                <div class="header-left">
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                </div>
                 <h1><i class="fas fa-tachometer-alt"></i> Tableau de bord administrateur</h1>
                 <div class="header-actions">
                     <span class="badge badge-info">

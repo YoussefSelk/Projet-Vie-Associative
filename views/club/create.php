@@ -256,7 +256,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                             <button type="submit" name="create_club" class="btn btn-success btn-lg">
                                 <i class="fas fa-plus-circle"></i> Créer le club
                             </button>
-                            <a href="?page=dashboard" class="btn btn-outline">
+                            <a href="?page=home" class="btn btn-outline">
                                 <i class="fas fa-times"></i> Annuler
                             </a>
                         </div>

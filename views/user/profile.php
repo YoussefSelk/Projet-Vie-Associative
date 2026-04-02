@@ -39,6 +39,10 @@ $pageCss = ['shared', 'buttons', 'profiles'];
                 <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars(strip_tags((string)$success_msg)) ?></div>
             <?php endif; ?>
 
+            <div class="header-left">
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                </div>
+
             <div class="profile-card">
                 <div class="profile-header">
                     <div class="profile-avatar">

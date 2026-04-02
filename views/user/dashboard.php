@@ -38,6 +38,9 @@ $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
 
     <main class="dashboard-wrapper">
         <div class="dashboard-container">
+            <div class="header-left">
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                </div>
             <!-- Hero Welcome Section -->
             <div class="dashboard-hero">
                 <div class="hero-content">

@@ -31,6 +31,9 @@ $pageCss = ['shared', 'buttons', 'clubs'];
             <!-- En-tête de page -->
             <div class="page-header">
                 <div class="header-center">
+                    <div class="header-left">
+                        <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                    </div>
                     <h1><i class="fas fa-users"></i> Découvrir les clubs</h1>
                     <p class="subtitle">
                         <?= count($clubs) ?> club<?= count($clubs) > 1 ? 's' : '' ?> actif<?= count($clubs) > 1 ? 's' : '' ?> à l'EILCO

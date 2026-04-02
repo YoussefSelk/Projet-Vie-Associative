@@ -28,6 +28,9 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
     <main>
         <div class="page-container">
             <div class="page-header">
+                <div class="header-left">
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                </div>
                 <h1><i class="fas fa-calendar-check"></i> Mes Événements</h1>
                 <p class="subtitle">Événements organisés par mes clubs</p>
             </div>
@@ -83,7 +86,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
             <?php else: ?>
                 <div class="events-grid">
                     <?php foreach ($events as $event): 
-                        // Build search data and filter
+                        // Logique de filtrage
                         $statusFilter = '';
                         if ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus']))) {
                             $statusFilter = 'attente';
@@ -93,6 +96,22 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                             $statusFilter = 'refuse';
                         }
                         $searchData = strtolower(($event['titre'] ?? '') . ' ' . ($event['description'] ?? '') . ' ' . ($event['campus'] ?? ''));
+                        
+                        // Détermination du statut pour l'affichage
+                        $status = '';
+                        $statusClass = '';
+                        $isRejected = false;
+                        if ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus']))) {
+                            $status = 'En attente';
+                            $statusClass = 'badge-warning';
+                        } elseif ($event['validation_finale'] == 1) {
+                            $status = 'Approuvé';
+                            $statusClass = 'badge-success';
+                        } else {
+                            $status = 'Refusé';
+                            $statusClass = 'badge-danger';
+                            $isRejected = true;
+                        }
                     ?>
                         <div class="event-card" data-search="<?= htmlspecialchars($searchData) ?>" data-filter="<?= $statusFilter ?>">
                             <div class="event-card-inner">

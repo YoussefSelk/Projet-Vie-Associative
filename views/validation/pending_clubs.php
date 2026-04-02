@@ -35,7 +35,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
         <div class="page-container">
             <div class="page-header">
                 <div class="header-left">
-                    <a href="?page=admin" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
                 </div>
                 <h1><i class="fas fa-building"></i> Clubs en attente</h1>
                 <p class="subtitle"><?= count($clubs) ?> club(s) en attente de validation</p>

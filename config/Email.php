@@ -33,6 +33,8 @@ function sendEmail($to, $subject, $message) {
     
     try {
         $mail->isSMTP();
+        // En livraison, conserver un niveau de debug SMTP nul.
+        $mail->SMTPDebug = 0;
         $mail->Host = $smtp_host;
         $mail->SMTPAuth = true;
         $mail->Username = $smtp_username;
@@ -54,11 +56,9 @@ function sendEmail($to, $subject, $message) {
             'recipient' => $to,
             'subject' => $subject
         ]);
-        
-        if (Environment::isProduction()) {
-            return false;
-        }
-        return "Erreur : " . $mail->ErrorInfo;
+
+        // Ne jamais propager d'information technique sensible a l'interface.
+        return false;
     }
 }
 

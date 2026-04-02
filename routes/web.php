@@ -138,6 +138,15 @@ return [
         'method' => 'viewEvent',
         'view' => '/event/view.php'
     ],
+
+    // Alias de compatibilite pour les anciens liens externes ou favoris navigateur.
+    'event-details' => [
+        'permission' => null,
+        'auth' => false,
+        'controller' => 'EventController',
+        'method' => 'viewEvent',
+        'view' => '/event/view.php'
+    ],
     
     'event-create' => [
         'permission' => [1,3,4,5],

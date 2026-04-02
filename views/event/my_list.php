@@ -18,7 +18,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 <!DOCTYPE html>
 <html lang="fr">
 <?php include VIEWS_PATH . '/includes/head.php'; ?>
-<body>
+<body class="my-events-page">
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
     </header>
@@ -192,7 +192,25 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
     </main>
 
     <script>
+    function cleanupStaleSwalOverlay() {
+        const hasVisiblePopup = !!document.querySelector('.swal2-popup.swal2-show');
+        if (hasVisiblePopup) {
+            return;
+        }
+
+        // Si un backdrop SweetAlert2 reste bloque sans popup visible, on le nettoie.
+        document.querySelectorAll('.swal2-container').forEach((container) => {
+            container.remove();
+        });
+        document.body.classList.remove('swal2-shown', 'swal2-height-auto', 'swal2-no-backdrop');
+        document.documentElement.classList.remove('swal2-shown', 'swal2-height-auto', 'swal2-no-backdrop');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        cleanupStaleSwalOverlay();
+
         // Initialize search for my events
         if (document.querySelector('#myEventSearch')) {
             window.myEventSearch = new SearchComponent({
@@ -215,6 +233,8 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
         }
     });
 
+    window.addEventListener('pageshow', cleanupStaleSwalOverlay);
+
     // Delete event confirmation with SweetAlert2
     document.querySelectorAll('.form-delete-event').forEach(form => {
         form.addEventListener('submit', (e) => {
@@ -225,7 +245,10 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                 .then((result) => {
                     if (result.isConfirmed) {
                         form.submit();
+                        return;
                     }
+
+                    cleanupStaleSwalOverlay();
                 });
         });
     });

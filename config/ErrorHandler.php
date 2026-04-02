@@ -48,14 +48,14 @@ class ErrorHandler
             return;
         }
         
-        // Configurer le reporting d'erreurs selon l'environnement
-        if (Environment::isDebug()) {
-            error_reporting(E_ALL);
-            ini_set('display_errors', 1);
-        } else {
-            error_reporting(E_ALL);
-            ini_set('display_errors', 0);
-        }
+        // Toujours journaliser toutes les erreurs.
+        // Pour les requetes web, ne jamais afficher les details techniques a l'utilisateur.
+        error_reporting(E_ALL);
+        $isCli = (php_sapi_name() === 'cli');
+        $allowCliDebugDisplay = $isCli && Environment::isDebug();
+        ini_set('display_errors', $allowCliDebugDisplay ? '1' : '0');
+        ini_set('display_startup_errors', $allowCliDebugDisplay ? '1' : '0');
+        ini_set('html_errors', '0');
         
         ini_set('log_errors', 1);
         

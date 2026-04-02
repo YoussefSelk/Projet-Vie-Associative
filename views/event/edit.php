@@ -164,7 +164,7 @@ $isEvent = ($event['type_event'] === 'event');
                             <button type="submit" name="update_event" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save"></i> Enregistrer les modifications
                             </button>
-                            <a href="?page=event-details&id=<?= $event['event_id'] ?>" class="btn btn-outline"><i class="fas fa-times"></i> Annuler</a>
+                            <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-outline"><i class="fas fa-times"></i> Annuler</a>
                         </div>
                     </form>
                 </div>

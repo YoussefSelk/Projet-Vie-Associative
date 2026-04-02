@@ -137,8 +137,9 @@ class Environment {
     private static function loadDefaults(): void
     {
         $defaults = [
-            'APP_ENV' => 'development',
-            'APP_DEBUG' => 'true',
+            // Par defaut, privilegier un mode sur pour eviter toute fuite d'information.
+            'APP_ENV' => 'production',
+            'APP_DEBUG' => 'false',
             'DB_HOST' => 'localhost',
             'DB_NAME' => 'test_projet_tech',
             'DB_USER' => 'root',

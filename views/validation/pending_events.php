@@ -34,7 +34,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         <div class="page-container admin-dashboard">
             <div class="page-header">
                 <div class="header-left">
-                    <a href="?page=admin" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
                 </div>
                 <h1><i class="fas fa-calendar-check"></i> Validation des événements</h1>
                 <p class="subtitle">Examinez et validez les événements soumis par les clubs</p>

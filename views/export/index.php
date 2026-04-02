@@ -30,6 +30,9 @@ $pageCss   = ['shared', 'buttons', 'forms', 'export'];
 
     <main>
         <div class="export-page">
+            <div class="header-left">
+                <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+            </div>
 
             <!-- ─── Hero ──────────────────────────────────────────────────── -->
             <div class="export-hero">

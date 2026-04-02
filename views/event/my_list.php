@@ -28,6 +28,9 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
     <main>
         <div class="page-container">
             <div class="page-header">
+                <div class="header-left">
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                </div>
                 <h1><i class="fas fa-calendar-check"></i> Mes Événements</h1>
                 <p class="subtitle">Événements organisés par mes clubs</p>
             </div>

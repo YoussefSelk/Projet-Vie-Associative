@@ -233,11 +233,12 @@ class ValidationController {
                     $check->execute([$event_id]);
                     $event = $check->fetch(PDO::FETCH_ASSOC);
 
-                    // RÈGLE : Validation finale si (BDE a validé) ET (Tuteur OU Admin a validé)
+                    // RÈGLE : Validation finale si (BDE a validé) ET Tuteur ET Admin ont validé)
                     $bde_ok = ($event['validation_bde'] == 1);
-                    $admin_or_tutor_ok = ($event['validation_admin'] == 1 || $event['validation_tuteur'] == 1);
+                    $admin_ok = $event['validation_admin'] == 1;
+                    $tuteur_ok = $event['validation_tuteur'] == 1;
 
-                    if ($event && $bde_ok && $admin_or_tutor_ok) {
+                    if ($event && $bde_ok && $admin_ok && $tuteur_ok) {
                         $this->db->prepare("UPDATE fiche_event SET validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
                         $success_msg = "Événement validé définitivement (Circuit de signatures complet).";
                     } else {

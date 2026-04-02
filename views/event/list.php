@@ -30,6 +30,9 @@ $user_permission = (int)($_SESSION['permission'] ?? 1);
     <main>
         <div class="page-container">
             <div class="page-header">
+                <div class="header-left">
+                    <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+                </div>
                 <h1><i class="fas fa-calendar-alt"></i> Événements</h1>
                 <p class="subtitle">Découvrez tous les événements validés de l'EILCO</p>
             </div>

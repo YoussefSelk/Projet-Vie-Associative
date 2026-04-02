@@ -1,133 +1,57 @@
-# SweetAlert2 Integration Guide
+<h1>SweetAlert2 Integration</h1>
 
-## 📚 Overview
+<p>
+SweetAlert2 is globally available from views/includes/head.php and wrapped by helper methods
+from assets/js/sweetalert-helpers.js.
+</p>
 
-SweetAlert2 has been integrated for beautiful confirmations, warnings, and info messages. This replaces standard JavaScript `alert()` and `confirm()` with modern popups.
+<hr>
 
-## 🔗 Resources
+<h2>Helper API (Current)</h2>
+<ul>
+  <li>SwalHelper.success(title, text='')</li>
+  <li>SwalHelper.error(title, text='')</li>
+  <li>SwalHelper.warning(title, text='')</li>
+  <li>SwalHelper.info(title, text='')</li>
+  <li>SwalHelper.confirm(title, text='', confirmText='Confirmer', cancelText='Annuler')</li>
+  <li>SwalHelper.confirmDelete(itemName='cet element')</li>
+</ul>
 
-- **Official Website**: https://sweetalert2.github.io/
-- **CDN Version**: v11 (latest)
+<hr>
 
-## 📦 Files
-
-1. **`views/includes/head.php`** - SweetAlert2 CDN loaded automatically
-2. **`assets/js/sweetalert-helpers.js`** - Simple helper functions
-
-## 🎯 Quick Usage
-
-### 1. Success Message
-
-```javascript
-SwalHelper.success("Opération réussie !");
-SwalHelper.success("Club créé", "Le club a été créé avec succès");
-```
-
-### 2. Error Message
-
-```javascript
-SwalHelper.error("Erreur", "Une erreur est survenue");
-```
-
-### 3. Warning Message
-
-```javascript
-SwalHelper.warning("Attention", "Cette action est irréversible");
-```
-
-### 4. Info Message
-
-```javascript
-SwalHelper.info("Information", "Votre session expire dans 5 minutes");
-```
-
-### 5. Simple Confirmation
-
-```javascript
-SwalHelper.confirm(
-  "Êtes-vous sûr ?",
-  "Cette action va publier l'événement",
-).then((result) => {
+<h2>Typical Usage</h2>
+<pre><code>SwalHelper.confirmDelete('the selected club').then((result) => {
   if (result.isConfirmed) {
-    // User clicked "Confirmer"
-    console.log("Confirmed");
+    form.submit();
   }
-});
+});</code></pre>
 
-// Custom button text
-SwalHelper.confirm("Publier ?", "Visible par tous", "Oui, publier", "Non").then(
-  (result) => {
-    if (result.isConfirmed) {
-      // Publish
-    }
-  },
-);
-```
+<pre><code>SwalHelper.success('Saved', 'Profile has been updated successfully');</code></pre>
 
-### 6. Delete Confirmation
+<pre><code>SwalHelper.error('Error', 'Action could not be completed');</code></pre>
 
-```javascript
-SwalHelper.confirmDelete("ce club").then((result) => {
-  if (result.isConfirmed) {
-    // Proceed with deletion
-    deleteItem();
-  }
-});
-```
+<hr>
 
-## 💡 Complete Example
+<h2>Integration Rules</h2>
+<ul>
+  <li>Prefer helper methods for consistency across views</li>
+  <li>Use confirm/confirmDelete before destructive actions</li>
+  <li>Keep server-side validation; alerts are UX enhancement only</li>
+  <li>Do not rely on alert text for authorization/security decisions</li>
+</ul>
 
-```javascript
-// Delete button click handler
-document.querySelector(".btn-delete").addEventListener("click", () => {
-  SwalHelper.confirmDelete("cet événement").then((result) => {
-    if (result.isConfirmed) {
-      // User confirmed - delete the item
-      fetch("/api/event/delete", { method: "DELETE" }).then((response) => {
-        if (response.ok) {
-          SwalHelper.success("Supprimé !", "L'événement a été supprimé");
-        } else {
-          SwalHelper.error("Erreur", "Impossible de supprimer");
-        }
-      });
-    }
-  });
-});
-```
+<hr>
 
-## 🎨 Available Icons
+<h2>Where It Is Used</h2>
+<ul>
+  <li>Validation pages: approval/rejection confirmation popups</li>
+  <li>Club pages: delete confirmation dialogs</li>
+  <li>Any form flow requiring user confirmation or feedback</li>
+</ul>
 
-- `success` ✅ Green checkmark
-- `error` ❌ Red X
-- `warning` ⚠️ Yellow exclamation
-- `info` ℹ️ Blue i
-- `question` ❓ Blue question mark
+<hr>
 
-## 📖 Advanced Usage
-
-Need more control? Use SweetAlert2 directly:
-
-```javascript
-Swal.fire({
-  title: "Custom Title",
-  text: "Custom message",
-  icon: "warning",
-  showCancelButton: true,
-  confirmButtonText: "Yes",
-  cancelButtonText: "No",
-}).then((result) => {
-  if (result.isConfirmed) {
-    // Action
-  }
-});
-```
-
-Full documentation: https://sweetalert2.github.io/
-
-## 🧪 Test Page
-
-Open `sweetalert-test.html` in your browser to see examples.
-
----
-
-That's it! Simple confirmations and alerts for your project. 🎉
+<h2>Screenshot Placeholders</h2>
+<p>
+Capture modal examples (confirm, reject, delete) using files listed in <a href="screenshots/README.md">screenshots/README.md</a>.
+</p>

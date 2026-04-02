@@ -83,7 +83,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
             <?php else: ?>
                 <div class="events-grid">
                     <?php foreach ($events as $event): 
-                        // Build search data and filter
+                        // Logique de filtrage
                         $statusFilter = '';
                         if ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus']))) {
                             $statusFilter = 'attente';
@@ -93,95 +93,82 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                             $statusFilter = 'refuse';
                         }
                         $searchData = strtolower(($event['titre'] ?? '') . ' ' . ($event['description'] ?? '') . ' ' . ($event['campus'] ?? ''));
+                        
+                        // Détermination du statut pour l'affichage
+                        $status = '';
+                        $statusClass = '';
+                        $isRejected = false;
+                        if ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus']))) {
+                            $status = 'En attente';
+                            $statusClass = 'badge-warning';
+                        } elseif ($event['validation_finale'] == 1) {
+                            $status = 'Approuvé';
+                            $statusClass = 'badge-success';
+                        } else {
+                            $status = 'Refusé';
+                            $statusClass = 'badge-danger';
+                            $isRejected = true;
+                        }
                     ?>
                         <div class="event-card" data-search="<?= htmlspecialchars($searchData) ?>" data-filter="<?= $statusFilter ?>">
-                            <div class="event-card-inner">
-                                <aside class="event-left">
-                                    <div class="event-date-badge">
-                                        <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
-                                        <span class="month"><?php 
-                                            $moisFr = ['jan', 'fév', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
-                                            echo $moisFr[date('n', strtotime($event['date_ev'] ?? 'now')) - 1];
-                                        ?></span>
-                                    </div>
-                                </aside>
-
-                                <div class="event-body">
-                                    <header class="event-head">
-                                        <h3 class="event-title"><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h3>
-                                        <div class="event-head-right">
-                                            <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
-                                                <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
-                                            </span>
-                                            <?php 
-                                            $status = '';
-                                            $statusClass = '';
-                                            $isRejected = false;
-                                            if ($event['validation_finale'] === null) {
-                                                $status = 'En attente';
-                                                $statusClass = 'badge-warning';
-                                            } elseif ($event['validation_finale'] == 0 && !empty($event['motif_refus'])) {
-                                                $status = 'Refusé';
-                                                $statusClass = 'badge-danger';
-                                                $isRejected = true;
-                                            } elseif ($event['validation_finale'] == 0) {
-                                                $status = 'En attente';
-                                                $statusClass = 'badge-warning';
-                                            } elseif ($event['validation_finale'] == 1) {
-                                                $status = 'Approuvé';
-                                                $statusClass = 'badge-success';
-                                            } else {
-                                                $status = 'Refusé';
-                                                $statusClass = 'badge-danger';
-                                                $isRejected = true;
-                                            }
-                                            ?>
-                                            <span class="badge <?= $statusClass ?>"><?= $status ?></span>
-                                        </div>
-                                    </header>
-
-                                    <?php if ($isRejected && !empty($event['motif_refus'])): ?>
-                                        <div class="refusal-reason">
-                                            <small><strong>Motif :</strong> <?= htmlspecialchars($event['motif_refus']) ?></small>
-                                        </div>
-                                    <?php endif; ?>
-
-                                    <?php if (!empty($event['description'])): ?>
-                                        <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 120)) ?><?= mb_strlen($event['description']) > 120 ? '...' : '' ?></p>
-                                    <?php endif; ?>
-
-                                    <div class="event-meta-row">
-                                        <div class="meta-item"><i class="fas fa-calendar-alt"></i> <?= htmlspecialchars(date('d/m/Y', strtotime($event['date_ev'] ?? 'now'))) ?></div>
-                                        <?php if (!empty($event['horaire_debut']) || !empty($event['horaire_fin'])): ?>
-                                            <div class="meta-item"><i class="fas fa-clock"></i> <?= htmlspecialchars((!empty($event['horaire_debut']) ? substr($event['horaire_debut'],0,5) : '?') . ' - ' . (!empty($event['horaire_fin']) ? substr($event['horaire_fin'],0,5) : '?')) ?></div>
-                                        <?php endif; ?>
-                                    </div>
-
-                                    <footer class="event-actions">
-                                        <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-eye"></i> Voir
-                                        </a>
-                                        <?php 
-                                        $isPending = ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus'])));
-                                        if ($isPending || $isRejected): ?>
-                                            <a href="?page=update-event&id=<?= $event['event_id'] ?>" class="btn btn-warning btn-sm">
-                                                <i class="fas fa-edit"></i> Modifier
-                                            </a>
-                                        <?php endif; ?>
-                                        <?php if ($isRejected): ?>
-                                            <form method="POST" class="form-delete-event" data-event-title="<?= htmlspecialchars($event['titre'] ?? '') ?>" style="display:inline-block;margin-left:6px;">
-                                                <?= Security::csrfField() ?>
-                                                <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
-                                                <input type="hidden" name="delete_event" value="1">
-                                                <button type="submit" class="btn btn-danger btn-sm">
-                                                    <i class="fas fa-trash"></i> Supprimer
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </footer>
+                            <div class="event-card-header">
+                                <h3><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h3>
+                                <div class="event-date">
+                                    <i class="fas fa-calendar-day"></i> 
+                                    <?= date('d', strtotime($event['date_ev'])) ?> 
+                                    <?php 
+                                        $moisFr = ['jan', 'fév', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
+                                        echo $moisFr[date('n', strtotime($event['date_ev'])) - 1];
+                                    ?>
                                 </div>
                             </div>
-                         </div>
+
+                            <div class="event-card-body">
+                                <div style="margin-bottom: 10px;">
+                                    <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
+                                        <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
+                                    </span>
+                                    <span class="badge <?= $statusClass ?>" style="margin-left: 5px;"><?= $status ?></span>
+                                </div>
+
+                                <?php if ($isRejected && !empty($event['motif_refus'])): ?>
+                                    <div class="refusal-reason">
+                                        <small><strong><i class="fas fa-info-circle"></i> Motif :</strong> <?= htmlspecialchars($event['motif_refus']) ?></small>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if (!empty($event['description'])): ?>
+                                    <p class="event-description">
+                                        <?= htmlspecialchars(mb_substr($event['description'], 0, 100)) ?>...
+                                    </p>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="event-card-footer">
+                                <a href="?page=event-view&id=<?= $event['event_id'] ?>" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
+                                <?php 
+                                $isPending = ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus'])));
+                                if ($isPending || $isRejected): ?>
+                                    <a href="?page=update-event&id=<?= $event['event_id'] ?>" style="color: #f39c12;" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                <?php endif; ?>
+
+                                <?php if ($isRejected): ?>
+                                    <form method="POST" class="form-delete-event" data-event-title="<?= htmlspecialchars($event['titre'] ?? '') ?>" style="display:inline;">
+                                        <?= Security::csrfField() ?>
+                                        <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
+                                        <input type="hidden" name="delete_event" value="1">
+                                        <button type="submit" style="background:none; border:none; color:#dc3545; cursor:pointer; padding:0; margin-left:10px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     <?php endforeach; ?>
                 </div>
 

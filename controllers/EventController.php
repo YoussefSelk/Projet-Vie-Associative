@@ -89,6 +89,7 @@ class EventController {
      */
     public function listEvents() {
         $events = $this->eventModel->getAllValidatedEvents();
+        $currentUserId = (int)($_SESSION['id'] ?? 0);
 
         // Normaliser et injecter les infos du club (logo, nom) pour l'affichage en liste
         if (!empty($events)) {
@@ -111,8 +112,28 @@ class EventController {
 
                 $ev['logo_club'] = $logoPath;
                 $ev['nom_club']  = $clubName;
+                $ev['is_subscribed'] = false;
             }
             unset($ev);
+
+            // Marquer les événements déjà abonnés pour l'utilisateur connecté.
+            if ($currentUserId > 0) {
+                $eventIds = array_values(array_unique(array_map(static fn($event) => (int)($event['event_id'] ?? 0), $events)));
+                $eventIds = array_values(array_filter($eventIds, static fn($id) => $id > 0));
+
+                if (!empty($eventIds)) {
+                    $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+                    $stmtSub = $this->db->prepare("SELECT event_id FROM abonnements WHERE id = ? AND event_id IN ($placeholders)");
+                    $stmtSub->execute(array_merge([$currentUserId], $eventIds));
+                    $subscribedIds = array_map('intval', $stmtSub->fetchAll(PDO::FETCH_COLUMN));
+                    $subscribedMap = array_flip($subscribedIds);
+
+                    foreach ($events as &$event) {
+                        $event['is_subscribed'] = isset($subscribedMap[(int)($event['event_id'] ?? 0)]);
+                    }
+                    unset($event);
+                }
+            }
         }
 
         return [

@@ -16,11 +16,12 @@
 $pageTitle = 'Événements - EILCO';
 $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 $user_permission = (int)($_SESSION['permission'] ?? 1);
+$isAuthenticated = !empty($_SESSION['id']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <?php include VIEWS_PATH . '/includes/head.php'; ?>
-<body>
+<body class="event-list-page">
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
     </header>
@@ -82,6 +83,34 @@ $user_permission = (int)($_SESSION['permission'] ?? 1);
                         $monthIndex = (int)date('n', $eventDate) - 1;
                         $searchData = strtolower($event['titre'] . ' ' . ($event['description'] ?? '') . ' ' . ($event['campus'] ?? ''));
                         $filterData = strtolower($event['campus'] ?? 'calais');
+                        // Détection robuste du type : prend en compte variantes, accents et libellés hétérogènes.
+                        $typeRaw = trim((string)($event['type_event'] ?? ''));
+                        $typeValue = mb_strtolower($typeRaw, 'UTF-8');
+                        $typeNormalized = strtr($typeValue, [
+                            'à' => 'a', 'â' => 'a',
+                            'ç' => 'c',
+                            'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
+                            'î' => 'i', 'ï' => 'i',
+                            'ô' => 'o',
+                            'ù' => 'u', 'û' => 'u', 'ü' => 'u'
+                        ]);
+
+                        $isActivity = false;
+                        $activityExactValues = [
+                            'activity', 'activite', 'atelier', 'workshop', 'club_activity', 'club-activity'
+                        ];
+
+                        if (in_array($typeNormalized, $activityExactValues, true)) {
+                            $isActivity = true;
+                        } else {
+                            $activityHints = ['activit', 'atelier', 'workshop'];
+                            foreach ($activityHints as $hint) {
+                                if ($typeNormalized !== '' && str_contains($typeNormalized, $hint)) {
+                                    $isActivity = true;
+                                    break;
+                                }
+                            }
+                        }
                     ?>
                         <div class="event-card" data-search="<?= htmlspecialchars($searchData) ?>" data-filter="<?= htmlspecialchars($filterData) ?>">
                             <div class="event-date-badge">
@@ -110,11 +139,10 @@ $user_permission = (int)($_SESSION['permission'] ?? 1);
                                         <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
                                             <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
                                         </span>
-                                        <?php if (!empty($event['type_event'])): ?>
-                                            <span class="type-badge <?= ($event['type_event'] === 'event') ? 'event' : 'activity' ?>">
-                                                <?= htmlspecialchars($event['type_event'] === 'event' ? 'Événement' : 'Activité') ?>
-                                            </span>
-                                        <?php endif; ?>
+                                        <span class="type-badge <?= $isActivity ? 'activity' : 'event' ?>">
+                                            <i class="fas <?= $isActivity ? 'fa-shapes' : 'fa-calendar-check' ?>"></i>
+                                            <?= $isActivity ? 'Activité' : 'Événement' ?>
+                                        </span>
                                         <?php if (!empty($event['horaire_debut'])): ?>
                                             <span class="time">
                                                 <i class="fas fa-clock"></i> <?= htmlspecialchars($event['horaire_debut']) ?>
@@ -124,9 +152,32 @@ $user_permission = (int)($_SESSION['permission'] ?? 1);
                                     <?php if (!empty($event['description'])): ?>
                                         <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 120)) ?>...</p>
                                     <?php endif; ?>
-                                    <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary">
-                                        <i class="fas fa-eye"></i> Voir détails
-                                    </a>
+
+                                    <div class="event-card-actions">
+                                        <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary">
+                                            <i class="fas fa-eye"></i> Voir détails
+                                        </a>
+
+                                        <?php if ($isAuthenticated): ?>
+                                            <?php if (!empty($event['is_subscribed'])): ?>
+                                                <a href="?page=my-subscriptions" class="btn btn-success">
+                                                    <i class="fas fa-check"></i> Inscrit
+                                                </a>
+                                            <?php else: ?>
+                                                <form method="POST" action="?page=subscribe" class="form-subscribe-inline">
+                                                    <?= Security::csrfField() ?>
+                                                    <input type="hidden" name="event_id" value="<?= (int)$event['event_id'] ?>">
+                                                    <button type="submit" class="btn btn-success">
+                                                        <i class="fas fa-user-plus"></i> S'inscrire
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <a href="?page=login" class="btn btn-secondary">
+                                                <i class="fas fa-sign-in-alt"></i> Se connecter
+                                            </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -160,6 +211,62 @@ $user_permission = (int)($_SESSION['permission'] ?? 1);
                 searchComponent: window.eventSearch || null
             });
         }
+
+        // Inscription AJAX sans redirection : popup de succès + mise à jour visuelle du bouton.
+        document.querySelectorAll('.form-subscribe-inline').forEach((form) => {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (!submitBtn || submitBtn.disabled) {
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                const originalHtml = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Inscription...';
+
+                try {
+                    const formData = new FormData(form);
+                    formData.append('action', 'subscribe');
+
+                    const response = await fetch('?page=subscribe-ajax', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error || 'Erreur lors de l\'inscription.');
+                    }
+
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Inscription confirmée',
+                        text: 'Vous êtes inscrit à cet événement.',
+                        confirmButtonText: 'OK'
+                    });
+
+                    const cardActions = form.closest('.event-card-actions');
+                    if (cardActions) {
+                        const subscribedLink = document.createElement('a');
+                        subscribedLink.href = '?page=my-subscriptions';
+                        subscribedLink.className = 'btn btn-success';
+                        subscribedLink.innerHTML = '<i class="fas fa-check"></i> Inscrit';
+                        form.replaceWith(subscribedLink);
+                    }
+                } catch (error) {
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Impossible de s\'inscrire',
+                        text: error.message || 'Veuillez réessayer.'
+                    });
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+            });
+        });
     });
     </script>
 

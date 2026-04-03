@@ -379,7 +379,7 @@ class ClubController {
                 // Vérifier que l'utilisateur est bien le créateur (Président)
                 $stmt = $this->db->prepare("
                     SELECT mc.fonction FROM membres_club mc
-                    WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.fonction = 'Président'
+                        WHERE mc.club_id = ? AND mc.membre_id = ? AND mc.valide = 1 AND mc.fonction IN ('Président', 'Vice-Président', 'Vice-President' , 'Vice-président', 'Vice-president')
                 ");
                 $stmt->execute([$club_id, $user_id]);
                 

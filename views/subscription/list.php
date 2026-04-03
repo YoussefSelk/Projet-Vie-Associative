@@ -19,7 +19,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 <!DOCTYPE html>
 <html lang="fr">
 <?php include VIEWS_PATH . '/includes/head.php'; ?>
-<body>
+<body class="my-subscriptions-page">
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
     </header>
@@ -133,23 +133,87 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
         }
     });
 
-    // Unsubscribe confirmation with SweetAlert2
-    document.querySelectorAll('.btn-unsubscribe').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    // Désinscription AJAX (sans redirection) + mise à jour visuelle locale.
+    document.querySelectorAll('.btn-unsubscribe').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
             e.preventDefault();
-            const eventTitle = btn.dataset.eventTitle;
             const form = btn.closest('form');
-            
-            SwalHelper.confirm(
+            const card = btn.closest('.event-card');
+            const eventTitle = btn.dataset.eventTitle || 'cet événement';
+
+            if (!form || !card) {
+                return;
+            }
+
+            const confirmResult = await SwalHelper.confirm(
                 'Se désinscrire ?',
                 'Voulez-vous vraiment vous désinscrire de "' + eventTitle + '" ?',
                 'Oui, me désinscrire',
                 'Annuler'
-            ).then((result) => {
-                if (result.isConfirmed) {
-                    form.submit();
+            );
+
+            if (!confirmResult.isConfirmed) {
+                return;
+            }
+
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Désinscription...';
+
+            try {
+                const formData = new FormData(form);
+                formData.append('action', 'unsubscribe');
+
+                const response = await fetch('?page=subscribe-ajax', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Erreur lors de la désinscription.');
                 }
-            });
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Désinscription effectuée',
+                    text: 'Vous avez été retiré de cet événement.',
+                    confirmButtonText: 'OK'
+                });
+
+                card.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(-8px)';
+
+                window.setTimeout(() => {
+                    card.remove();
+
+                    const remainingCards = document.querySelectorAll('.events-grid .event-card').length;
+                    const countStrong = document.querySelector('.search-results-count strong');
+                    const countLabel = document.querySelector('.search-results-count');
+
+                    if (countStrong) {
+                        countStrong.textContent = String(remainingCards);
+                    }
+                    if (countLabel) {
+                        countLabel.innerHTML = '<strong>' + remainingCards + '</strong> inscription' + (remainingCards !== 1 ? 's' : '');
+                    }
+
+                    if (remainingCards === 0) {
+                        window.location.reload();
+                    }
+                }, 260);
+            } catch (error) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: error.message || 'La désinscription a échoué.'
+                });
+
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
         });
     });
     </script>

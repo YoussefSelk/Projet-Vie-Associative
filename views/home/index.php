@@ -140,7 +140,7 @@ $pageCss = ['shared', 'buttons', 'calendar', 'home'];
                         <h3>Calendrier</h3>
                         <p>Consultez tous les événements à venir dans un calendrier interactif</p>
                     </a>
-                    <a href="?page=club-list" class="quick-access-card">
+                    <a href="?page=clubs-browse" class="quick-access-card">
                         <div class="quick-access-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
                             <i class="fas fa-th-large"></i>
                         </div>

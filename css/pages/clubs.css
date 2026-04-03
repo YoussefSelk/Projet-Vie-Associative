@@ -778,97 +778,258 @@
    ================================================ */
 
 .club-status-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
 }
 
 .status-pending {
-  background-color: #fff3cd;
-  color: #856404;
+  background: #fff7d6;
+  color: #8a5a00;
+  border-color: #f8d480;
 }
 
 .status-approved {
-  background-color: #d4edda;
-  color: #155724;
+  background: #d8f5e3;
+  color: #0f6a38;
+  border-color: #99e2bb;
 }
 
 .status-rejected {
-  background-color: #f8d7da;
-  color: #721c24;
+  background: #ffe2e4;
+  color: #9f1f2f;
+  border-color: #f6a9b2;
+}
+
+.clubs-list {
+  display: grid;
+  gap: 18px;
 }
 
 .club-card {
-  background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
+  position: relative;
+  background: linear-gradient(165deg, #ffffff 0%, #fbfdff 100%);
+  border: 1px solid #dbe6f3;
+  border-radius: 16px;
+  padding: 22px;
+  margin-bottom: 0;
+  box-shadow: 0 12px 30px rgba(15, 42, 67, 0.08);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+  overflow: hidden;
+}
+
+.club-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #0ea5e9 0%, #2563eb 100%);
 }
 
 .club-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 18px 38px rgba(15, 42, 67, 0.14);
+  border-color: #b9d0ea;
 }
 
 .club-card .club-header {
   display: flex;
   justify-content: space-between;
-  align-items: start;
-  margin-bottom: 15px;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .club-title {
   flex: 1;
+  min-width: 0;
 }
 
 .club-title h3 {
-  margin: 0 0 5px 0;
-  color: #333;
-  font-size: 18px;
+  margin: 0 0 4px 0;
+  color: #0f172a;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  font-weight: 700;
 }
 
 .club-type {
-  color: #666;
-  font-size: 14px;
+  color: #4f6b85;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .club-meta {
   display: flex;
-  gap: 15px;
-  margin-bottom: 15px;
+  gap: 16px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
 .meta-item {
   display: flex;
   align-items: center;
-  gap: 5px;
-  color: #666;
-  font-size: 14px;
+  gap: 6px;
+  color: #3d5b77;
+  font-size: 0.92rem;
+  font-weight: 500;
 }
 
 .meta-icon {
-  color: #007bff;
+  color: #1d7ae2;
 }
 
 .club-card .club-description {
-  color: #555;
-  line-height: 1.6;
+  color: #20364d;
+  line-height: 1.65;
   margin-bottom: 15px;
-  padding: 10px;
-  background-color: #f9f9f9;
-  border-left: 3px solid #007bff;
-  border-radius: 4px;
+  padding: 12px 13px;
+  background: linear-gradient(180deg, #f8fbff 0%, #f4f8fd 100%);
+  border: 1px solid #deebf8;
+  border-left: 3px solid #1d7ae2;
+  border-radius: 10px;
+}
+
+.request-tracker {
+  margin: 0 0 15px;
+  padding: 14px 14px 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+}
+
+.tracker-title {
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: #0f2a43;
+}
+
+.tracker-subtitle {
+  margin: -4px 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.tracker-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 6px;
+}
+
+.tracker-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 36px;
+  color: #64748b;
+}
+
+.tracker-step:not(:last-child) {
+  padding-bottom: 10px;
+}
+
+.tracker-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 30px;
+  bottom: -2px;
+  width: 2px;
+  background: #cbd5e1;
+}
+
+.tracker-dot {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+}
+
+.tracker-label {
+  font-size: 0.89rem;
+  font-weight: 500;
+}
+
+.tracker-step.is-done {
+  color: #166534;
+}
+
+.tracker-step.is-done .tracker-dot {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #ffffff;
+}
+
+.tracker-step.is-done:not(:last-child)::after {
+  background: #86efac;
+}
+
+.tracker-step.is-current {
+  color: #0f172a;
+}
+
+.tracker-step.is-current .tracker-dot {
+  border-color: #2563eb;
+  color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+}
+
+.tracker-step.is-rejected {
+  color: #991b1b;
+}
+
+.tracker-step.is-rejected .tracker-dot {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.tracker-step.is-rejected:not(:last-child)::after {
+  background: #fca5a5;
+}
+
+.tracker-step.is-forced .tracker-dot {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
 }
 
 .club-card .club-actions {
   display: flex;
   gap: 10px;
-  margin-top: 15px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid #e4edf6;
 }
 
 .refusal-reason {
@@ -898,13 +1059,19 @@
 }
 
 @media (max-width: 768px) {
+  .club-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
   .club-card .club-header {
     flex-direction: column;
+    gap: 10px;
   }
 
   .club-meta {
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .club-card .club-actions {
@@ -913,6 +1080,30 @@
 
   .club-card .club-actions .btn {
     width: 100%;
+  }
+
+  .request-tracker {
+    padding: 12px;
+  }
+
+  .tracker-step {
+    grid-template-columns: 24px 1fr;
+    gap: 8px;
+  }
+
+  .tracker-step:not(:last-child)::after {
+    left: 11px;
+    top: 27px;
+  }
+
+  .tracker-dot {
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
+  }
+
+  .tracker-label {
+    font-size: 0.84rem;
   }
 }
 
@@ -923,7 +1114,15 @@
   }
 
   .club-card {
-    padding: 15px;
+    padding: 14px;
+  }
+
+  .club-title h3 {
+    font-size: 1.1rem;
+  }
+
+  .club-type {
+    font-size: 0.83rem;
   }
 
   .club-detail-header {

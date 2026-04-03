@@ -136,13 +136,27 @@ class SubscriptionController {
             
             $user_id = $_SESSION['id'];
             $isSubscribed = $this->subscriptionModel->isSubscribed($event_id, $user_id);
+            $action = strtolower(trim((string)($_POST['action'] ?? 'toggle')));
             
-            if ($isSubscribed) {
-                $this->subscriptionModel->unsubscribeFromEvent($event_id, $user_id);
+            if ($action === 'subscribe') {
+                if (!$isSubscribed) {
+                    $this->subscriptionModel->subscribeToEvent($event_id, $user_id);
+                }
+                $newState = true;
+            } elseif ($action === 'unsubscribe') {
+                if ($isSubscribed) {
+                    $this->subscriptionModel->unsubscribeFromEvent($event_id, $user_id);
+                }
                 $newState = false;
             } else {
-                $this->subscriptionModel->subscribeToEvent($event_id, $user_id);
-                $newState = true;
+                // Compatibilité existante : comportement toggle
+                if ($isSubscribed) {
+                    $this->subscriptionModel->unsubscribeFromEvent($event_id, $user_id);
+                    $newState = false;
+                } else {
+                    $this->subscriptionModel->subscribeToEvent($event_id, $user_id);
+                    $newState = true;
+                }
             }
             
             echo json_encode([

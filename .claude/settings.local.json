@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/USER/Documents/Coding/Projet_TECH/www -name \"*.php\" -type f -exec grep -l \"function checkPermission\" {} \\\\;)",
+      "Read(//c/Users/USER/Documents/CodingProjet_TECHwww/controllers/**)",
+      "Read(//tmp/**)"
+    ]
+  }
+}

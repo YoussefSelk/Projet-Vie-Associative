@@ -705,47 +705,22 @@ class ClubController {
             
             $type_label = ($type === 'club') ? 'club' : 'événement';
             $subject = "Nouvelle demande de validation - $type_label";
-            
-            $message = "
-            <html>
-            <head>
-                <style>
-                    body { font-family: Arial, sans-serif; line-height: 1.6; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                    .header { background: #0066cc; color: white; padding: 20px; text-align: center; }
-                    .content { padding: 20px; background: #f8f9fa; }
-                    .btn { display: inline-block; padding: 12px 24px; background: #0066cc; color: white; text-decoration: none; border-radius: 5px; }
-                </style>
-            </head>
-            <body>
-                <div class='container'>
-                    <div class='header'>
-                        <h2>Vie Étudiante EILCO</h2>
-                    </div>
-                    <div class='content'>
-                        <p>Bonjour {$tutor['prenom']} {$tutor['nom']},</p>
-                        <p>{$creator_name} a créé un nouveau $type_label qui requiert votre validation :</p>
-                        <p><strong>$item_name</strong></p>
-                        <p>Veuillez vous connecter à la plateforme pour valider ou refuser cette demande.</p>
-                        <p><a href='" . (defined('BASE_URL') ? BASE_URL : '') . "/?page=tutoring' class='btn'>Accéder aux validations</a></p>
-                        <p>Cordialement,<br>L'équipe Vie Étudiante EILCO</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            ";
-            
-            // Send email using PHPMailer
-            if (function_exists('sendEmail')) {
-                return sendEmail($tutor['mail'], $subject, $message);
+
+            $actionUrl = null;
+            if (defined('BASE_URL') && is_string(BASE_URL) && BASE_URL !== '') {
+                $actionUrl = rtrim(BASE_URL, '/') . '/?page=tutoring';
             }
-            
-            // Fallback to basic mail
-            $headers = "MIME-Version: 1.0\r\n";
-            $headers .= "Content-type:text/html;charset=UTF-8\r\n";
-            $headers .= "From: noreply@eilco.univ-littoral.fr\r\n";
-            
-            return mail($tutor['mail'], $subject, $message, $headers);
+
+            $tutorFullName = trim(($tutor['prenom'] ?? '') . ' ' . ($tutor['nom'] ?? ''));
+            $message = buildTutorValidationNotificationEmail(
+                $tutorFullName,
+                $creator_name,
+                $type_label,
+                (string)$item_name,
+                $actionUrl
+            );
+
+            return sendEmail($tutor['mail'], $subject, $message);
             
         } catch (Exception $e) {
             ErrorHandler::logError("Failed to notify tutor: " . $e->getMessage(), 'WARNING', [

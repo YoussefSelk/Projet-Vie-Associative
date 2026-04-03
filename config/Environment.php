@@ -146,10 +146,15 @@ class Environment {
             'DB_PASS' => '',
             'MAIL_HOST' => 'smtp.gmail.com',
             'MAIL_PORT' => '587',
+            'MAIL_ENCRYPTION' => 'tls',
             'MAIL_USERNAME' => '',
             'MAIL_PASSWORD' => '',
             'MAIL_FROM' => 'noreply@eilco.fr',
             'MAIL_FROM_NAME' => 'EILCO Events',
+            'MAIL_TIMEOUT' => '15',
+            'MAIL_VERIFY_PEER' => 'true',
+            'MAIL_VERIFY_PEER_NAME' => 'true',
+            'MAIL_ALLOW_SELF_SIGNED' => 'false',
         ];
 
         foreach ($defaults as $name => $value) {
@@ -222,10 +227,15 @@ class Environment {
         return [
             'host' => self::get('MAIL_HOST', 'smtp.gmail.com'),
             'port' => (int) self::get('MAIL_PORT', 587),
+            'encryption' => self::get('MAIL_ENCRYPTION', 'tls'),
             'username' => self::get('MAIL_USERNAME', ''),
             'password' => self::get('MAIL_PASSWORD', ''),
             'from' => self::get('MAIL_FROM', 'noreply@eilco.fr'),
             'from_name' => self::get('MAIL_FROM_NAME', 'EILCO Events'),
+            'timeout' => (int) self::get('MAIL_TIMEOUT', 15),
+            'verify_peer' => filter_var(self::get('MAIL_VERIFY_PEER', 'true'), FILTER_VALIDATE_BOOLEAN),
+            'verify_peer_name' => filter_var(self::get('MAIL_VERIFY_PEER_NAME', 'true'), FILTER_VALIDATE_BOOLEAN),
+            'allow_self_signed' => filter_var(self::get('MAIL_ALLOW_SELF_SIGNED', 'false'), FILTER_VALIDATE_BOOLEAN),
         ];
     }
 

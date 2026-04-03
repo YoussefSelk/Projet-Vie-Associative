@@ -182,7 +182,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
 
                         <script>
                         let memberIndex = <?= !empty($currentMembers) ? count($currentMembers) : 0 ?>;
-                        const users = <?= json_encode($users ?? []) ?>;
+                        const users = <?= json_encode($users ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
                         const MAX_SOUTENANCE_MEMBERS = 5;
                         const PRESIDENT_SOUTENANCE = <?= (int)($presidentSoutenance ?? 0) ?>;
 

@@ -34,10 +34,15 @@ DB_CHARSET=utf8mb4
 
 MAIL_HOST=smtp.provider.example
 MAIL_PORT=465
+MAIL_ENCRYPTION=ssl
 MAIL_USERNAME=no-reply@your-domain.example
 MAIL_PASSWORD=mail_secret
 MAIL_FROM=no-reply@your-domain.example
 MAIL_FROM_NAME="Vie Etudiante EILCO"
+MAIL_TIMEOUT=15
+MAIL_VERIFY_PEER=true
+MAIL_VERIFY_PEER_NAME=true
+MAIL_ALLOW_SELF_SIGNED=false
 
 SESSION_LIFETIME=3600
 CSRF_TOKEN_LIFETIME=7200
@@ -45,6 +50,19 @@ COOKIE_SECURE=true
 COOKIE_HTTPONLY=true
 COOKIE_SAMESITE=Strict
 SERVER_TYPE=auto</code></pre>
+
+<hr>
+
+<h2>Mail Security Requirements</h2>
+<ol>
+  <li>Use a dedicated mailbox account (no personal mailbox credentials)</li>
+  <li>Rotate SMTP password before go-live if it has been exposed</li>
+  <li>Ensure DNS records are configured (SPF, DKIM, DMARC) for better Gmail deliverability</li>
+  <li>Keep TLS/certificate verification enabled in production</li>
+  <li>Monitor logs for repeated SMTP failures and authentication errors</li>
+</ol>
+
+<p><strong>Compatibility note:</strong> the application supports both <code>MAIL_*</code> and legacy <code>SMTP_*</code> variables.</p>
 
 <hr>
 

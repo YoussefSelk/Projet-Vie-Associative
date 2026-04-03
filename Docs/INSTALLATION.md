@@ -45,10 +45,15 @@ DB_CHARSET=utf8mb4
 
 MAIL_HOST=smtp.yourprovider.com
 MAIL_PORT=465
+MAIL_ENCRYPTION=ssl
 MAIL_USERNAME=your_email@domain.com
 MAIL_PASSWORD=your_email_password
 MAIL_FROM=noreply@domain.com
 MAIL_FROM_NAME="Vie Etudiante EILCO"
+MAIL_TIMEOUT=15
+MAIL_VERIFY_PEER=true
+MAIL_VERIFY_PEER_NAME=true
+MAIL_ALLOW_SELF_SIGNED=false
 
 SESSION_LIFETIME=3600
 CSRF_TOKEN_LIFETIME=7200
@@ -67,6 +72,19 @@ SERVER_TYPE=auto</code></pre>
 </ol>
 
 <p>Open: <code>http://localhost:8000/index.php?page=home</code></p>
+
+<hr>
+
+<h2>SMTP Hardening (Recommended)</h2>
+<ul>
+  <li>Use <code>MAIL_ENCRYPTION=ssl</code> with port <code>465</code>, or <code>tls</code> with port <code>587</code></li>
+  <li>Keep certificate checks enabled: <code>MAIL_VERIFY_PEER=true</code> and <code>MAIL_VERIFY_PEER_NAME=true</code></li>
+  <li>Keep <code>MAIL_ALLOW_SELF_SIGNED=false</code> in production</li>
+  <li>Set a bounded timeout with <code>MAIL_TIMEOUT=15</code></li>
+  <li>Never commit real mailbox credentials to git</li>
+</ul>
+
+<p>Legacy aliases <code>SMTP_*</code> are still supported for backward compatibility.</p>
 
 <hr>
 

@@ -65,6 +65,18 @@ Security is implemented with multiple layers in bootstrap, Security, Router, and
 
 <hr>
 
+<h2>Email Transport Security</h2>
+<ul>
+  <li>SMTP subject is normalized to prevent header injection</li>
+  <li>Both HTML and text/plain bodies are generated for client compatibility and safer fallback</li>
+  <li>TLS mode is configurable with <code>MAIL_ENCRYPTION</code> (ssl/tls)</li>
+  <li>Certificate verification is configurable and enabled by default</li>
+  <li>Sender and recipient addresses are validated before transmission</li>
+  <li>SMTP timeout is bounded to avoid hung worker processes</li>
+</ul>
+
+<hr>
+
 <h2>Operational Security Checklist</h2>
 <ol>
   <li>APP_ENV=production and APP_DEBUG=false in production</li>
@@ -73,6 +85,7 @@ Security is implemented with multiple layers in bootstrap, Security, Router, and
   <li>uploads/ does not execute PHP files</li>
   <li>All state-changing forms include csrf_token</li>
   <li>Role-sensitive routes tested with low/high permission accounts</li>
+  <li>SMTP credentials rotated immediately after any accidental exposure</li>
 </ol>
 
 <hr>

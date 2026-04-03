@@ -198,7 +198,8 @@ class AuthController {
                 $_SESSION['reset_token_expires_at'] = time() + 300;
                 $_SESSION['reset_verification_attempts'] = 0;
                 $_SESSION['reset_verification_attempts_time'] = time();
-                sendEmail($mail, "Code de réinitialisation", "Votre code : " . $resetToken . "\n\nCe code expire dans 5 minutes.");
+                $resetEmail = buildPasswordResetEmail($user['prenom'] ?? null, $resetToken);
+                sendEmail($mail, 'Code de reinitialisation', $resetEmail);
                 $_SESSION['reset_step'] = 2;
             } else {
                 $error_message = "Aucun compte trouvé avec cet email.";
@@ -449,9 +450,9 @@ class AuthController {
                     $_SESSION['password'] = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
                     
                     // Envoyer l'email avec le code
-                    $subject = "Code de vérification - Inscription EILCO";
-                    $message = "Bonjour $prenom,\n\nVotre code de vérification est : $code\n\nEntrez ce code pour finaliser votre inscription.\n\nCe code expire dans 5 minutes.";
-                    sendEmail($mail, $subject, $message);
+                    $subject = 'Code de verification - Inscription EILCO';
+                    $verificationEmail = buildRegistrationVerificationEmail($prenom, (string)$code);
+                    sendEmail($mail, $subject, $verificationEmail);
 
                     $_SESSION['reset_step'] = 1;
                     $reset_step = 1;

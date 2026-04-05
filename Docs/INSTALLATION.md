@@ -1,295 +1,121 @@
-# Guide d'Installation
+<h1>Installation Guide</h1>
 
-## Prérequis
+<p>
+This setup guide is aligned with the current codebase behavior and environment keys.
+</p>
 
-### Logiciels Requis
+<hr>
 
-| Logiciel        | Version Minimum | Recommandé |
-| --------------- | --------------- | ---------- |
-| PHP             | 8.0             | 8.1+       |
-| MySQL / MariaDB | 5.7 / 10.3      | 8.0 / 10.6 |
-| Composer        | 2.0             | 2.5+       |
-| Apache / Nginx  | 2.4 / 1.18      | Dernière   |
+<h2>Requirements</h2>
+<ul>
+  <li>PHP 8.0+ (8.1+ recommended)</li>
+  <li>Composer 2.x</li>
+  <li>MySQL or MariaDB</li>
+  <li>Apache, Nginx, IIS, or PHP built-in server</li>
+  <li>PHP extensions: pdo, pdo_mysql, mbstring, intl, fileinfo, openssl, curl</li>
+</ul>
 
-### Extensions PHP Requises
+<hr>
 
-```ini
-extension=pdo
-extension=pdo_mysql
-extension=mbstring
-extension=openssl
-extension=intl
-extension=fileinfo
-extension=curl
-```
-
-## Installation Pas à Pas
-
-### 1. Cloner le Projet
-
-```bash
-git clone <repository-url> vie-etudiante
-cd vie-etudiante
-```
-
-### 2. Installer les Dépendances
-
-```bash
-composer install
-```
-
-Cela installe :
-
-- `vlucas/phpdotenv` - Gestion des variables d'environnement
-- `phpmailer/phpmailer` - Envoi d'emails SMTP
-
-### 3. Configuration de l'Environnement
-
-Copier le fichier d'exemple :
-
-**Linux/macOS :**
-
-```bash
+<h2>Quick Setup</h2>
+<ol>
+  <li>Install dependencies:
+    <pre><code>composer install</code></pre>
+  </li>
+  <li>Copy environment template:
+    <pre><code># Linux/macOS
 cp .env.example .env
-```
 
-**Windows (PowerShell) :**
+# Windows PowerShell
 
-```powershell
-Copy-Item .env.example .env
-```
+Copy-Item .env.example .env</code></pre>
 
-Éditer `.env` avec vos paramètres :
-
-```ini
-# Application
-APP_ENV=development
+  </li>
+  <li>Edit .env:
+    <pre><code>APP_ENV=development
 APP_DEBUG=true
 APP_URL=http://localhost:8000
 
-# Base de données
 DB_HOST=localhost
-DB_NAME=vieasso
+DB_PORT=3306
+DB_NAME=vieasso_local
 DB_USER=root
 DB_PASS=
+DB_CHARSET=utf8mb4
 
-# Email SMTP
-MAIL_HOST=smtp.example.com
-MAIL_PORT=587
-MAIL_USERNAME=your-email@example.com
-MAIL_PASSWORD=your-password
-MAIL_FROM=noreply@example.com
-MAIL_FROM_NAME="Vie Étudiante EILCO"
-MAIL_ENCRYPTION=tls
-
-# Sécurité
-SESSION_LIFETIME=3600
-CSRF_LIFETIME=1800
-```
-
-### 4. Créer la Base de Données
-
-Connectez-vous à MySQL :
-
-```bash
-mysql -u root -p
-```
-
-Créez la base :
-
-```sql
-CREATE DATABASE vieasso CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-Importez le schéma (si fourni) :
-
-```bash
-mysql -u root -p vieasso < database/schema.sql
-```
-
-### 5. Permissions des Dossiers
-
-**Linux/macOS :**
-
-```bash
-chmod 755 uploads/
-chmod 755 uploads/logos/
-chmod 755 uploads/rapports/
-chmod 755 logs/
-chmod 600 .env
-```
-
-**Windows :** S'assurer que le serveur web peut écrire dans `uploads/` et `logs/`.
-
-### 6. Configuration du Serveur Web
-
-#### Option A : Serveur PHP intégré (Développement)
-
-```bash
-php -S localhost:8000
-```
-
-Accédez à `http://localhost:8000`
-
-#### Option B : Apache
-
-Créer un VirtualHost :
-
-```apache
-<VirtualHost *:80>
-    ServerName vie-etudiante.local
-    DocumentRoot /chemin/vers/vie-etudiante
-
-    <Directory /chemin/vers/vie-etudiante>
-        AllowOverride All
-        Require all granted
-    </Directory>
-
-    ErrorLog ${APACHE_LOG_DIR}/vie-etudiante-error.log
-    CustomLog ${APACHE_LOG_DIR}/vie-etudiante-access.log combined
-</VirtualHost>
-```
-
-Activer mod_rewrite :
-
-```bash
-sudo a2enmod rewrite
-sudo systemctl restart apache2
-```
-
-#### Option C : Nginx
-
-```nginx
-server {
-    listen 80;
-    server_name vie-etudiante.local;
-    root /chemin/vers/vie-etudiante;
-    index index.php;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-
-    location ~ /\.(env|git|htaccess) {
-        deny all;
-    }
-}
-```
-
-### 7. Vérification de l'Installation
-
-1. Accédez à `http://localhost:8000` (ou votre URL)
-2. La page d'accueil devrait s'afficher
-3. Testez la connexion : `?page=login`
-4. Vérifiez les logs dans `logs/error.log`
-
-## Configuration Avancée
-
-### Variables d'Environnement
-
-| Variable          | Description        | Valeurs                     |
-| ----------------- | ------------------ | --------------------------- |
-| `APP_ENV`         | Environnement      | `development`, `production` |
-| `APP_DEBUG`       | Mode debug         | `true`, `false`             |
-| `DB_HOST`         | Hôte MySQL         | hostname ou IP              |
-| `DB_NAME`         | Nom de la base     | string                      |
-| `DB_USER`         | Utilisateur MySQL  | string                      |
-| `DB_PASS`         | Mot de passe MySQL | string                      |
-| `MAIL_HOST`       | Serveur SMTP       | hostname                    |
-| `MAIL_PORT`       | Port SMTP          | `25`, `465`, `587`          |
-| `MAIL_ENCRYPTION` | Chiffrement        | `tls`, `ssl`, `null`        |
-
-### Configuration Email
-
-Pour OVH :
-
-```ini
-MAIL_HOST=ssl0.ovh.net
+MAIL_HOST=smtp.yourprovider.com
 MAIL_PORT=465
 MAIL_ENCRYPTION=ssl
-```
+MAIL_USERNAME=your_email@domain.com
+MAIL_PASSWORD=your_email_password
+MAIL_FROM=noreply@domain.com
+MAIL_FROM_NAME="Vie Etudiante EILCO"
+MAIL_TIMEOUT=15
+MAIL_VERIFY_PEER=true
+MAIL_VERIFY_PEER_NAME=true
+MAIL_ALLOW_SELF_SIGNED=false
 
-Pour Gmail :
+SESSION_LIFETIME=3600
+CSRF_TOKEN_LIFETIME=7200
+COOKIE_SECURE=false
+COOKIE_HTTPONLY=true
+COOKIE_SAMESITE=Strict
+SERVER_TYPE=auto</code></pre>
 
-```ini
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_ENCRYPTION=tls
-```
+  </li>
+  <li>Create database:
+    <pre><code>CREATE DATABASE vieasso_local CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;</code></pre>
+  </li>
+  <li>Run local server:
+    <pre><code>php -S localhost:8000</code></pre>
+  </li>
+</ol>
 
-**Note :** Gmail nécessite un "App Password" si 2FA est activé.
+<p>Open: <code>http://localhost:8000/index.php?page=home</code></p>
 
-### Configuration de Sécurité
+<hr>
 
-Pour la production, modifiez :
+<h2>SMTP Hardening (Recommended)</h2>
+<ul>
+  <li>Use <code>MAIL_ENCRYPTION=ssl</code> with port <code>465</code>, or <code>tls</code> with port <code>587</code></li>
+  <li>Keep certificate checks enabled: <code>MAIL_VERIFY_PEER=true</code> and <code>MAIL_VERIFY_PEER_NAME=true</code></li>
+  <li>Keep <code>MAIL_ALLOW_SELF_SIGNED=false</code> in production</li>
+  <li>Set a bounded timeout with <code>MAIL_TIMEOUT=15</code></li>
+  <li>Never commit real mailbox credentials to git</li>
+</ul>
 
-```ini
-APP_ENV=production
-APP_DEBUG=false
-```
+<p>Legacy aliases <code>SMTP_*</code> are still supported for backward compatibility.</p>
 
-Cela active :
+<hr>
 
-- Masquage des erreurs détaillées
-- Headers de sécurité stricts
-- Forçage HTTPS
+<h2>Smoke Test</h2>
+<ol>
+  <li>Open home: <code>?page=home</code></li>
+  <li>Open login: <code>?page=login</code></li>
+  <li>Open register: <code>?page=register</code></li>
+  <li>Open event list: <code>?page=event-list</code></li>
+</ol>
 
-## Dépannage
+<hr>
 
-### Erreur "Database connection failed"
+<h2>Useful Commands</h2>
+<pre><code>composer test
+composer test-unit
+composer test-feature</code></pre>
 
-1. Vérifiez les credentials dans `.env`
-2. Assurez-vous que MySQL est démarré
-3. Testez la connexion manuellement :
-   ```bash
-   mysql -h localhost -u root -p vieasso
-   ```
+<hr>
 
-### Erreur "Class not found"
+<h2>Troubleshooting</h2>
+<ul>
+  <li>DB error: verify DB_* keys and database user grants</li>
+  <li>403 on POST: verify csrf_token is present and session is active</li>
+  <li>404 route: verify route exists in routes/web.php</li>
+  <li>Upload issues: verify uploads/ and logs/ are writable</li>
+</ul>
 
-1. Vérifiez que Composer est installé
-2. Exécutez `composer install`
-3. Vérifiez les autoloads : `composer dump-autoload`
+<hr>
 
-### Page blanche
-
-1. Activez l'affichage des erreurs dans `.env` :
-   ```ini
-   APP_DEBUG=true
-   ```
-2. Consultez `logs/error.log`
-3. Vérifiez les logs PHP : `/var/log/php/error.log`
-
-### Erreur 500 Internal Server Error
-
-1. Vérifiez `.htaccess` et mod_rewrite
-2. Consultez les logs Apache/Nginx
-3. Vérifiez les permissions des fichiers
-
-### Emails non envoyés
-
-1. Vérifiez les paramètres SMTP dans `.env`
-2. Testez la connexion SMTP :
-   ```php
-   // Créez un fichier test-mail.php temporaire
-   require 'vendor/autoload.php';
-   // Testez avec PHPMailer
-   ```
-3. Consultez `logs/error.log` pour les erreurs SMTP
-
-## Mise à Jour
-
-Pour mettre à jour le projet :
-
-```bash
-git pull origin main
-composer install
-```
-
-Vérifiez les changements dans `.env.example` et mettez à jour votre `.env` si nécessaire.
+<h2>Screenshot Placeholders</h2>
+<p>
+Capture setup screenshots using <a href="screenshots/README.md">screenshots/README.md</a>.
+</p>

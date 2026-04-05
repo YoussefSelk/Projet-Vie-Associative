@@ -12,7 +12,7 @@
  * 
  * @package Views/Event
  */
-$pageTitle = 'Mes événements - EILCO';
+$pageTitle = 'Mes demandes - EILCO';
 $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 ?>
 <!DOCTYPE html>
@@ -31,8 +31,8 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                 <div class="header-left">
                     <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
                 </div>
-                <h1><i class="fas fa-calendar-check"></i> Mes Événements</h1>
-                <p class="subtitle">Événements organisés par mes clubs</p>
+                <h1><i class="fas fa-layer-group"></i> Mes Demandes</h1>
+                <p class="subtitle">Suivi global de mes événements et activités</p>
             </div>
 
             <?php if (!empty($error_msg)): ?>
@@ -52,8 +52,8 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
             <div class="search-container">
                 <div class="search-box">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" id="myEventSearch" class="search-input" 
-                           placeholder="Rechercher un événement..." 
+                          <input type="text" id="myEventSearch" class="search-input" 
+                              placeholder="Rechercher un événement ou une activité..." 
                            autocomplete="off">
                     <button type="button" class="search-clear" aria-label="Effacer">
                         <i class="fas fa-times"></i>
@@ -95,7 +95,9 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                         } else {
                             $statusFilter = 'refuse';
                         }
-                        $searchData = strtolower(($event['titre'] ?? '') . ' ' . ($event['description'] ?? '') . ' ' . ($event['campus'] ?? ''));
+                        $searchData = strtolower(($event['titre'] ?? '') . ' ' . ($event['description'] ?? '') . ' ' . ($event['campus'] ?? '') . ' ' . ($event['type_event'] ?? ''));
+                        $typeValue = strtolower(trim((string)($event['type_event'] ?? '')));
+                        $isActivity = ($typeValue === 'activity');
                         
                         // Détermination du statut pour l'affichage
                         $status = '';
@@ -132,6 +134,10 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                             <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
                                                 <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
                                             </span>
+                                            <span class="type-badge <?= $isActivity ? 'activity' : 'event' ?>">
+                                                <i class="fas <?= $isActivity ? 'fa-shapes' : 'fa-calendar-check' ?>"></i>
+                                                <?= $isActivity ? 'Activité' : 'Événement' ?>
+                                            </span>
                                             <?php 
                                             $status = '';
                                             $statusClass = '';
@@ -164,6 +170,71 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                             <small><strong>Motif :</strong> <?= htmlspecialchars($event['motif_refus']) ?></small>
                                         </div>
                                     <?php endif; ?>
+
+                                    <?php
+                                        $eventStateFromValue = static function ($value) {
+                                            if ($value === 1 || $value === '1') {
+                                                return 'done';
+                                            }
+                                            if ($value === 0 || $value === '0' || $value === -1 || $value === '-1') {
+                                                return 'rejected';
+                                            }
+                                            return 'pending';
+                                        };
+
+                                        $eventRejected = (($event['validation_finale'] == -1 || $event['validation_finale'] == 0) && !empty($event['motif_refus']));
+                                        $eventFinallyApproved = ((int)($event['validation_finale'] ?? 0) === 1);
+                                        $encadrantDone = (($event['validation_tuteur'] ?? null) == 1 || ($event['validation_admin'] ?? null) == 1);
+                                        $encadrantRejected = (($event['validation_tuteur'] ?? null) == 0 || ($event['validation_admin'] ?? null) == 0);
+                                        $encadrantState = $encadrantDone ? 'done' : ($encadrantRejected ? 'rejected' : 'pending');
+
+                                        $eventTrackingSteps = [
+                                            ['label' => 'Demande envoyée', 'state' => 'done', 'icon' => 'fa-paper-plane', 'forced' => false],
+                                            ['label' => 'Validation BDE', 'state' => $eventStateFromValue($event['validation_bde'] ?? null), 'icon' => 'fa-people-group', 'forced' => false],
+                                            ['label' => 'Validation encadrant (Tuteur/Admin)', 'state' => $encadrantState, 'icon' => 'fa-user-check', 'forced' => false],
+                                            ['label' => 'Décision finale', 'state' => $eventRejected ? 'rejected' : ($eventFinallyApproved ? 'done' : 'pending'), 'icon' => 'fa-flag-checkered', 'forced' => false]
+                                        ];
+
+                                        $eventIsForcedApproval = $eventFinallyApproved
+                                            && (
+                                                (int)($event['validation_bde'] ?? 0) !== 1
+                                                || (int)($event['validation_admin'] ?? 0) !== 1
+                                                || (int)($event['validation_tuteur'] ?? 0) !== 1
+                                            );
+
+                                        if ($eventIsForcedApproval) {
+                                            foreach ($eventTrackingSteps as $eventStepIndex => $eventStep) {
+                                                $isMiddleStep = ($eventStepIndex > 0 && $eventStepIndex < (count($eventTrackingSteps) - 1));
+                                                if ($isMiddleStep && $eventStep['state'] === 'pending') {
+                                                    $eventTrackingSteps[$eventStepIndex]['state'] = 'done';
+                                                    $eventTrackingSteps[$eventStepIndex]['forced'] = true;
+                                                }
+                                            }
+                                        }
+
+                                        $currentEventStepAssigned = false;
+                                        foreach ($eventTrackingSteps as $eventStepIndex => $eventStep) {
+                                            if ($eventStep['state'] === 'pending' && !$currentEventStepAssigned) {
+                                                $eventTrackingSteps[$eventStepIndex]['state'] = 'current';
+                                                $currentEventStepAssigned = true;
+                                            }
+                                        }
+                                    ?>
+
+                                    <section class="request-tracker" aria-label="Suivi de validation de l'événement <?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?>">
+                                        <h4 class="tracker-title"><i class="fas fa-route"></i> Suivi de validation</h4>
+                                        <?php if ($eventIsForcedApproval): ?>
+                                            <p class="tracker-subtitle"><i class="fas fa-bolt"></i> Validation forcée administrativement</p>
+                                        <?php endif; ?>
+                                        <ol class="tracker-timeline">
+                                            <?php foreach ($eventTrackingSteps as $eventStep): ?>
+                                                <li class="tracker-step is-<?= $eventStep['state'] ?><?= !empty($eventStep['forced']) ? ' is-forced' : '' ?>">
+                                                    <span class="tracker-dot"><i class="fas <?= $eventStep['icon'] ?>"></i></span>
+                                                    <span class="tracker-label"><?= htmlspecialchars($eventStep['label']) ?></span>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ol>
+                                    </section>
 
                                     <?php if (!empty($event['description'])): ?>
                                         <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 120)) ?><?= mb_strlen($event['description']) > 120 ? '...' : '' ?></p>

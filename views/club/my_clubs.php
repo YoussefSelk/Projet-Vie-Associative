@@ -131,6 +131,68 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                                 </div>
                             <?php endif; ?>
 
+                            <?php
+                                $isClubRejected = (($club['validation_finale'] == -1 || $club['validation_finale'] === 0) && !empty($club['motif_refus']));
+                                $isClubFinallyApproved = ((int)($club['validation_finale'] ?? 0) === 1);
+                                $clubStateFromValue = static function ($value) {
+                                    if ($value === 1 || $value === '1') {
+                                        return 'done';
+                                    }
+                                    if ($value === 0 || $value === '0' || $value === -1 || $value === '-1') {
+                                        return 'rejected';
+                                    }
+                                    return 'pending';
+                                };
+
+                                $clubTrackingSteps = [
+                                    ['label' => 'Demande envoyée', 'state' => 'done', 'icon' => 'fa-paper-plane', 'forced' => false],
+                                    ['label' => 'Validation BDE', 'state' => $clubStateFromValue($club['validation_bde'] ?? null), 'icon' => 'fa-people-group', 'forced' => false],
+                                    ['label' => 'Validation Admin', 'state' => $clubStateFromValue($club['validation_admin'] ?? null), 'icon' => 'fa-user-shield', 'forced' => false],
+                                    ['label' => 'Validation Tuteur', 'state' => $clubStateFromValue($club['validation_tuteur'] ?? null), 'icon' => 'fa-user-check', 'forced' => false],
+                                    ['label' => 'Décision finale', 'state' => $isClubRejected ? 'rejected' : ($isClubFinallyApproved ? 'done' : 'pending'), 'icon' => 'fa-flag-checkered', 'forced' => false]
+                                ];
+
+                                $clubIsForcedApproval = $isClubFinallyApproved
+                                    && (
+                                        (int)($club['validation_bde'] ?? 0) !== 1
+                                        || (int)($club['validation_admin'] ?? 0) !== 1
+                                        || (int)($club['validation_tuteur'] ?? 0) !== 1
+                                    );
+
+                                if ($clubIsForcedApproval) {
+                                    foreach ($clubTrackingSteps as $stepIndex => $step) {
+                                        $isMiddleStep = ($stepIndex > 0 && $stepIndex < (count($clubTrackingSteps) - 1));
+                                        if ($isMiddleStep && $step['state'] === 'pending') {
+                                            $clubTrackingSteps[$stepIndex]['state'] = 'done';
+                                            $clubTrackingSteps[$stepIndex]['forced'] = true;
+                                        }
+                                    }
+                                }
+
+                                $currentStepAssigned = false;
+                                foreach ($clubTrackingSteps as $stepIndex => $step) {
+                                    if ($step['state'] === 'pending' && !$currentStepAssigned) {
+                                        $clubTrackingSteps[$stepIndex]['state'] = 'current';
+                                        $currentStepAssigned = true;
+                                    }
+                                }
+                            ?>
+
+                            <section class="request-tracker" aria-label="Suivi de validation du club <?= htmlspecialchars($club['nom_club']) ?>">
+                                <h4 class="tracker-title"><i class="fas fa-route"></i> Suivi de validation</h4>
+                                <?php if ($clubIsForcedApproval): ?>
+                                    <p class="tracker-subtitle"><i class="fas fa-bolt"></i> Validation forcée administrativement</p>
+                                <?php endif; ?>
+                                <ol class="tracker-timeline">
+                                    <?php foreach ($clubTrackingSteps as $step): ?>
+                                        <li class="tracker-step is-<?= $step['state'] ?><?= !empty($step['forced']) ? ' is-forced' : '' ?>">
+                                            <span class="tracker-dot"><i class="fas <?= $step['icon'] ?>"></i></span>
+                                            <span class="tracker-label"><?= htmlspecialchars($step['label']) ?></span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ol>
+                            </section>
+
                             <?php if (($club['validation_finale'] == -1 || $club['validation_finale'] === 0) && !empty($club['motif_refus'])): ?>
                                 <div class="refusal-reason">
                                     <h5><i class="fas fa-times-circle"></i> Motif du refus :</h5>

@@ -1,204 +1,106 @@
-# Architecture du Projet
+<h1>Architecture</h1>
 
-## Vue d'ensemble
+<p>
+The application follows a classic PHP MVC architecture with a single entry point and centralized route dispatch.
+</p>
 
-Vie Étudiante EILCO est une plateforme web de gestion de la vie associative pour l'École d'Ingénieurs du Littoral Côte d'Opale (EILCO). L'application suit une architecture **MVC (Model-View-Controller)** pure en PHP.
+<hr>
 
-## Diagramme d'Architecture
+<h2>Runtime Flow</h2>
+<pre><code>HTTP Request
+        -> index.php
+                 -> config/bootstrap.php
+                                -> Environment::load()
+                                -> ErrorHandler setup
+                                -> Security headers + HTTPS enforcement
+                                -> session initialization + hardening
+                                -> PDO connection
+                                -> load models + controllers
+                 -> Router::dispatch()
+                                -> route lookup from routes/web.php
+                                -> HTTP method check
+                                -> CSRF check for POST
+                                -> auth/permission check
+                                -> controller method call
+                                -> view render (if route has view)</code></pre>
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              NAVIGATEUR                                       │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              index.php                                        │
-│                          (Point d'entrée unique)                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           config/bootstrap.php                                │
-│  ┌──────────────┬──────────────┬──────────────┬──────────────┐              │
-│  │ Environment  │   Security   │   Database   │ ErrorHandler │              │
-│  └──────────────┴──────────────┴──────────────┴──────────────┘              │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            config/Router.php                                  │
-│                    (Routing basé sur routes/web.php)                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    ▼               ▼               ▼
-            ┌───────────┐   ┌───────────┐   ┌───────────┐
-            │Controllers│   │  Models   │   │   Views   │
-            └───────────┘   └───────────┘   └───────────┘
-                    │               │               │
-                    └───────────────┼───────────────┘
-                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         Base de données MySQL                                 │
-│                           (vieasso / test_projet_tech)                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+<hr>
 
-## Structure des Dossiers
+<h2>Core Components</h2>
 
-```
-Code Source/
-│
-├── config/                    # Configuration et initialisation
-│   ├── bootstrap.php          # Point d'initialisation principal
-│   ├── Database.php           # Connexion PDO à la base
-│   ├── DatabaseUtil.php       # Utilitaires SQL
-│   ├── Email.php              # Configuration PHPMailer
-│   ├── Environment.php        # Gestion des variables .env
-│   ├── ErrorHandler.php       # Gestion centralisée des erreurs
-│   ├── Router.php             # Routeur MVC
-│   └── Security.php           # Headers HTTP et CSRF
-│
-├── controllers/               # Logique métier
-│   ├── AdminController.php    # Administration système
-│   ├── AuthController.php     # Authentification
-│   ├── ClubController.php     # Gestion des clubs
-│   ├── EventController.php    # Gestion des événements
-│   ├── HomeController.php     # Page d'accueil
-│   ├── SubscriptionController.php  # Inscriptions événements
-│   ├── UserController.php     # Profils utilisateurs
-│   └── ValidationController.php    # Workflow de validation
-│
-├── models/                    # Accès aux données
-│   ├── Club.php               # Modèle clubs
-│   ├── ClubMember.php         # Modèle membres de clubs
-│   ├── Event.php              # Modèle événements
-│   ├── EventReport.php        # Modèle rapports
-│   ├── EventSubscription.php  # Modèle inscriptions
-│   ├── User.php               # Modèle utilisateurs
-│   └── Validation.php         # Modèle validations
-│
-├── views/                     # Templates HTML/PHP
-│   ├── admin/                 # Vues administration
-│   ├── auth/                  # Vues connexion/inscription
-│   ├── club/                  # Vues clubs
-│   ├── errors/                # Pages d'erreur personnalisées
-│   ├── event/                 # Vues événements
-│   ├── home/                  # Page d'accueil
-│   ├── includes/              # Composants réutilisables
-│   ├── subscription/          # Vues inscriptions
-│   ├── user/                  # Vues utilisateur
-│   └── validation/            # Vues validation
-│
-├── routes/                    # Définition des routes
-│   └── web.php                # Configuration du routage
-│
-├── assets/                    # Ressources front-end
-│   ├── js/                    # Scripts JavaScript
-│   └── lib/                   # Bibliothèques externes
-│
-├── css/                       # Feuilles de style
-├── images/                    # Images statiques
-├── uploads/                   # Fichiers uploadés
-│   ├── logos/                 # Logos des clubs
-│   └── rapports/              # Rapports d'événements
-│
-├── logs/                      # Journaux d'application
-├── vendor/                    # Dépendances Composer
-├── Docs/                      # Documentation
-│
-└── index.php                  # Point d'entrée unique
-```
+<h3>index.php</h3>
+<ul>
+        <li>Bootstraps application</li>
+        <li>Handles custom HTTP error rendering</li>
+        <li>Runs router dispatch</li>
+</ul>
 
-## Flux de Requête
+<h3>config/bootstrap.php</h3>
+<ul>
+        <li>Defines project paths and constants</li>
+        <li>Loads environment and security settings</li>
+        <li>Configures sessions with secure cookie options</li>
+        <li>Initializes database and utility helper functions</li>
+</ul>
 
-1. **Réception** : `index.php` reçoit toutes les requêtes
-2. **Bootstrap** : `config/bootstrap.php` initialise l'environnement
-3. **Routage** : `Router::dispatch()` analyse `?page=xxx`
-4. **Contrôleur** : Le contrôleur approprié est instancié
-5. **Modèle** : Les données sont récupérées via les modèles
-6. **Vue** : Les données sont passées à la vue pour rendu
-7. **Réponse** : HTML généré envoyé au navigateur
+<h3>config/Router.php</h3>
+<ul>
+        <li>Loads route map from routes/web.php</li>
+        <li>Validates allowed HTTP methods</li>
+        <li>Validates CSRF tokens for POST requests</li>
+        <li>Applies auth and permission gates</li>
+        <li>Calls controller method then includes view</li>
+</ul>
 
-## Composants Clés
+<h3>config/Security.php</h3>
+<ul>
+        <li>Sets security headers</li>
+        <li>Generates and validates CSRF tokens</li>
+        <li>Detects HTTPS (direct/proxy) and enforces HTTPS in production</li>
+</ul>
 
-### Router (config/Router.php)
+<hr>
 
-Le routeur centralise la gestion des URLs :
+<h2>Project Layout</h2>
+<ul>
+        <li>config/: bootstrap, security, environment, error handling, router</li>
+        <li>controllers/: request orchestration and business actions</li>
+        <li>models/: SQL and domain data behavior</li>
+        <li>views/: server-rendered templates by feature area</li>
+        <li>routes/web.php: route definition map</li>
+        <li>css/ + assets/js/: frontend presentation and behavior</li>
+        <li>tests/: feature and unit test suites</li>
+</ul>
 
-- Charge les routes depuis `routes/web.php`
-- Vérifie l'authentification et les permissions
-- Valide les tokens CSRF pour les POST
-- Dispatch vers le bon contrôleur/méthode
+<hr>
 
-### Security (config/Security.php)
+<h2>Authorization Model</h2>
+<table>
+        <thead>
+                <tr><th>Permission</th><th>Role</th><th>Typical Scope</th></tr>
+        </thead>
+        <tbody>
+                <tr><td>0</td><td>Visitor</td><td>Public routes only</td></tr>
+                <tr><td>1</td><td>Member</td><td>Create events, club member features</td></tr>
+                <tr><td>2</td><td>Tutor</td><td>Tutoring pages, export dashboard</td></tr>
+                <tr><td>3</td><td>BDE/Admin-level</td><td>Validation and admin dashboard</td></tr>
+                <tr><td>4</td><td>Extended internal role</td><td>Used on selected array-gated routes</td></tr>
+                <tr><td>5</td><td>Super Admin</td><td>Settings, audit, user permission updates</td></tr>
+        </tbody>
+</table>
 
-Gère la sécurité applicative :
+<hr>
 
-- Headers HTTP sécurisés (X-Frame-Options, CSP, etc.)
-- Génération/validation tokens CSRF
-- Détection HTTPS
-- Force HTTPS en production
+<h2>State-Driven Workflows</h2>
+<ul>
+        <li>Clubs and events can move through pending, approved, rejected states</li>
+        <li>Validation models/controllers coordinate remarks and decision fields</li>
+        <li>Rejected entities can be corrected and re-submitted based on model logic</li>
+</ul>
 
-### ErrorHandler (config/ErrorHandler.php)
+<hr>
 
-Gestion centralisée des erreurs :
-
-- Pages d'erreur personnalisées (403, 404, 500, 503)
-- Mode développement avec stack trace
-- Mode production avec messages utilisateur
-- Journalisation des erreurs
-
-## Niveaux de Permission
-
-| Niveau | Rôle         | Description                               |
-| ------ | ------------ | ----------------------------------------- |
-| 0      | Visiteur     | Accès lecture seule aux contenus publics  |
-| 1      | Membre       | Utilisateur inscrit standard              |
-| 2      | Gestionnaire | Membre de bureau de club                  |
-| 3      | BDE          | Bureau des Étudiants, validation niveau 1 |
-| 4      | Tuteur       | Enseignant tuteur, validation niveau 2    |
-| 5      | Admin        | Administrateur système                    |
-
-## Base de Données
-
-### Tables Principales
-
-- `users` : Utilisateurs et authentification
-- `fiche_club` : Fiches descriptives des clubs
-- `membres_club` : Adhésions aux clubs
-- `fiche_event` : Événements et activités
-- `abonnements` : Inscriptions aux événements
-- `config` : Configuration applicative
-
-### Schéma de Validation
-
-```
-Club créé (validation_* = NULL)
-         │
-         ▼
-┌─────────────────┐
-│ Validation BDE  │ (validation_admin = 1)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│Validation Tuteur│ (validation_tuteur = 1)
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   Club Validé   │ (validation_finale = 1)
-└─────────────────┘
-```
-
-## Technologies Utilisées
-
-- **Backend** : PHP 8.0+
-- **Base de données** : MySQL 5.7+ / MariaDB
-- **Serveur** : Apache (mod_rewrite) ou Nginx
-- **Email** : PHPMailer avec SMTP
-- **Configuration** : vlucas/phpdotenv
-- **Front-end** : HTML5, CSS3, JavaScript vanilla
-- **Icônes** : FontAwesome 6
+<h2>Screenshot Placeholders</h2>
+<p>
+Architecture documentation screenshots (request-flow diagram, admin dashboard snapshot) are tracked in <a href="screenshots/README.md">screenshots/README.md</a>.
+</p>

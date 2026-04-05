@@ -4,14 +4,14 @@ declare(strict_types=1);
  * =============================================================================
  * MODÈLE CLUB
  * =============================================================================
- * 
+ *
  * Gère toutes les opérations liées aux clubs associatifs :
  * - Récupération des clubs (validés, par ID, par nom)
  * - Création et modification des fiches clubs
  * - Suppression des clubs
- * 
+ *
  * Table associée : fiche_club
- * 
+ *
  * @author Équipe de développement EILCO
  * @version 2.0
  */
@@ -105,7 +105,7 @@ class Club {
         $stmt = $this->db->prepare("
             SELECT fc.*, mc.fonction as user_role FROM fiche_club fc
             INNER JOIN membres_club mc ON fc.club_id = mc.club_id
-            WHERE mc.membre_id = ? AND mc.fonction IN ('Président', 'Secrétaire') AND mc.valide = 1
+            WHERE mc.membre_id = ? AND mc.fonction IN ('Président', 'Vice-Président', 'Vice-President' , 'Vice-président', 'Vice-president' ,'Vice-Présidente', 'Vice-Presidente' , 'Vice-présidente', 'Vice-presidente', 'Secrétaire' ) AND mc.valide = 1
             ORDER BY fc.nom_club ASC
         ");
         $stmt->execute([$user_id]);

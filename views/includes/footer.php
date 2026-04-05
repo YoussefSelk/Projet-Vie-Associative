@@ -19,10 +19,9 @@
                 <img src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/images/EILCO-LOGO-2022.png" alt="EILCO" class="footer-logo">
                 <p>Vie Étudiante EILCO - La plateforme des clubs et événements de l'École d'Ingénieurs du Littoral Côte d'Opale</p>
                 <div class="footer-social">
-                    <a href="https://www.facebook.com/EILCO.Officiel" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="https://www.linkedin.com/school/eilco/" target="_blank" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
-                    <a href="https://www.instagram.com/eilco_officiel/" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="https://twitter.com/EILCO_officiel" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
+                    <a href="https://www.facebook.com/eilco.ulco" target="_blank" rel="noopener noreferrer" title="Facebook"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://www.linkedin.com/school/eilco-ulco/" target="_blank" rel="noopener noreferrer" title="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="https://www.instagram.com/eilco_ulco/" target="_blank" rel="noopener noreferrer" title="Instagram"><i class="fab fa-instagram"></i></a>
                 </div>
             </div>
             

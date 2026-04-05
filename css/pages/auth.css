@@ -225,7 +225,7 @@ body.auth-page main {
 }
 
 .link-button:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .auth-footer {
@@ -243,7 +243,7 @@ body.auth-page main {
 }
 
 .auth-footer a:hover {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 /* Form Hints */

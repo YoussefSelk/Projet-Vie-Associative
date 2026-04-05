@@ -111,6 +111,17 @@ a:hover {
   color: var(--color-primary-dark, #004999);
   text-decoration: none;
 }
+
+/* Prevent global link hover color from overriding button-like links. */
+a.btn:hover,
+a.btn:focus,
+a[role="button"]:hover,
+a[role="button"]:focus,
+a[class*="btn"]:hover,
+a[class*="btn"]:focus {
+  color: inherit;
+  text-decoration: none;
+}
 li {
   list-style: none;
 }

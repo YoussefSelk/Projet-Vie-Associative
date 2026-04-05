@@ -159,7 +159,7 @@ else {
             <?php if(isset($_SESSION["id"])): ?>
                 <!-- User Menu -->
                 <div class="user-menu-dropdown">
-                    <button class="user-menu-btn" onclick="toggleUserMenu()">
+                    <button class="user-menu-btn" onclick="toggleUserMenu(this)">
                         <div class="user-avatar">
                             <?= strtoupper(substr($_SESSION['prenom'], 0, 1) . substr($_SESSION['nom'], 0, 1)) ?>
                         </div>
@@ -365,8 +365,25 @@ else {
 <?php endif; ?>
 
 <script>
-function toggleUserMenu() {
+function toggleUserMenu(button) {
     const dropdown = document.getElementById('userDropdown');
+    if (!dropdown) return;
+
+    if (window.matchMedia('(max-width: 768px)').matches && button) {
+        const rect = button.getBoundingClientRect();
+        dropdown.style.top = `${rect.bottom + 8}px`;
+        dropdown.style.left = '10px';
+        dropdown.style.right = '10px';
+        dropdown.style.maxHeight = `${Math.max(220, window.innerHeight - rect.bottom - 24)}px`;
+        dropdown.style.overflowY = 'auto';
+    } else {
+        dropdown.style.top = '';
+        dropdown.style.left = '';
+        dropdown.style.right = '';
+        dropdown.style.maxHeight = '';
+        dropdown.style.overflowY = '';
+    }
+
     dropdown.classList.toggle('show');
 }
 
@@ -377,7 +394,23 @@ function toggleMobileHeader() {
 
 function toggleQuickDropdown(button) {
     const dropdown = button.closest('.quick-action-dropdown');
-    const isOpen = dropdown.classList.contains('open');
+    if (!dropdown) return;
+
+    const menu = dropdown.querySelector('.quick-dropdown-menu');
+    if (window.matchMedia('(max-width: 768px)').matches && menu) {
+        const rect = button.getBoundingClientRect();
+        menu.style.top = `${rect.bottom + 8}px`;
+        menu.style.left = '10px';
+        menu.style.right = '10px';
+        menu.style.maxHeight = `${Math.max(220, window.innerHeight - rect.bottom - 24)}px`;
+        menu.style.overflowY = 'auto';
+    } else if (menu) {
+        menu.style.top = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.maxHeight = '';
+        menu.style.overflowY = '';
+    }
     
     // Close all other dropdowns
     document.querySelectorAll('.quick-action-dropdown.open').forEach(d => {
@@ -399,6 +432,27 @@ document.addEventListener('click', function(e) {
     if (!e.target.closest('.quick-action-dropdown')) {
         document.querySelectorAll('.quick-action-dropdown.open').forEach(d => {
             d.classList.remove('open');
+        });
+    }
+});
+
+window.addEventListener('resize', function() {
+    if (!window.matchMedia('(max-width: 768px)').matches) {
+        const userDropdown = document.getElementById('userDropdown');
+        if (userDropdown) {
+            userDropdown.style.top = '';
+            userDropdown.style.left = '';
+            userDropdown.style.right = '';
+            userDropdown.style.maxHeight = '';
+            userDropdown.style.overflowY = '';
+        }
+
+        document.querySelectorAll('.quick-dropdown-menu').forEach(menu => {
+            menu.style.top = '';
+            menu.style.left = '';
+            menu.style.right = '';
+            menu.style.maxHeight = '';
+            menu.style.overflowY = '';
         });
     }
 });

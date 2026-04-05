@@ -156,6 +156,7 @@
 .hero-btn-secondary:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
   transform: translateY(-3px);
 }
 
@@ -725,6 +726,7 @@
 .cta-btn-secondary:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: white;
+  color: #ffffff;
   transform: translateY(-3px);
 }
 

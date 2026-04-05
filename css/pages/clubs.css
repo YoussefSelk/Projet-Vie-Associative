@@ -440,8 +440,11 @@
 
 /* Member Add Row */
 .member-add-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto auto;
+  grid-template-areas:
+    "search search search"
+    "role soutenance add";
   gap: 15px;
   align-items: center;
   margin-top: 10px;
@@ -451,21 +454,30 @@
 }
 
 .member-add-row .member-search-container {
-  flex: 1;
-  min-width: 250px;
+  grid-area: search;
+  min-width: 0;
 }
 
 .role-select-container {
-  flex: 0 0 auto;
-  min-width: 140px;
+  grid-area: role;
+  min-width: 220px;
 }
 
 .role-select {
   width: 100%;
 }
 
+.member-add-row .role-select,
+.member-add-row #addMemberBtn {
+  min-height: 44px;
+}
+
+.member-add-row #memberSearchInput {
+  min-height: 44px;
+}
+
 .soutenance-check-container {
-  flex: 0 0 auto;
+  grid-area: soutenance;
 }
 
 .soutenance-check-container label {
@@ -489,12 +501,31 @@
 }
 
 .member-add-row #addMemberBtn {
-  flex: 0 0 auto;
+  grid-area: add;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+}
+
+.member-add-row #addMemberBtn:not(:disabled) {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.member-add-row #addMemberBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
   .member-add-row {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "search"
+      "role"
+      "soutenance"
+      "add";
     align-items: stretch;
   }
 
@@ -504,7 +535,6 @@
   .member-add-row #addMemberBtn {
     width: 100%;
     min-width: 0;
-    flex: none;
   }
 
   .member-add-row #addMemberBtn {
@@ -598,8 +628,8 @@
 }
 
 .btn-add-disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  opacity: 1;
+  cursor: pointer;
 }
 
 /* Logo Upload */
@@ -667,11 +697,22 @@
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s;
+  color: #ffffff !important;
+  text-decoration: none;
 }
 
 .logo-upload-btn:hover {
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff !important;
   transform: translateY(-1px);
+}
+
+.logo-upload-btn:focus,
+.logo-upload-btn:active,
+.logo-upload-btn i,
+.logo-upload-btn:hover i,
+.logo-upload-btn:focus i {
+  color: #ffffff !important;
 }
 
 .logo-upload-btn input[type="file"] {
@@ -1148,7 +1189,7 @@
 .filters-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 16px;
   border: none;
   background: transparent;
@@ -1171,6 +1212,25 @@
 
 .filters-row .filter-item.filter-item-action {
   flex: 0 0 auto;
+}
+
+.filters-row .filter-item.filter-item-results {
+  flex: 0 0 auto;
+  min-width: auto;
+  margin-left: auto;
+}
+
+.filters-row .filter-item.filter-item-action .filter-action-label {
+  visibility: hidden;
+}
+
+.filters-row .filter-item.filter-item-results .browse-count {
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-gray-500, #64748b);
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .filters-row .filter-item label {
@@ -1214,6 +1274,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
   transition: all 0.2s ease;
   font-size: 0.875rem;
 }
@@ -1274,5 +1335,13 @@
   .filters-row .filter-item {
     width: 100%;
     min-width: 0;
+  }
+
+  .filters-row .filter-item.filter-item-results {
+    margin-left: 0;
+  }
+
+  .filters-row .filter-item.filter-item-results .browse-count {
+    height: auto;
   }
 }

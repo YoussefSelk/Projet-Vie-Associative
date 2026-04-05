@@ -172,6 +172,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'search', 'pagination', 'tables', 'clu
                         </div>
                         
                         <div class="filter-item filter-item-action">
+                            <label class="filter-action-label" aria-hidden="true">Action</label>
                             <button type="button" id="resetFilters" class="filter-reset-btn">
                                 <i class="fas fa-undo"></i> Réinitialiser
                             </button>

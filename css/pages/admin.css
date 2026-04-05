@@ -1755,13 +1755,13 @@
   color: #991b1b;
 }
 
-.user-info {
+.admin-users-container .user-info {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-.user-avatar {
+.admin-users-container .user-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
@@ -1775,12 +1775,12 @@
   flex-shrink: 0;
 }
 
-.user-name {
+.admin-users-container .user-name {
   font-weight: 600;
   color: #1e293b;
 }
 
-.user-email {
+.admin-users-container .user-email {
   font-size: 0.8rem;
   color: #64748b;
 }

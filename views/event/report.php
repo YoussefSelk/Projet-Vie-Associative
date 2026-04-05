@@ -10,7 +10,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
 <!DOCTYPE html>
 <html lang="fr">
 <?php include VIEWS_PATH . '/includes/head.php'; ?>
-<body>
+<body class="event-report-page">
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
     </header>

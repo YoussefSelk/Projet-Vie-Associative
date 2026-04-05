@@ -114,6 +114,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         $has_admin = ($event['validation_admin'] ?? null) == 1;
                         $is_partial = $has_bde || $has_tuteur || $has_admin;
                         $filter_type = $is_partial ? 'partial' : 'pending';
+                        $is_event_type = false;
+                        if (isset($event['is_event'])) {
+                            $is_event_type = ((int)$event['is_event'] === 1);
+                        } elseif (!empty($event['type_event'])) {
+                            $is_event_type = (mb_strtolower((string)$event['type_event'], 'UTF-8') === 'event');
+                        }
                         
                         $date_depot = !empty($event['date_depot']) ? date('d/m/Y à H:i', strtotime($event['date_depot'])) : 'N/A';
                         $date_ev = !empty($event['date_ev']) ? date('d/m/Y', strtotime($event['date_ev'])) : 'N/A';
@@ -143,6 +149,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                                 <?php endif; ?>
                                             </span>
                                         </div>
+                                        <span class="badge event-kind-badge <?= $is_event_type ? 'event' : 'activity' ?>">
+                                            <i class="fas <?= $is_event_type ? 'fa-calendar-check' : 'fa-shapes' ?>"></i>
+                                            <?= $is_event_type ? 'Événement' : 'Activité' ?>
+                                        </span>
                                         <?php if ($is_partial): ?>
                                             <span class="badge badge-info"><i class="fas fa-spinner"></i> Validation partielle</span>
                                         <?php else: ?>
@@ -174,11 +184,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                             <span><?= intval($event['montant'] ?? 0) ?> €</span>
                                         </div>
                                         <?php endif; ?>
-                                        <?php if (isset($event['type_event'])): ?>
-                                                <span class="type-badge <?= (!empty($event['type_event']) && $event['type_event'] == 'event') ? 'event' : 'activity' ?>">
-                                                    <?= htmlspecialchars((!empty($event['type_event']) && $event['type_event'] == 'event') ? 'Événement' : 'Activité') ?>
-                                                </span>
-                                            <?php endif; ?>
                                     </div>
                                     <?php if (!empty($event['description'])): ?>
                                         <p class="card-description"><?= htmlspecialchars($event['description']) ?></p>
@@ -186,29 +191,26 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                     <!-- Validation Progress -->
                                     <div class="validation-badges-row">
                                         <span class="badge <?= $has_bde ? 'badge-success' : 'badge-light' ?>">
-                                            <i class="fas <?= $has_bde ? 'fa-check' : 'fa-hourglass-half' ?>"></i> BDE
+                                            <i class="fas <?= $has_bde ? 'fa-check' : 'fa-times' ?>"></i> BDE
                                         </span>
                                         <span class="badge <?= $has_tuteur ? 'badge-success' : 'badge-light' ?>">
-                                            <i class="fas <?= $has_tuteur ? 'fa-check' : 'fa-hourglass-half' ?>"></i> Tuteur
+                                            <i class="fas <?= $has_tuteur ? 'fa-check' : 'fa-times' ?>"></i> Tuteur
                                         </span>
                                         <span class="badge <?= $has_admin ? 'badge-success' : 'badge-light' ?>">
-                                            <i class="fas <?= $has_admin ? 'fa-check' : 'fa-hourglass-half' ?>"></i> Admin
+                                            <i class="fas <?= $has_admin ? 'fa-check' : 'fa-times' ?>"></i> Admin
                                         </span>
-                                        <?php if (!empty($event['doc_organisation'])): ?>
-                                        <span class="badge badge-info">
-                                            <i class="fas fa-image"></i> Document d'organisation
+                                        <span class="badge doc-badge <?= !empty($event['doc_organisation']) ? 'badge-info' : 'badge-light is-missing' ?>">
+                                            <i class="fas <?= !empty($event['doc_organisation']) ? 'fa-image' : 'fa-times' ?>"></i>
+                                            Document d'organisation
                                         </span>
-                                        <?php endif; ?>
-                                        <?php if (!empty($event['fiche_sanitaire'])): ?>
-                                        <span class="badge badge-info">
-                                            <i class="fas fa-file-medical"></i> Fiche sanitaire
+                                        <span class="badge doc-badge <?= !empty($event['fiche_sanitaire']) ? 'badge-info' : 'badge-light is-missing' ?>">
+                                            <i class="fas <?= !empty($event['fiche_sanitaire']) ? 'fa-file-medical' : 'fa-times' ?>"></i>
+                                            Fiche sanitaire
                                         </span>
-                                        <?php endif; ?>
-                                        <?php if (!empty($event['affiche'])): ?>
-                                        <span class="badge badge-info">
-                                            <i class="fas fa-image"></i> Affiche
+                                        <span class="badge doc-badge <?= !empty($event['affiche']) ? 'badge-info' : 'badge-light is-missing' ?>">
+                                            <i class="fas <?= !empty($event['affiche']) ? 'fa-image' : 'fa-times' ?>"></i>
+                                            Affiche
                                         </span>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="card-actions">
@@ -361,6 +363,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
             return '<span class="swal-badge swal-badge-danger"><i class="fas fa-times-circle"></i> ' + label + '</span>';
         }
 
+        function docStatusBadge(label, available, icon) {
+            var cls = available ? 'swal-doc-badge available' : 'swal-doc-badge missing';
+            var ico = available ? icon : 'fa-times-circle';
+            return '<span class="' + cls + '"><i class="fas ' + ico + '"></i> ' + label + '</span>';
+        }
+
         // ---- Search & Filter ----
         var searchInput = document.getElementById('searchInput');
         var filterTabs = document.querySelectorAll('.filter-tab');
@@ -413,16 +421,38 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
             }
 
             // Logo for modal (keep external URLs or prefix with /)
-            var logoHtml = '';
+            var logoHtml = '<div class="swal-detail-logo-placeholder"><i class="fas fa-calendar-alt"></i></div>';
             if (ev.logo_club) {
                 var lp = ev.logo_club.match(/^https?:\/\//i) ? ev.logo_club : '/' + String(ev.logo_club).replace(/^\/+/, '');
-                logoHtml = '<div style="text-align:center;margin-bottom:10px;"><img src="' + esc(lp) + '" alt="Logo" class="swal-detail-logo" /></div>';
+                logoHtml = '<img src="' + esc(lp) + '" alt="Logo" class="swal-detail-logo" />';
             }
 
             var finHtml = '<span class="swal-muted">Non demandé</span>';
             if (ev.financement_bde == 1) {
                 finHtml = '<span class="swal-finance-highlight"><i class="fas fa-check-circle"></i> Oui — ' + parseInt(ev.montant || 0) + ' €</span>';
             }
+
+            var typeText = (ev.is_event == 1 || ev.type_event === 'event') ? 'Événement' : 'Activité';
+            var statusText = (ev.validation_finale == 1)
+                ? 'Validé'
+                : ((ev.validation_finale == 0)
+                    ? 'Rejeté'
+                    : ((ev.validation_bde == 1 || ev.validation_tuteur == 1 || ev.validation_admin == 1)
+                        ? 'Validation partielle'
+                        : 'En attente'));
+            var statusClass = (ev.validation_finale == 1)
+                ? 'done'
+                : ((ev.validation_finale == 0)
+                    ? 'rejected'
+                    : ((ev.validation_bde == 1 || ev.validation_tuteur == 1 || ev.validation_admin == 1)
+                        ? 'partial'
+                        : 'pending'));
+
+            var docsStatusHtml = '<div class="swal-doc-status-row">' +
+                docStatusBadge('Document d\'organisation', !!ev.doc_organisation, 'fa-file-alt') +
+                docStatusBadge('Fiche sanitaire', !!ev.fiche_sanitaire, 'fa-file-medical') +
+                docStatusBadge('Affiche', !!ev.affiche, 'fa-image') +
+            '</div>';
 
             var filesHtml = '';
             if (ev.fiche_sanitaire || ev.affiche || ev.doc_organisation) {
@@ -447,10 +477,33 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 filesHtml += '</div></div>';
             }
 
-            return '<div class="swal-detail-content">' + logoHtml +
+            var idMetaHtml = '';
+            if (ev.event_id || ev.club_id) {
+                idMetaHtml = '<div class="swal-detail-section swal-detail-section-compact"><div class="swal-detail-label"><i class="fas fa-fingerprint"></i> Identifiants</div><div class="swal-keyline">' +
+                    '<span><strong>Event ID:</strong> ' + esc(ev.event_id || 'N/A') + '</span>' +
+                    '<span><strong>Club ID:</strong> ' + esc(ev.club_id || 'N/A') + '</span>' +
+                '</div></div>';
+            }
+
+            return '<div class="swal-detail-content">' +
+                 '<div class="swal-detail-hero">' +
+                     '<div class="swal-detail-hero-media">' + logoHtml + '</div>' +
+                     '<div class="swal-detail-hero-main">' +
+                         '<div class="swal-detail-hero-title">' + esc(ev.titre || 'Sans titre') + '</div>' +
+                         '<div class="swal-detail-hero-sub">' +
+                             '<span><i class="fas fa-building"></i> ' + esc(ev.nom_club || 'Club inconnu') + '</span>' +
+                             (ev.responsable_prenom ? '<span><i class="fas fa-user"></i> ' + esc(ev.responsable_prenom + ' ' + (ev.responsable_nom || '')) + '</span>' : '') +
+                         '</div>' +
+                         '<div class="swal-detail-hero-chips">' +
+                             '<span class="swal-chip type"><i class="fas fa-tag"></i> ' + typeText + '</span>' +
+                             '<span class="swal-chip campus"><i class="fas fa-map-marker-alt"></i> ' + esc(ev.campus || 'N/A') + '</span>' +
+                             '<span class="swal-chip status ' + statusClass + '"><i class="fas fa-circle"></i> ' + statusText + '</span>' +
+                         '</div>' +
+                     '</div>' +
+                 '</div>' +
                  '<div class="swal-detail-grid">' +
                      '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-building"></i> Club</div><div class="swal-detail-value">' + esc(ev.nom_club || 'N/A') + '</div></div>' +
-                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-tag"></i> Type</div><div class="swal-detail-value">' + (ev.is_event == 1 ? 'Événement' : 'Activité') + '</div></div>' +
+                     '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-tag"></i> Type</div><div class="swal-detail-value">' + typeText + '</div></div>' +
                      '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-user"></i> Responsable</div><div class="swal-detail-value">' + resp + '</div></div>' +
                      '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-calendar"></i> Date</div><div class="swal-detail-value">' + formatDate(ev.date_ev) + '</div></div>' +
                      '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-clock"></i> Horaires</div><div class="swal-detail-value">' + formatTime(ev.horaire_debut) + ' - ' + formatTime(ev.horaire_fin) + '</div></div>' +
@@ -460,10 +513,12 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                      '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-inbox"></i> Dépôt</div><div class="swal-detail-value">' + formatDatetime(ev.date_depot) + '</div></div>' +
                 '</div>' +
                 (ev.description ? '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-align-left"></i> Description</div><div class="swal-detail-description">' + esc(ev.description) + '</div></div>' : '') +
+                '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-file-circle-check"></i> Disponibilité des pièces</div>' + docsStatusHtml + '</div>' +
                 filesHtml +
                 '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div><div class="swal-badges-row">' +
                     valBadge('BDE', ev.validation_bde) + valBadge('Tuteur', ev.validation_tuteur) + valBadge('Admin', ev.validation_admin) +
                 '</div></div>' +
+                idMetaHtml +
             '</div>';
         }
 

@@ -118,15 +118,21 @@ $isAuthenticated = !empty($_SESSION['id']);
                                 <span class="month"><?= $months_fr[$monthIndex] ?></span>
                             </div>
                             <div class="event-content">
-                                <?php if (!empty($event['logo_club'])): ?>
-                                    <?php
-                                        $rawLogo = $event['logo_club'];
-                                        $logoPath = preg_match('#^https?://#i', $rawLogo) ? $rawLogo : '/' . ltrim($rawLogo, '/');
-                                        $logoEscaped = htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8');
-                                        $alt = htmlspecialchars($event['nom_club'] ?? 'Logo du club', ENT_QUOTES, 'UTF-8');
-                                    ?>
-                                    <img src="<?= $logoEscaped ?>" alt="<?= $alt ?>" class="event-card-logo" loading="lazy" />
-                                <?php endif; ?>
+                                <div class="event-media" aria-hidden="true">
+                                    <?php if (!empty($event['logo_club'])): ?>
+                                        <?php
+                                            $rawLogo = $event['logo_club'];
+                                            $logoPath = preg_match('#^https?://#i', $rawLogo) ? $rawLogo : '/' . ltrim($rawLogo, '/');
+                                            $logoEscaped = htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8');
+                                            $alt = htmlspecialchars($event['nom_club'] ?? 'Logo du club', ENT_QUOTES, 'UTF-8');
+                                        ?>
+                                        <img src="<?= $logoEscaped ?>" alt="<?= $alt ?>" class="event-card-logo" loading="lazy" />
+                                    <?php else: ?>
+                                        <div class="event-card-logo-placeholder">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
 
                                 <div class="event-content-main">
                                     <p class="club-name">
@@ -150,7 +156,23 @@ $isAuthenticated = !empty($_SESSION['id']);
                                         <?php endif; ?>
                                     </div>
                                     <?php if (!empty($event['description'])): ?>
-                                        <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 120)) ?>...</p>
+                                        <?php
+                                            $description = trim((string)$event['description']);
+                                            $isLongDescription = mb_strlen($description) > 120;
+                                            $shortDescription = $isLongDescription ? mb_substr($description, 0, 120) . '...' : $description;
+                                        ?>
+                                        <div class="event-description-block">
+                                            <p class="event-description"
+                                               data-short="<?= htmlspecialchars($shortDescription, ENT_QUOTES, 'UTF-8') ?>"
+                                               data-full="<?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8') ?>">
+                                               <?= htmlspecialchars($shortDescription) ?>
+                                            </p>
+                                            <?php if ($isLongDescription): ?>
+                                                <button type="button" class="event-see-more" aria-expanded="false">Voir plus...</button>
+                                            <?php else: ?>
+                                                <span class="event-see-more-placeholder" aria-hidden="true">Voir plus...</span>
+                                            <?php endif; ?>
+                                        </div>
                                     <?php endif; ?>
 
                                     <div class="event-card-actions">
@@ -264,6 +286,30 @@ $isAuthenticated = !empty($_SESSION['id']);
                     });
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalHtml;
+                }
+            });
+        });
+
+        // Description toggle for long texts.
+        document.querySelectorAll('.event-see-more').forEach((toggleBtn) => {
+            toggleBtn.addEventListener('click', function () {
+                const card = this.closest('.event-content-main');
+                const descriptionEl = card ? card.querySelector('.event-description') : null;
+                if (!descriptionEl) {
+                    return;
+                }
+
+                const expanded = this.getAttribute('aria-expanded') === 'true';
+                if (expanded) {
+                    descriptionEl.textContent = descriptionEl.dataset.short || descriptionEl.textContent;
+                    descriptionEl.classList.remove('is-expanded');
+                    this.setAttribute('aria-expanded', 'false');
+                    this.textContent = 'Voir plus...';
+                } else {
+                    descriptionEl.textContent = descriptionEl.dataset.full || descriptionEl.textContent;
+                    descriptionEl.classList.add('is-expanded');
+                    this.setAttribute('aria-expanded', 'true');
+                    this.textContent = 'Voir moins';
                 }
             });
         });

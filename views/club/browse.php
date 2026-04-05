@@ -86,13 +86,15 @@ $pageCss = ['shared', 'buttons', 'clubs'];
                         </div>
 
                         <div class="filter-item filter-item-action">
+                            <label class="filter-action-label" aria-hidden="true">Action</label>
                             <button type="button" id="browseReset" class="filter-reset-btn">
                                 <i class="fas fa-undo"></i> Réinitialiser
                             </button>
                         </div>
 
-                        <div class="filter-item" style="margin-left: auto; align-self: center;">
-                            <span id="browseCount" style="color: #666; font-size: .9rem;">
+                        <div class="filter-item filter-item-results">
+                            <label class="filter-action-label" aria-hidden="true">Resultats</label>
+                            <span id="browseCount" class="browse-count">
                                 <?= count($clubs) ?> résultat<?= count($clubs) > 1 ? 's' : '' ?>
                             </span>
                         </div>

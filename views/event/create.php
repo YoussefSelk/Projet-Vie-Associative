@@ -39,46 +39,46 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                         <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars(strip_tags((string)$success_msg)) ?></div>
                     <?php endif; ?>
                     
-                    <div class="info-box info-box-primary" style="margin-bottom: 25px; border-left: 5px solid #0056b3;">
+                    <div class="info-box info-box-primary submission-guide">
                         <h4><i class="fas fa-info-circle"></i> Guide de soumission BDE</h4>
-                        <div class="info-content">
-                            <div style="display: flex; gap: 20px; margin-bottom: 15px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 250px;">
-                                    <p><strong><i class="fas fa-calendar-star" style="color: #e67e22;"></i> Événement</strong><br>
-                                    <small>Soirée, gala, tournoi... Validation complète requise.</small></p>
+                        <div class="submission-guide-content">
+                            <div class="submission-guide-types">
+                                <div class="submission-guide-type-card event">
+                                    <p class="submission-guide-type-title"><i class="fas fa-calendar-check"></i> Événement</p>
+                                    <p class="submission-guide-type-text">Soirée, gala, tournoi... Validation complète requise.</p>
                                 </div>
-                                <div style="flex: 1; min-width: 250px;">
-                                    <p><strong><i class="fas fa-users" style="color: #27ae60;"></i> Activité</strong><br>
-                                    <small>Réunion, atelier, entraînement... Processus simplifié.</small></p>
+                                <div class="submission-guide-type-card activity">
+                                    <p class="submission-guide-type-title"><i class="fas fa-users"></i> Activité</p>
+                                    <p class="submission-guide-type-text">Réunion, atelier, entraînement... Processus simplifié.</p>
                                 </div>
                             </div>
 
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dee2e6;">
-                                <h5 style="margin-top: 0; color: #333;"><i class="fas fa-file-import"></i> Le dossier d'organisation</h5>
-                                <p style="font-size: 0.9em; margin-bottom: 10px;">
+                            <div class="submission-guide-dossier">
+                                <h5><i class="fas fa-file-import"></i> Le dossier d'organisation</h5>
+                                <p class="submission-guide-dossier-intro">
                                     Obligatoire pour les <strong>Événements</strong> / Facultatif pour les <strong>Activités</strong>.
                                 </p>
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-                                    <div style="font-size: 0.85em;">
+                                <div class="submission-guide-dossier-grid">
+                                    <div class="submission-guide-dossier-item">
                                         <i class="fas fa-sitemap"></i> <strong>Organisation</strong><br>
                                         Gantt, répartition tâches.
                                     </div>
-                                    <div style="font-size: 0.85em;">
+                                    <div class="submission-guide-dossier-item">
                                         <i class="fas fa-coins"></i> <strong>Budget</strong><br>
                                         Recettes/Dépenses, financements.
                                     </div>
-                                    <div style="font-size: 0.85em;">
+                                    <div class="submission-guide-dossier-item">
                                         <i class="fas fa-bullhorn"></i> <strong>Communication</strong><br>
                                         Canaux, visuels des affiches.
                                     </div>
                                 </div>
                             </div>
 
-                            <details style="margin-top: 15px;">
-                                <summary style="cursor: pointer; color: #0056b3; font-weight: bold;">
-                                    <i class="fas fa-chevron-right"></i> Rappel des règles générales
+                            <details class="submission-guide-rules">
+                                <summary>
+                                    <span>Rappel des règles générales</span>
                                 </summary>
-                                <ul style="margin-top: 10px; padding-left: 20px; font-size: 0.9em;">
+                                <ul>
                                     <li>Dépôt au moins <strong>2 semaines à l'avance</strong>.</li>
                                     <li>Réservation de salle via le secrétariat uniquement.</li>
                                     <li>Autorisation spéciale requise pour les événements avec alcool.</li>
@@ -96,7 +96,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                             <div class="type-selector">
                                 <label class="type-option selected" data-type="event">
                                     <input type="radio" name="type_event" value="event" checked>
-                                    <i class="fas fa-calendar-star"></i>
+                                    <i class="fas fa-calendar-check"></i>
                                     <span>Événement</span>
                                     <small>Validation complète requise</small>
                                 </label>

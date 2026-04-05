@@ -236,6 +236,29 @@
   flex-wrap: wrap;
 }
 
+.event-kind-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.event-kind-badge.event {
+  color: #0f4fb0;
+  background: #e8f2ff;
+  border-color: #bed6fb;
+}
+
+.event-kind-badge.activity {
+  color: #0f5a49;
+  background: #e8fbf5;
+  border-color: #b8eed8;
+}
+
 .card-type-icon {
   width: 48px;
   height: 48px;
@@ -351,6 +374,17 @@
   align-items: stretch;
 }
 
+/* Pending-events: keep all action buttons the same width */
+.validation-card-advanced.event-card .card-actions > * {
+  width: 100%;
+}
+
+.validation-card-advanced.event-card .card-actions form {
+  display: flex;
+  width: 100%;
+  margin: 0;
+}
+
 .btn-view-details {
   padding: 12px 20px;
   border: 2px solid #e2e8f0;
@@ -365,6 +399,8 @@
   justify-content: center;
   gap: 8px;
   white-space: nowrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-view-details:hover {
@@ -386,6 +422,8 @@
   justify-content: center;
   gap: 8px;
   white-space: nowrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-approve {
@@ -423,6 +461,8 @@
   white-space: nowrap;
   background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #fff;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-force:hover {
@@ -900,6 +940,121 @@
   line-height: 1.6;
 }
 
+/* Hero block */
+.swal-detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.swal-detail-hero-media {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 60px;
+}
+
+.swal-detail-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #dbe4ef;
+  box-shadow: 0 6px 16px rgba(15, 42, 67, 0.12);
+}
+
+.swal-detail-logo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 1px dashed #cbd5e1;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 1.2rem;
+}
+
+.swal-detail-hero-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.swal-detail-hero-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.swal-detail-hero-sub {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.swal-detail-hero-chips {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.swal-chip.type {
+  background: #e8f2ff;
+  color: #0f4fb0;
+  border-color: #bfd6fb;
+}
+
+.swal-chip.campus {
+  background: #eef5fb;
+  color: #1f4e79;
+  border-color: #d2e3f2;
+}
+
+.swal-chip.status.pending {
+  background: #fff7cc;
+  color: #854d0e;
+  border-color: #fde68a;
+}
+
+.swal-chip.status.partial {
+  background: #e0f2fe;
+  color: #075985;
+  border-color: #bae6fd;
+}
+
+.swal-chip.status.done {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+
+.swal-chip.status.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
 /* 2-column grid for key-value pairs */
 .swal-detail-grid {
   display: grid;
@@ -949,6 +1104,19 @@
 
 .swal-detail-section .swal-detail-label {
   margin-bottom: 8px;
+}
+
+.swal-detail-section-compact {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.swal-keyline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.85rem;
+  color: #475569;
 }
 
 .swal-detail-description {
@@ -1097,6 +1265,39 @@
   flex-wrap: wrap;
 }
 
+.swal-doc-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swal-doc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.swal-doc-badge.available {
+  background: #e8f2ff;
+  color: #0f4fb0;
+  border-color: #bfd6fb;
+}
+
+.swal-doc-badge.missing {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px dashed #cbd5e1;
+}
+
+.swal-doc-badge.missing i {
+  color: #ef4444;
+}
+
 .swal-file-link {
   display: inline-flex;
   align-items: center;
@@ -1141,6 +1342,32 @@
 
 .validation-badges-row .badge {
   font-size: 0.75rem;
+}
+
+.validation-badges-row .badge i {
+  margin-right: 4px;
+}
+
+/* Ensure non-validated tags remain visible (not white-on-white) */
+.validation-badges-row .badge-light {
+  background: #eef2f7;
+  color: #5b6778;
+  border: 1px solid #d4dbe6;
+}
+
+.validation-badges-row .badge-light i {
+  color: #7b8798;
+}
+
+/* Missing document tags: explicit disabled visual state */
+.validation-badges-row .doc-badge.is-missing {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px dashed #cbd5e1;
+}
+
+.validation-badges-row .doc-badge.is-missing i {
+  color: #ef4444;
 }
 
 /* ================================================

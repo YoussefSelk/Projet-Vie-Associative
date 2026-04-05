@@ -18,7 +18,7 @@
  * @package Views/Validation
  */
 $pageTitle = 'Événements en attente - EILCO';
-$pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'search'];
+$pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'search', 'pagination'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -245,6 +245,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <div id="pendingEventsPagination" class="pagination-wrapper"></div>
                 
                 <div class="empty-state-advanced" id="noResults">
                     <div class="empty-icon empty-icon-search">
@@ -262,7 +264,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                     <h3><i class="fas fa-times-circle"></i> Événements rejetés (<?= count($rejected_events) ?>)</h3>
                 </div>
                 <div class="card-body">
-                    <div class="validation-cards-container">
+                    <div class="validation-cards-container" id="rejectedEventsCards">
                         <?php foreach ($rejected_events as $event): ?>
                             <div class="validation-card-advanced event-card rejected-event">
                                 <div class="card-main">
@@ -300,6 +302,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                             </div>
                         <?php endforeach; ?>
                     </div>
+                    <div id="rejectedEventsPagination" class="pagination-wrapper"></div>
                 </div>
             </div>
             <?php endif; ?>
@@ -328,7 +331,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
     </form>
 
     <script>
-    (function() {
+    document.addEventListener('DOMContentLoaded', function() {
         'use strict';
 
         function esc(str) {
@@ -375,7 +378,30 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         var cards = document.querySelectorAll('#validationCards > .validation-card-advanced');
         var noResults = document.getElementById('noResults');
         var cardsContainer = document.getElementById('validationCards');
+        var paginationWrapper = document.getElementById('pendingEventsPagination');
+        var rejectedCardsContainer = document.getElementById('rejectedEventsCards');
+        var rejectedPaginationWrapper = document.getElementById('rejectedEventsPagination');
         var currentFilter = 'all';
+        var pendingPagination = null;
+        var rejectedPagination = null;
+
+        if (cardsContainer && paginationWrapper && typeof PaginationComponent === 'function') {
+            pendingPagination = new PaginationComponent({
+                itemsSelector: '#validationCards',
+                paginationSelector: '#pendingEventsPagination',
+                perPage: 6,
+                perPageOptions: [6, 9, 12, 18]
+            });
+        }
+
+        if (rejectedCardsContainer && rejectedPaginationWrapper && typeof PaginationComponent === 'function') {
+            rejectedPagination = new PaginationComponent({
+                itemsSelector: '#rejectedEventsCards',
+                paginationSelector: '#rejectedEventsPagination',
+                perPage: 6,
+                perPageOptions: [6, 9, 12, 18]
+            });
+        }
 
         function filterCards() {
             var searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
@@ -384,19 +410,31 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 var matchesSearch = card.dataset.search.includes(searchTerm);
                 var matchesFilter = currentFilter === 'all' || card.dataset.type === currentFilter;
                 if (matchesSearch && matchesFilter) {
-                    card.style.display = '';
+                    card.classList.remove('filter-hidden');
+                    if (!pendingPagination) {
+                        card.style.display = '';
+                    }
                     visibleCount++;
                 } else {
+                    card.classList.add('filter-hidden');
                     card.style.display = 'none';
                 }
             });
+
+            if (pendingPagination) {
+                pendingPagination.currentPage = 1;
+                pendingPagination.update();
+            }
+
             if (noResults && cardsContainer) {
                 if (visibleCount === 0 && cards.length > 0) {
                     noResults.style.display = '';
                     cardsContainer.style.display = 'none';
+                    if (paginationWrapper) paginationWrapper.style.display = 'none';
                 } else {
                     noResults.style.display = 'none';
                     cardsContainer.style.display = '';
+                    if (paginationWrapper) paginationWrapper.style.display = '';
                 }
             }
         }
@@ -410,6 +448,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 filterCards();
             });
         });
+
+        filterCards();
 
         // ---- SweetAlert2 Detail Modal ----
         function buildDetailHtml(ev) {
@@ -660,7 +700,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
             });
         });
 
-    })();
+    });
     </script>
 
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>

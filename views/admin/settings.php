@@ -61,34 +61,34 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
             <div class="settings-grid">
                 <!-- Quick Stats Overview -->
                 <div class="settings-card" style="grid-column: 1 / -1;">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="settings-card-header quick">
                         <i class="fas fa-tachometer-alt"></i>
                         <h3>Aperçu Rapide</h3>
                     </div>
                     <div class="settings-card-body">
-                        <div class="db-stats-grid" style="grid-template-columns: repeat(6, 1fr);">
-                            <div class="db-stat-item" style="background: #d4edda;">
-                                <div class="count" style="color: #155724;"><?= $advanced_stats['pending_clubs'] ?? 0 ?></div>
+                        <div class="db-stats-grid quick-overview-grid">
+                            <div class="db-stat-item quick-stat pending-clubs">
+                                <div class="count"><?= $advanced_stats['pending_clubs'] ?? 0 ?></div>
                                 <div class="label">Clubs en attente</div>
                             </div>
-                            <div class="db-stat-item" style="background: #cce5ff;">
-                                <div class="count" style="color: #004085;"><?= $advanced_stats['pending_events'] ?? 0 ?></div>
+                            <div class="db-stat-item quick-stat pending-events">
+                                <div class="count"><?= $advanced_stats['pending_events'] ?? 0 ?></div>
                                 <div class="label">Événements en attente</div>
                             </div>
-                            <div class="db-stat-item" style="background: #f8d7da;">
-                                <div class="count" style="color: #721c24;"><?= $advanced_stats['rejected_clubs'] ?? 0 ?></div>
+                            <div class="db-stat-item quick-stat rejected-clubs">
+                                <div class="count"><?= $advanced_stats['rejected_clubs'] ?? 0 ?></div>
                                 <div class="label">Clubs refusés</div>
                             </div>
-                            <div class="db-stat-item" style="background: #f8d7da;">
-                                <div class="count" style="color: #721c24;"><?= $advanced_stats['rejected_events'] ?? 0 ?></div>
+                            <div class="db-stat-item quick-stat rejected-events">
+                                <div class="count"><?= $advanced_stats['rejected_events'] ?? 0 ?></div>
                                 <div class="label">Événements refusés</div>
                             </div>
-                            <div class="db-stat-item" style="background: #fff3cd;">
-                                <div class="count" style="color: #856404;"><?= $advanced_stats['events_no_report'] ?? 0 ?></div>
+                            <div class="db-stat-item quick-stat no-report">
+                                <div class="count"><?= $advanced_stats['events_no_report'] ?? 0 ?></div>
                                 <div class="label">Sans rapport</div>
                             </div>
-                            <div class="db-stat-item" style="background: #e2e3e5;">
-                                <div class="count" style="color: #383d41;"><?= $advanced_stats['old_events'] ?? 0 ?></div>
+                            <div class="db-stat-item quick-stat old-events">
+                                <div class="count"><?= $advanced_stats['old_events'] ?? 0 ?></div>
                                 <div class="label">Anciens (+1 an)</div>
                             </div>
                         </div>
@@ -152,13 +152,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                 
                 <!-- Bulk Actions -->
                 <div class="settings-card">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="settings-card-header accent">
                         <i class="fas fa-bolt"></i>
                         <h3>Actions en Masse</h3>
                     </div>
                     <div class="settings-card-body">
-                        <p style="margin-bottom: 1rem; color: #6c757d; font-size: 0.9rem;">
-                            <i class="fas fa-exclamation-triangle" style="color: #ffc107;"></i>
+                        <p class="settings-warning-text" style="margin-bottom: 1rem;">
+                            <i class="fas fa-exclamation-triangle"></i>
                             Ces actions sont irréversibles. Utilisez-les avec précaution.
                         </p>
                         <form method="POST">
@@ -173,7 +173,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                                         data-action="validate-events" data-count="<?= $advanced_stats['pending_events'] ?? 0 ?>">
                                     <i class="fas fa-check-double"></i> Valider tous les événements en attente (<?= $advanced_stats['pending_events'] ?? 0 ?>)
                                 </button>
-                                <button type="submit" name="clean_old_events" class="export-btn btn-bulk-action" style="width: 100%; justify-content: center; background: #6c757d;"
+                                <button type="submit" name="clean_old_events" class="export-btn neutral btn-bulk-action" style="width: 100%; justify-content: center;"
                                         data-action="clean-events">
                                     <i class="fas fa-broom"></i> Analyser les anciens événements (+1 an)
                                 </button>
@@ -202,7 +202,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                 
                 <!-- Users by Permission -->
                 <div class="settings-card">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <div class="settings-card-header roles">
                         <i class="fas fa-user-shield"></i>
                         <h3>Utilisateurs par Rôle</h3>
                     </div>
@@ -309,7 +309,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                 
                 <!-- Recent Users -->
                 <div class="settings-card" style="grid-column: 1 / -1;">
-                    <div class="settings-card-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="settings-card-header recent">
                         <i class="fas fa-user-plus"></i>
                         <h3>Derniers Utilisateurs Inscrits</h3>
                     </div>
@@ -347,7 +347,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'admin'];
                             </table>
                         </div>
                         <div style="margin-top: 1rem; text-align: center;">
-                            <a href="?page=users-list" class="export-btn" style="background: #6c757d;">
+                            <a href="?page=users-list" class="export-btn neutral">
                                 <i class="fas fa-list"></i> Voir tous les utilisateurs
                             </a>
                         </div>

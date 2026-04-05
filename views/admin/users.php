@@ -157,7 +157,7 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'admin', 'pro
                                 <?php
                                     $perm_names = [0 => 'Invité', 1 => 'Utilisateur', 2 => 'Tuteur', 3 => 'BDE', 4 => 'Personnel', 5 => 'Admin'];
                                 ?>
-                                <span class="permission-badge p-<?php echo $u['permission']; ?>">
+                                <span class="permission-badge perm-<?php echo $u['permission']; ?>">
                                     <?php echo $perm_names[$u['permission']] ?? 'Inconnu'; ?>
                                 </span>
                             </td>

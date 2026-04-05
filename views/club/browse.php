@@ -13,7 +13,7 @@
  * @package Views/Club
  */
 $pageTitle = 'Découvrir les clubs - EILCO';
-$pageCss = ['shared', 'buttons', 'clubs'];
+$pageCss = ['shared', 'buttons', 'pagination', 'clubs'];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -241,6 +241,8 @@ $pageCss = ['shared', 'buttons', 'clubs'];
                 <?php endforeach; ?>
             </div>
 
+            <div id="browsePagination" class="pagination-wrapper"></div>
+
             <!-- Message vide après filtrage -->
             <div id="noFilterResults" style="display:none; text-align:center; padding:3rem; color:#888;">
                 <i class="fas fa-search" style="font-size:2.5rem; margin-bottom:1rem; display:block;"></i>
@@ -262,8 +264,19 @@ $pageCss = ['shared', 'buttons', 'clubs'];
         const resetBtn = document.getElementById('browseReset');
         const countEl = document.getElementById('browseCount');
         const noResults = document.getElementById('noFilterResults');
+        const paginationEl = document.getElementById('browsePagination');
+        let browsePagination = null;
 
         if (!cards.length) return;
+
+        if (typeof PaginationComponent === 'function' && paginationEl) {
+            browsePagination = new PaginationComponent({
+                itemsSelector: '#clubsGrid',
+                paginationSelector: '#browsePagination',
+                perPage: 9,
+                perPageOptions: [6, 9, 12, 18]
+            });
+        }
 
         function applyFilters() {
             const search = (searchInput.value || '').toLowerCase().trim();
@@ -277,12 +290,19 @@ $pageCss = ['shared', 'buttons', 'clubs'];
                 const matchType   = !type   || card.dataset.type.includes(type);
 
                 if (matchName && matchCampus && matchType) {
+                    card.classList.remove('filter-hidden');
                     card.style.display = '';
                     visible++;
                 } else {
+                    card.classList.add('filter-hidden');
                     card.style.display = 'none';
                 }
             });
+
+            if (browsePagination) {
+                browsePagination.currentPage = 1;
+                browsePagination.update();
+            }
 
             if (countEl) countEl.textContent = visible + ' résultat' + (visible !== 1 ? 's' : '');
             if (noResults) noResults.style.display = visible === 0 ? 'block' : 'none';

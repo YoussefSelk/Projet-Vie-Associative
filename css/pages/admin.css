@@ -1342,6 +1342,15 @@
   gap: 0.75rem;
 }
 
+.settings-card-header h3 {
+  margin: 0;
+  color: #ffffff;
+}
+
+.settings-card-header i {
+  color: rgba(255, 255, 255, 0.95);
+}
+
 .settings-card-header.danger {
   background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
 }
@@ -1357,6 +1366,22 @@
 .settings-card-header.warning {
   background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
   color: white;
+}
+
+.settings-card-header.quick {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+}
+
+.settings-card-header.accent {
+  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+}
+
+.settings-card-header.roles {
+  background: linear-gradient(135deg, #0f766e 0%, #0f766e 55%, #115e59 100%);
+}
+
+.settings-card-header.recent {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
 }
 
 .settings-card-body {
@@ -1439,6 +1464,7 @@
   padding: 1rem;
   background: #f8f9fa;
   border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .db-stat-item .count {
@@ -1451,6 +1477,47 @@
   font-size: 0.85rem;
   color: #6c757d;
   text-transform: capitalize;
+}
+
+.quick-overview-grid {
+  grid-template-columns: repeat(6, minmax(130px, 1fr));
+}
+
+.quick-stat.pending-clubs {
+  background: #eef6f0;
+}
+.quick-stat.pending-clubs .count {
+  color: #166534;
+}
+
+.quick-stat.pending-events {
+  background: #edf4fb;
+}
+.quick-stat.pending-events .count {
+  color: #1d4ed8;
+}
+
+.quick-stat.rejected-clubs,
+.quick-stat.rejected-events {
+  background: #fbefef;
+}
+.quick-stat.rejected-clubs .count,
+.quick-stat.rejected-events .count {
+  color: #b91c1c;
+}
+
+.quick-stat.no-report {
+  background: #faf5e8;
+}
+.quick-stat.no-report .count {
+  color: #92400e;
+}
+
+.quick-stat.old-events {
+  background: #f3f4f6;
+}
+.quick-stat.old-events .count {
+  color: #374151;
 }
 
 .system-info-list {
@@ -1483,6 +1550,41 @@
   background: #1a1a2e;
   border-radius: 8px;
   padding: 1rem;
+}
+
+.settings-container .logs-container {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+}
+
+.settings-container .logs-container .log-entry {
+  color: #e2e8f0;
+  border-bottom: 1px solid #1f2a44;
+}
+
+.settings-container .logs-container .log-entry:nth-child(even) {
+  background: #111c33;
+}
+
+.settings-container .logs-container .log-entry.error {
+  color: #fecaca;
+}
+
+.settings-container .logs-container .log-entry.warning {
+  color: #fde68a;
+}
+
+.settings-container .logs-container .log-entry.info {
+  color: #bfdbfe;
+}
+
+.settings-warning-text {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.settings-warning-text i {
+  color: #d97706;
 }
 
 .export-buttons {
@@ -1525,6 +1627,14 @@
 
 .export-btn.success:hover {
   background: #064e3b;
+}
+
+.export-btn.neutral {
+  background: #475569;
+}
+
+.export-btn.neutral:hover {
+  background: #334155;
 }
 
 .super-admin-badge {
@@ -1730,27 +1840,27 @@
   text-transform: uppercase;
 }
 
-.permission-badge.p-0 {
+.permission-badge.perm-0 {
   background: #f1f5f9;
   color: #475569;
 }
-.permission-badge.p-1 {
+.permission-badge.perm-1 {
   background: #ecfdf5;
   color: #065f46;
 }
-.permission-badge.p-2 {
+.permission-badge.perm-2 {
   background: #fffbeb;
   color: #92400e;
 }
-.permission-badge.p-3 {
+.permission-badge.perm-3 {
   background: #f5f3ff;
   color: #5b21b6;
 }
-.permission-badge.p-4 {
+.permission-badge.perm-4 {
   background: #eff6ff;
   color: #1e40af;
 }
-.permission-badge.p-5 {
+.permission-badge.perm-5 {
   background: #fef2f2;
   color: #991b1b;
 }
@@ -1805,6 +1915,8 @@
 .actions-cell {
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .action-btn {
@@ -1817,11 +1929,15 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  min-height: 34px;
+  min-width: 38px;
+  font-weight: 600;
 }
 
 .action-btn.view {
-  background: #1e40af;
+  background: #1d4ed8;
   color: white;
 }
 .action-btn.edit {
@@ -1829,8 +1945,18 @@
   color: white;
 }
 .action-btn.delete {
-  background: #991b1b;
+  background: #b91c1c;
   color: white;
+}
+
+.admin-users-container .action-btn,
+.admin-users-container .permission-form button {
+  color: #ffffff !important;
+}
+
+.admin-users-container .action-btn i,
+.admin-users-container .permission-form button i {
+  color: inherit !important;
 }
 
 .action-btn:hover {
@@ -1845,20 +1971,29 @@
 }
 
 .permission-form select {
-  padding: 4px 8px;
-  border: 1px solid #ddd;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 0.8rem;
+  min-height: 34px;
+  background: #f8fafc;
+  color: #0f172a;
 }
 
 .permission-form button {
-  padding: 4px 10px;
+  padding: 6px 10px;
   background: #059669;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
+  min-height: 34px;
+  min-width: 38px;
+}
+
+.permission-form button:hover {
+  background: #047857;
 }
 
 /* Self user indicator */

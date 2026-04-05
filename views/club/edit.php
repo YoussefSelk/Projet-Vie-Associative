@@ -140,44 +140,75 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 <small style="color:#1d4ed8;">Le Président est conservé automatiquement et compte dans le quota si sa case soutenance est active.</small>
                             </div>
                             
-                            <div id="members-container">
+                            <h5 style="margin-top: 20px; margin-bottom: 10px;"><i class="fas fa-user-plus"></i> Autres membres</h5>
+                            <div id="membersList" class="members-form-list">
                                 <?php if (!empty($currentMembers)): ?>
                                     <?php foreach ($currentMembers as $index => $member): ?>
-                                        <div class="member-row" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; background: #f8f9fa; padding: 10px; border-radius: 8px;">
-                                            <select name="members[<?= $index ?>][user_id]" class="form-control" style="flex: 1; min-width: 200px;">
-                                                <option value="">-- Sélectionner un membre --</option>
-                                                <?php foreach ($users as $user): ?>
-                                                    <option value="<?= $user['id'] ?>" <?= ($member['id'] == $user['id']) ? 'selected' : '' ?>>
-                                                        <?= htmlspecialchars($user['nom'] . ' ' . $user['prenom']) ?>
-                                                        <?php if (!empty($user['promo'])): ?> (<?= htmlspecialchars($user['promo']) ?>)<?php endif; ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            
-                                            <select name="members[<?= $index ?>][role]" class="form-control" style="flex: 0 0 auto; width: 200px;">
-                                                <option value="Membre" <?= ($member['fonction'] == 'Membre') ? 'selected' : '' ?>>Membre</option>
-                                                <option value="Vice-Président" <?= ($member['fonction'] == 'Vice-Président') ? 'selected' : '' ?>>Vice-Président</option>
-                                                <option value="Trésorier" <?= ($member['fonction'] == 'Trésorier') ? 'selected' : '' ?>>Trésorier</option>
-                                                <option value="Secrétaire" <?= ($member['fonction'] == 'Secrétaire') ? 'selected' : '' ?>>Secrétaire</option>
-                                                <option value="Charge d'événement / communication" <?= ($member['fonction'] == "Charge d'événement / communication") ? 'selected' : '' ?>>Charge d'événement / communication</option>
-                                            </select>
-                                            
-                                            <label class="form-check" style="margin: 0; white-space: nowrap; flex: 0 0 auto;">
-                                                <input type="checkbox" name="members[<?= $index ?>][soutenance]" value="1" <?= (!empty($member['soutenance'])) ? 'checked' : '' ?>>
-                                                <i class="fas fa-graduation-cap"></i> Soutenance
-                                            </label>
-                                            
-                                            <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.member-row').remove(); updateUniqueRoleOptions();" style="flex: 0 0 auto;">
+                                        <?php
+                                        $role = $member['fonction'] ?? 'Membre';
+                                        $isSoutenance = !empty($member['soutenance']) ? 1 : 0;
+                                        $memberFullName = trim(($member['prenom'] ?? '') . ' ' . ($member['nom'] ?? ''));
+                                        $memberMeta = trim((string)($member['promo'] ?? ''));
+                                        if ($memberMeta === '' && !empty($member['mail'])) {
+                                            $memberMeta = trim((string)$member['mail']);
+                                        }
+                                        ?>
+                                        <div class="member-form-row" id="member_<?= (int)$index ?>" data-user-id="<?= (int)$member['id'] ?>" <?= in_array($role, ['Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"], true) ? 'data-unique-role="' . htmlspecialchars($role, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
+                                            <input type="hidden" name="members[<?= (int)$index ?>][user_id]" value="<?= (int)$member['id'] ?>">
+                                            <input type="hidden" name="members[<?= (int)$index ?>][role]" value="<?= htmlspecialchars($role, ENT_QUOTES, 'UTF-8') ?>">
+                                            <input type="hidden" name="members[<?= (int)$index ?>][soutenance]" value="<?= $isSoutenance ?>">
+                                            <div class="member-avatar">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div class="member-details">
+                                                <span class="member-name"><?= htmlspecialchars($memberFullName) ?></span>
+                                                <?php if ($memberMeta !== ''): ?>
+                                                    <small><?= htmlspecialchars($memberMeta) ?></small>
+                                                <?php endif; ?>
+                                            </div>
+                                            <span class="member-role-badge"><?= htmlspecialchars($role) ?></span>
+                                            <?php if ($isSoutenance === 1): ?>
+                                                <span class="member-role-badge" style="background-color: #10b981; margin-left: 5px;"><i class="fas fa-graduation-cap"></i> Soutenance</span>
+                                            <?php endif; ?>
+                                            <button type="button" class="btn btn-danger btn-sm btn-remove-member" data-member-id="<?= (int)$index ?>" data-user-id="<?= (int)$member['id'] ?>">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
                             </div>
-                            
-                            <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 10px;" onclick="addMemberRow()">
-                                <i class="fas fa-plus"></i> Ajouter un membre
-                            </button>
+
+                            <div class="member-add-row">
+                                <div class="member-search-container">
+                                    <input type="text"
+                                        id="memberSearchInput"
+                                        class="form-control"
+                                        placeholder="Rechercher un membre par nom..."
+                                        autocomplete="off">
+                                    <div id="memberSuggestions" class="autocomplete-suggestions"></div>
+                                </div>
+
+                                <div class="role-select-container">
+                                    <select id="newMemberRole" class="form-control role-select">
+                                        <option value="Membre">Membre</option>
+                                        <option value="Vice-Président">Vice-Président</option>
+                                        <option value="Trésorier">Trésorier</option>
+                                        <option value="Charge d'événement / communication">Charge d'événement / communication</option>
+                                        <option value="Secrétaire">Secrétaire</option>
+                                    </select>
+                                </div>
+
+                                <div class="soutenance-check-container">
+                                    <label>
+                                        <input type="checkbox" id="newMemberSoutenance" value="1">
+                                        <i class="fas fa-graduation-cap"></i> Soutenance
+                                    </label>
+                                </div>
+
+                                <button type="button" class="btn btn-primary btn-add-disabled" id="addMemberBtn" disabled>
+                                    <i class="fas fa-plus"></i> Ajouter
+                                </button>
+                            </div>
                         </div>
 
                         <script>
@@ -194,43 +225,172 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                             { key: 'Secrétaire', badgeId: 'badge_Secretaire', label: 'Secrétaire' }
                         ];
 
-                        function getRoleSelects() {
-                            return Array.from(document.querySelectorAll('#members-container select[name$="[role]"]'));
+                        function setAddButtonEnabled(enabled) {
+                            addBtn.disabled = !enabled;
+                            if (enabled) {
+                                addBtn.classList.remove('btn-add-disabled');
+                            } else {
+                                addBtn.classList.add('btn-add-disabled');
+                            }
                         }
 
-                        function updateUniqueRoleOptions() {
-                            const roleSelects = getRoleSelects();
+                        function getRoleCounts() {
                             const counts = {};
-
-                            roleSelects.forEach(select => {
-                                const role = select.value;
+                            const roleInputs = Array.from(document.querySelectorAll('#membersList input[name$="[role]"]'));
+                            roleInputs.forEach(input => {
+                                const role = input.value;
                                 if (UNIQUE_ROLES.includes(role)) {
                                     counts[role] = (counts[role] || 0) + 1;
                                 }
                             });
+                            return counts;
+                        }
 
-                            // Mise à jour des options désactivées
-                            roleSelects.forEach(select => {
-                                Array.from(select.options).forEach(option => {
-                                    if (!UNIQUE_ROLES.includes(option.value)) {
-                                        option.disabled = false;
-                                        return;
-                                    }
-                                    const isTaken = (counts[option.value] || 0) > 0;
-                                    const isCurrent = select.value === option.value;
-                                    option.disabled = isTaken && !isCurrent;
-                                    option.text = option.disabled ? `${option.value} (déjà attribué)` : option.value;
-                                });
+                        function syncRoleDropdown() {
+                            const counts = getRoleCounts();
+
+                            Array.from(roleSelect.options).forEach(option => {
+                                if (!UNIQUE_ROLES.includes(option.value)) {
+                                    option.disabled = false;
+                                    return;
+                                }
+                                const isTaken = (counts[option.value] || 0) > 0;
+                                option.disabled = isTaken;
+                                option.text = isTaken ? option.value + ' (déjà attribué)' : option.value;
                             });
 
-                            // Mise à jour de l'affichage des rôles obligatoires
+                            if (roleSelect.options[roleSelect.selectedIndex] && roleSelect.options[roleSelect.selectedIndex].disabled) {
+                                roleSelect.value = 'Membre';
+                            }
+
                             updateRequiredRoles(counts);
+                        }
+
+                        function syncSoutenanceInputState() {
+                            if (roleSelect.value === 'Membre') {
+                                newMemberSoutenance.checked = false;
+                                soutenanceContainer.style.display = 'none';
+                            } else {
+                                soutenanceContainer.style.display = '';
+                            }
+                        }
+
+                        function resetMemberAddForm() {
+                            searchInput.value = '';
+                            suggestionsDiv.style.display = 'none';
+                            selectedUser = null;
+                            roleSelect.value = 'Membre';
+                            newMemberSoutenance.checked = false;
+                            syncSoutenanceInputState();
+                            setAddButtonEnabled(false);
+                        }
+
+                        function escapeHtml(text) {
+                            var div = document.createElement('div');
+                            div.textContent = text || '';
+                            return div.innerHTML;
+                        }
+
+                        function showSuggestions(matches) {
+                            if (matches.length === 0) {
+                                suggestionsDiv.innerHTML = '<div class="no-results"><i class="fas fa-search"></i> Aucun résultat</div>';
+                            } else {
+                                var html = '';
+                                for (var i = 0; i < matches.length; i++) {
+                                    var u = matches[i];
+                                    html += '<div class="suggestion-item" data-id="' + u.id + '" data-name="' + escapeHtml(u.name) + '" data-email="' + escapeHtml(u.email) + '" data-promo="' + escapeHtml(u.promo) + '">' +
+                                        '<div class="suggestion-name"><i class="fas fa-user"></i>' + escapeHtml(u.name) + '</div>' +
+                                        '<div class="suggestion-details">' + escapeHtml(u.promo || 'N/A') + ' • ' + escapeHtml(u.email || '') + '</div>' +
+                                    '</div>';
+                                }
+                                suggestionsDiv.innerHTML = html;
+                            }
+                            suggestionsDiv.style.display = 'block';
+                        }
+
+                        function addMember() {
+                            if (!selectedUser) {
+                                alert('Veuillez sélectionner un membre dans les suggestions.');
+                                return;
+                            }
+
+                            if (addedMembers[selectedUser.id]) {
+                                alert('Ce membre a déjà été ajouté.');
+                                return;
+                            }
+
+                            var role = roleSelect.value;
+                            var counts = getRoleCounts();
+                            if (UNIQUE_ROLES.includes(role) && (counts[role] || 0) > 0) {
+                                alert('Le rôle "' + role + '" est déjà attribué dans ce club.');
+                                return;
+                            }
+
+                            var isSoutenance = PRINCIPAL_ROLES.includes(role) && newMemberSoutenance.checked;
+                            if (isSoutenance && getTotalSoutenanceCount() >= MAX_SOUTENANCE_MEMBERS) {
+                                alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
+                                return;
+                            }
+
+                            var soutenanceValue = isSoutenance ? 1 : 0;
+                            var metaParts = [];
+                            if (selectedUser.promo) {
+                                metaParts.push(escapeHtml(selectedUser.promo));
+                            }
+                            if (selectedUser.email) {
+                                metaParts.push(escapeHtml(selectedUser.email));
+                            }
+                            var memberMetaHtml = metaParts.length > 0
+                                ? '<small>' + metaParts.join(' • ') + '</small>'
+                                : '';
+                            var soutenanceBadge = isSoutenance
+                                ? '<span class="member-role-badge" style="background-color: #10b981; margin-left: 5px;"><i class="fas fa-graduation-cap"></i> Soutenance</span>'
+                                : '';
+
+                            var row = document.createElement('div');
+                            row.className = 'member-form-row';
+                            row.id = 'member_' + memberIndex;
+                            row.setAttribute('data-user-id', selectedUser.id);
+                            if (UNIQUE_ROLES.includes(role)) {
+                                row.setAttribute('data-unique-role', role);
+                            }
+
+                            row.innerHTML =
+                                '<input type="hidden" name="members[' + memberIndex + '][user_id]" value="' + selectedUser.id + '">' +
+                                '<input type="hidden" name="members[' + memberIndex + '][role]" value="' + escapeHtml(role) + '">' +
+                                '<input type="hidden" name="members[' + memberIndex + '][soutenance]" value="' + soutenanceValue + '">' +
+                                '<div class="member-avatar"><i class="fas fa-user"></i></div>' +
+                                '<div class="member-details">' +
+                                    '<span class="member-name">' + escapeHtml(selectedUser.name) + '</span>' +
+                                    memberMetaHtml +
+                                '</div>' +
+                                '<span class="member-role-badge">' + escapeHtml(role) + '</span>' +
+                                soutenanceBadge +
+                                '<button type="button" class="btn btn-danger btn-sm btn-remove-member" data-member-id="' + memberIndex + '" data-user-id="' + selectedUser.id + '"><i class="fas fa-trash"></i></button>';
+
+                            membersList.appendChild(row);
+                            addedMembers[selectedUser.id] = true;
+                            memberIndex++;
+
+                            resetMemberAddForm();
+                            syncRoleDropdown();
+                            updateSoutenanceQuotaStatus();
+                        }
+
+                        function removeMember(memberId, userId) {
+                            var row = document.getElementById('member_' + memberId);
+                            if (!row) {
+                                return;
+                            }
+                            row.remove();
+                            delete addedMembers[userId];
+                            syncRoleDropdown();
                             updateSoutenanceQuotaStatus();
                         }
 
                         function getDynamicSoutenanceCount() {
-                            return Array.from(document.querySelectorAll('#members-container input[type="checkbox"][name$="[soutenance]"]'))
-                                .filter(input => input.checked && !input.disabled)
+                            return Array.from(document.querySelectorAll('#membersList input[name$="[soutenance]"]'))
+                                .filter(input => parseInt(input.value, 10) === 1)
                                 .length;
                         }
 
@@ -291,107 +451,118 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                             }
                         }
 
-                        function syncSoutenanceState(roleSelect, soutenanceInput, soutenanceLabel) {
-                            if (!PRINCIPAL_ROLES.includes(roleSelect.value)) {
-                                soutenanceInput.checked = false;
-                                soutenanceInput.disabled = true;
-                                if (soutenanceLabel) {
-                                    soutenanceLabel.style.display = 'none';
+                        const usersData = users.map(function(u) {
+                            return {
+                                id: String(u.id),
+                                name: (u.prenom || '') + ' ' + (u.nom || ''),
+                                email: u.mail || '',
+                                promo: u.promo || ''
+                            };
+                        });
+                        const addedMembers = {};
+                        let selectedUser = null;
+
+                        const searchInput = document.getElementById('memberSearchInput');
+                        const suggestionsDiv = document.getElementById('memberSuggestions');
+                        const addBtn = document.getElementById('addMemberBtn');
+                        const membersList = document.getElementById('membersList');
+                        const roleSelect = document.getElementById('newMemberRole');
+                        const newMemberSoutenance = document.getElementById('newMemberSoutenance');
+                        const soutenanceContainer = document.querySelector('.soutenance-check-container');
+
+                        Array.from(membersList.querySelectorAll('.member-form-row')).forEach(function(row) {
+                            var userId = row.getAttribute('data-user-id');
+                            if (userId) {
+                                addedMembers[String(userId)] = true;
+                            }
+                        });
+
+                        searchInput.addEventListener('input', function() {
+                            var query = this.value.toLowerCase().trim();
+                            selectedUser = null;
+                            setAddButtonEnabled(false);
+
+                            if (query.length < 2) {
+                                suggestionsDiv.style.display = 'none';
+                                return;
+                            }
+
+                            var matches = [];
+                            for (var i = 0; i < usersData.length && matches.length < 10; i++) {
+                                var u = usersData[i];
+                                if (addedMembers[u.id]) {
+                                    continue;
                                 }
-                            } else {
-                                soutenanceInput.disabled = false;
-                                if (soutenanceLabel) {
-                                    soutenanceLabel.style.display = '';
+                                if (u.name.toLowerCase().indexOf(query) !== -1 ||
+                                    u.email.toLowerCase().indexOf(query) !== -1 ||
+                                    u.promo.toLowerCase().indexOf(query) !== -1) {
+                                    matches.push(u);
                                 }
                             }
-                        }
 
-                        function wireMemberRow(row) {
-                            const roleSelect = row.querySelector('select[name$="[role]"]');
-                            const soutenanceInput = row.querySelector('input[type="checkbox"][name$="[soutenance]"]');
-                            const soutenanceLabel = soutenanceInput ? soutenanceInput.closest('label') : null;
+                            showSuggestions(matches);
+                        });
 
-                            if (!roleSelect || !soutenanceInput) return;
-
-                            roleSelect.dataset.previousRole = roleSelect.value;
-                            syncSoutenanceState(roleSelect, soutenanceInput, soutenanceLabel);
-
-                            roleSelect.addEventListener('change', () => {
-                                const nextRole = roleSelect.value;
-                                if (UNIQUE_ROLES.includes(nextRole)) {
-                                    const duplicate = getRoleSelects().some(select =>
-                                        select !== roleSelect && select.value === nextRole
-                                    );
-                                    if (duplicate) {
-                                        alert(`Le rôle "${nextRole}" est déjà attribué. Il doit être unique.`);
-                                        roleSelect.value = roleSelect.dataset.previousRole || 'Membre';
-                                    }
-                                }
-                                roleSelect.dataset.previousRole = roleSelect.value;
-                                syncSoutenanceState(roleSelect, soutenanceInput, soutenanceLabel);
-                                updateUniqueRoleOptions();
-                            });
-
-                            if (soutenanceInput) {
-                                soutenanceInput.addEventListener('change', () => {
-                                    if (!PRINCIPAL_ROLES.includes(roleSelect.value)) {
-                                        soutenanceInput.checked = false;
-                                        return;
-                                    }
-
-                                    if (getTotalSoutenanceCount() > MAX_SOUTENANCE_MEMBERS) {
-                                        soutenanceInput.checked = false;
-                                        alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
-                                    }
-                                    updateSoutenanceQuotaStatus();
-                                });
+                        suggestionsDiv.addEventListener('click', function(e) {
+                            var item = e.target.closest('.suggestion-item');
+                            if (!item) {
+                                return;
                             }
-                        }
 
-                        function addMemberRow() {
-                            const container = document.getElementById('members-container');
-                            const row = document.createElement('div');
-                            row.className = 'member-row';
-                            row.style.cssText = 'display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; background: #f8f9fa; padding: 10px; border-radius: 8px;';
+                            selectedUser = {
+                                id: item.getAttribute('data-id'),
+                                name: item.getAttribute('data-name'),
+                                email: item.getAttribute('data-email'),
+                                promo: item.getAttribute('data-promo')
+                            };
 
-                            let optionsHtml = '<option value="">-- Sélectionner un membre --</option>';
-                            users.forEach(user => {
-                                optionsHtml += `<option value="${user.id}">${user.nom} ${user.prenom}${user.promo ? ' (' + user.promo + ')' : ''}</option>`;
-                            });
+                            searchInput.value = selectedUser.name;
+                            suggestionsDiv.style.display = 'none';
+                            setAddButtonEnabled(true);
+                        });
 
-                            row.innerHTML = `
-                                <select name="members[${memberIndex}][user_id]" class="form-control" style="flex: 1; min-width: 200px;">
-                                    ${optionsHtml}
-                                </select>
-                                <select name="members[${memberIndex}][role]" class="form-control" style="flex: 0 0 auto; width: 200px;">
-                                    <option value="Membre" selected>Membre</option>
-                                    <option value="Vice-Président">Vice-Président</option>
-                                    <option value="Trésorier">Trésorier</option>
-                                    <option value="Secrétaire">Secrétaire</option>
-                                    <option value="Charge d'événement / communication">Charge d'événement / communication</option>
-                                </select>
-                                <label class="form-check" style="margin: 0; white-space: nowrap; flex: 0 0 auto;">
-                                    <input type="checkbox" name="members[${memberIndex}][soutenance]" value="1">
-                                    <span><i class="fas fa-graduation-cap"></i> Soutenance</span>
-                                </label>
-                                <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.member-row').remove(); updateUniqueRoleOptions();" style="flex: 0 0 auto;">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            `;
+                        document.addEventListener('click', function(e) {
+                            if (!searchInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                                suggestionsDiv.style.display = 'none';
+                            }
+                        });
 
-                            container.appendChild(row);
-                            wireMemberRow(row);
-                            updateUniqueRoleOptions();
-                            memberIndex++;
-                        }
+                        roleSelect.addEventListener('change', function() {
+                            syncSoutenanceInputState();
+                        });
+
+                        addBtn.addEventListener('click', addMember);
+
+                        membersList.addEventListener('click', function(e) {
+                            var removeBtn = e.target.closest('.btn-remove-member');
+                            if (!removeBtn) {
+                                return;
+                            }
+                            var memberId = removeBtn.getAttribute('data-member-id');
+                            var userId = removeBtn.getAttribute('data-user-id');
+                            removeMember(memberId, userId);
+                        });
+
+                        searchInput.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (selectedUser) {
+                                    addMember();
+                                }
+                            }
+                        });
+
+                        newMemberSoutenance.addEventListener('change', function() {
+                            if (this.checked && getTotalSoutenanceCount() >= MAX_SOUTENANCE_MEMBERS) {
+                                this.checked = false;
+                                alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
+                            }
+                            updateSoutenanceQuotaStatus();
+                        });
 
                         // Validation du formulaire pour vérifier les rôles obligatoires
                         document.getElementById('editClubForm').addEventListener('submit', function(e) {
-                            const roleSelects = getRoleSelects();
-                            const counts = {};
-                            roleSelects.forEach(select => {
-                                counts[select.value] = (counts[select.value] || 0) + 1;
-                            });
+                            const counts = getRoleCounts();
 
                             var missingRoles = [];
                             REQUIRED_ROLES.forEach(r => {
@@ -417,8 +588,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                             }
                         });
 
-                        document.querySelectorAll('#members-container .member-row').forEach(wireMemberRow);
-                        updateUniqueRoleOptions();
+                        syncSoutenanceInputState();
+                        syncRoleDropdown();
                         updateSoutenanceQuotaStatus();
                         </script>
 

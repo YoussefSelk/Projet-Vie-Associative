@@ -14,7 +14,8 @@ validation workflows, exports, and administration.
     <pre><code>composer install</code></pre>
   </li>
   <li>Create local environment file:
-    <pre><code># Linux/macOS
+    <pre><code>
+# Linux/macOS
 cp .env.example .env
 
 # Windows PowerShell

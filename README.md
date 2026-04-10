@@ -15,6 +15,7 @@ validation workflows, exports, and administration.
   </li>
   <li>Create local environment file:
     <pre><code>
+      
 # Linux/macOS
 cp .env.example .env
 

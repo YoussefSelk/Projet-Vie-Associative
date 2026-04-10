@@ -56,8 +56,15 @@ These fields drive pending/approved/rejected behavior shown in validation and ow
   <li>Pending validation</li>
   <li>Approve or reject with remarks</li>
   <li>Subscribers managed in abonnements</li>
+  <li>Email reminders sent at J-48 and J-24 for subscribed users</li>
   <li>Post-event report data attached if provided</li>
 </ol>
+
+<h3>Subscription reminder tracking</h3>
+<ul>
+  <li>abonnements.reminder_48h_sent_at (DATETIME NULL)</li>
+  <li>abonnements.reminder_24h_sent_at (DATETIME NULL)</li>
+</ul>
 
 <hr>
 

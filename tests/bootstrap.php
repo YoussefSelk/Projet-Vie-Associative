@@ -123,6 +123,22 @@ if (!function_exists('buildAdminValidationNotificationEmail')) {
         ];
     }
 }
+if (!function_exists('buildLeadershipRequestStatusEmail')) {
+    function buildLeadershipRequestStatusEmail(
+        string $fullName,
+        string $clubName,
+        string $requestType,
+        string $itemName,
+        string $statusLabel,
+        ?string $reason = null,
+        ?string $actionUrl = null
+    ): array {
+        return [
+            'html' => '<p>Statut demande</p>',
+            'text' => 'Statut demande',
+        ];
+    }
+}
 
 // Autoloader for test helpers
 spl_autoload_register(function (string $class): void {

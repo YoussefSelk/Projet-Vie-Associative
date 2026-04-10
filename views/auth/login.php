@@ -70,7 +70,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                                 <i class="fas fa-sign-in-alt"></i> Se connecter
                             </button>
                             <div class="auth-links">
-                                <button type="submit" name="check-email" class="link-button">
+                                <button type="submit" name="check-email" class="link-button" formnovalidate>
                                     <i class="fas fa-key"></i> Mot de passe oublié ?
                                 </button>
                             </div>
@@ -98,7 +98,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                             <?= Security::csrfField() ?>
                             <div class="form-group">
                                 <label><i class="fas fa-key"></i> Code de vérification</label>
-                                <input type="text" name="reset_code" class="form-control" placeholder="32-character reset code" autocomplete="one-time-code" required>
+                                <input type="text" name="reset_code" class="form-control" placeholder="Code à 6 chiffres" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required>
                             </div>
                             <button type="submit" name="verify_reset_code" class="btn btn-primary btn-lg btn-block">
                                 <i class="fas fa-check"></i> Vérifier

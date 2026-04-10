@@ -42,6 +42,64 @@ class ValidationController {
     }
 
     /**
+     * Retourne les dirigeants (president/secretaire) valides d'un club.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function getClubLeadershipRecipients(int $clubId): array {
+        $stmt = $this->db->prepare("\n            SELECT DISTINCT u.id, u.nom, u.prenom, u.mail, mc.fonction\n            FROM membres_club mc\n            INNER JOIN users u ON u.id = mc.membre_id\n            WHERE mc.club_id = ?\n              AND mc.valide = 1\n              AND mc.fonction IN ('Président', 'President', 'Secrétaire', 'Secretaire')\n              AND u.mail IS NOT NULL\n              AND u.mail <> ''\n        ");
+        $stmt->execute([$clubId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Notifie president/secretaire du statut d'une demande.
+     */
+    private function notifyLeadershipRequestStatus(
+        int $clubId,
+        string $clubName,
+        string $requestType,
+        string $itemName,
+        string $statusLabel,
+        ?string $reason = null
+    ): void {
+        $recipients = $this->getClubLeadershipRecipients($clubId);
+        if (empty($recipients)) {
+            return;
+        }
+
+        $actionUrl = null;
+        if (defined('BASE_URL') && is_string(BASE_URL) && BASE_URL !== '') {
+            $actionUrl = rtrim(BASE_URL, '/') . '/?page=' . (($requestType === 'club') ? 'my-clubs' : 'my-events');
+        }
+
+        foreach ($recipients as $recipient) {
+            $email = trim((string)($recipient['mail'] ?? ''));
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+
+            $fullName = trim((string)($recipient['prenom'] ?? '') . ' ' . (string)($recipient['nom'] ?? ''));
+            if ($fullName === '') {
+                $fullName = 'Membre du bureau';
+            }
+
+            $message = buildLeadershipRequestStatusEmail(
+                $fullName,
+                $clubName,
+                $requestType,
+                $itemName,
+                $statusLabel,
+                $reason,
+                $actionUrl
+            );
+
+            $subject = '[' . strtoupper($requestType) . '] Statut demande: ' . $statusLabel;
+            sendEmail($email, $subject, $message);
+        }
+    }
+
+    /**
      * Affiche la liste des clubs en attente de validation BDE
      * Requiert permission 3 (membre BDE)
      * 
@@ -104,11 +162,17 @@ class ValidationController {
         if (!$club_id || !$action) {
             $error_msg = "Données manquantes.";
         } else {
+            $clubMetaStmt = $this->db->prepare("SELECT club_id, nom_club FROM fiche_club WHERE club_id = ?");
+            $clubMetaStmt->execute([$club_id]);
+            $clubMeta = $clubMetaStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $clubName = (string)($clubMeta['nom_club'] ?? ('Club #' . (int)$club_id));
+
             // --- CAS 1 : FORCE APPROVE (Admin uniquement - Validation immédiate compl\u00e8te) ---
             if ($action === 'force_approve' && $is_admin) {
                 $stmt = $this->db->prepare("UPDATE fiche_club SET validation_bde = 1, validation_admin = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL WHERE club_id = ?");
                 if ($stmt->execute([$club_id])) {
                     $success_msg = "Club valid IMM\u00c9DIATEMENT (Validation forcée : BDE + Tuteur + Admin).";
+                    $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'validée');
                 } else {
                     $error_msg = "Erreur lors de la validation forcée.";
                 }
@@ -133,6 +197,7 @@ class ValidationController {
                         // BDE OK + Tuteur OK + Admin OK = Validation finale
                         $this->db->prepare("UPDATE fiche_club SET validation_finale = 1, motif_refus = NULL WHERE club_id = ?")->execute([$club_id]);
                         $success_msg = "Club approuvé définitivement. Toutes les signatures sont complètes, le club est maintenant actif.";
+                        $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'validée');
                     } else {
                         if ($is_admin) {
                             $success_msg = "Approbation admin enregistrée. En attente des autres signatures requises.";
@@ -149,6 +214,7 @@ class ValidationController {
                 $stmt = $this->db->prepare("UPDATE fiche_club SET validation_bde = 0, validation_admin = 0, validation_tuteur = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?");
                 if ($stmt->execute([$remarques, $club_id])) {
                     $success_msg = "Club rejeté. Toutes les validations ont été annulées.";
+                    $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'rejetée', $remarques);
                 } else {
                     $error_msg = "Erreur lors du rejet.";
                 }
@@ -207,11 +273,21 @@ class ValidationController {
         if (!$event_id || !$action) {
             $error_msg = "Données manquantes.";
         } else {
+            $eventMetaStmt = $this->db->prepare("SELECT fe.event_id, fe.titre, fe.club_orga, fc.nom_club FROM fiche_event fe LEFT JOIN fiche_club fc ON fc.club_id = fe.club_orga WHERE fe.event_id = ?");
+            $eventMetaStmt->execute([$event_id]);
+            $eventMeta = $eventMetaStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            $eventTitle = (string)($eventMeta['titre'] ?? ('Evenement #' . (int)$event_id));
+            $eventClubId = (int)($eventMeta['club_orga'] ?? 0);
+            $eventClubName = (string)($eventMeta['nom_club'] ?? 'Club inconnu');
+
             // --- CAS 1 : FORCE APPROVE (Administration uniquement) ---
             if ($action === 'force_approve' && $is_admin) {
                 $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_bde = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL WHERE event_id = ?");
                 if ($stmt->execute([$event_id])) {
                     $success_msg = "Événement validé IMMÉDIATEMENT par l'administration (Validation forcée).";
+                    if ($eventClubId > 0) {
+                        $this->notifyLeadershipRequestStatus($eventClubId, $eventClubName, 'evenement', $eventTitle, 'validée');
+                    }
                 } else {
                     $error_msg = "Erreur lors de la validation forcée.";
                 }
@@ -241,6 +317,9 @@ class ValidationController {
                     if ($event && $bde_ok && $admin_ok && $tuteur_ok) {
                         $this->db->prepare("UPDATE fiche_event SET validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
                         $success_msg = "Événement validé définitivement (Circuit de signatures complet).";
+                        if ($eventClubId > 0) {
+                            $this->notifyLeadershipRequestStatus($eventClubId, $eventClubName, 'evenement', $eventTitle, 'validée');
+                        }
                     } else {
                         $success_msg = "Votre approbation a été enregistrée. En attente des autres signatures requises.";
                     }
@@ -254,6 +333,9 @@ class ValidationController {
                 $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = 0, validation_admin = 0, validation_tuteur = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?");
                 if ($stmt->execute([$remarques, $event_id])) {
                     $success_msg = "Événement rejeté.";
+                    if ($eventClubId > 0) {
+                        $this->notifyLeadershipRequestStatus($eventClubId, $eventClubName, 'evenement', $eventTitle, 'rejetée', $remarques);
+                    }
                 } else {
                     $error_msg = "Erreur lors du rejet.";
                 }

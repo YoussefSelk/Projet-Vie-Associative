@@ -513,6 +513,93 @@ function buildAdminValidationNotificationEmail(
 }
 
 /**
+ * Template de rappel pour un evenement a venir (J-48 / J-24).
+ *
+ * @return array{html:string,text:string}
+ */
+function buildEventReminderEmail(
+    string $fullName,
+    string $eventTitle,
+    string $eventDateTimeLabel,
+    string $campus,
+    string $lieu,
+    int $hoursBefore
+): array {
+    $hoursBefore = max(1, $hoursBefore);
+    $accent = $hoursBefore <= 24 ? '#b91c1c' : '#1d4ed8';
+
+    return renderProfessionalEmailTemplate([
+        'title' => 'Rappel evenement: J-' . $hoursBefore . 'h',
+        'preheader' => 'Votre evenement approche. Pensez a preparer votre participation.',
+        'intro' => 'Bonjour ' . trim($fullName) . ',',
+        'body_lines' => [
+            'Vous etes inscrit a un evenement prevu dans environ ' . $hoursBefore . ' heures.',
+            'Ce message est un rappel automatique pour vous aider a anticiper votre participation.',
+        ],
+        'meta_lines' => [
+            'Evenement: ' . $eventTitle,
+            'Date et heure: ' . $eventDateTimeLabel,
+            'Campus: ' . $campus,
+            'Lieu: ' . $lieu,
+        ],
+        'accent' => $accent,
+    ]);
+}
+
+/**
+ * Template de notification de statut d'une demande (club/evenement)
+ * pour les membres de bureau (president/secretaire).
+ *
+ * @return array{html:string,text:string}
+ */
+function buildLeadershipRequestStatusEmail(
+    string $fullName,
+    string $clubName,
+    string $requestType,
+    string $itemName,
+    string $statusLabel,
+    ?string $reason = null,
+    ?string $actionUrl = null
+): array {
+    $normalizedType = strtolower(trim($requestType)) === 'club' ? 'club' : 'evenement';
+    $accent = '#1d4ed8';
+    if (stripos($statusLabel, 'rejet') !== false) {
+        $accent = '#b91c1c';
+    } elseif (stripos($statusLabel, 'valid') !== false || stripos($statusLabel, 'approuv') !== false) {
+        $accent = '#0f766e';
+    }
+
+    $metaLines = [
+        'Club: ' . $clubName,
+        ucfirst($normalizedType) . ': ' . $itemName,
+        'Statut: ' . $statusLabel,
+    ];
+
+    if (!empty($reason)) {
+        $metaLines[] = 'Motif: ' . trim($reason);
+    }
+
+    $data = [
+        'title' => 'Mise a jour de votre demande ' . $normalizedType,
+        'preheader' => 'Le statut de votre demande a ete mis a jour.',
+        'intro' => 'Bonjour ' . trim($fullName) . ',',
+        'body_lines' => [
+            'La demande de ' . $normalizedType . ' de votre club a ete mise a jour.',
+            'Veuillez consulter le statut ci-dessous.',
+        ],
+        'meta_lines' => $metaLines,
+        'accent' => $accent,
+    ];
+
+    if (!empty($actionUrl)) {
+        $data['button_label'] = 'Consulter la demande';
+        $data['button_url'] = $actionUrl;
+    }
+
+    return renderProfessionalEmailTemplate($data);
+}
+
+/**
  * Envoi d'email SMTP avec fallback texte pour les clients stricts.
  *
  * @param string|array{html?:string,text?:string} $message

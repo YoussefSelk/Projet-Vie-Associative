@@ -207,7 +207,7 @@ class AuthController {
 
             if ($user) {
                 $_SESSION['reset_mail'] = $mail;
-                $resetToken = bin2hex(random_bytes(16));
+                $resetToken = $this->generateRegistrationVerificationCode();
                 $_SESSION['reset_token_hash'] = hash('sha256', $resetToken);
                 $_SESSION['reset_token_expires_at'] = time() + 300;
                 $_SESSION['reset_verification_attempts'] = 0;

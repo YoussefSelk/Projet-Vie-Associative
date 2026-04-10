@@ -115,6 +115,24 @@ composer security:audit</code></pre>
 
 <hr>
 
+<h2>Scheduled Event Reminders</h2>
+<p>
+The platform supports automated reminder emails for event subscribers:
+</p>
+<ul>
+  <li>first reminder: 48 hours before event start</li>
+  <li>second reminder: 24 hours before event start</li>
+</ul>
+
+<p>Run manually:</p>
+<pre><code>php scripts/send_event_reminders.php
+php scripts/send_event_reminders.php --window=30</code></pre>
+
+<p>Recommended production schedule (every 15 minutes):</p>
+<pre><code>*/15 * * * * php /path/to/project/scripts/send_event_reminders.php >> /path/to/project/logs/reminders.log 2>&1</code></pre>
+
+<hr>
+
 <h2>Screenshot Placeholders</h2>
 <p>
 Use screenshot slots defined in <a href="Docs/screenshots/README.md">Docs/screenshots/README.md</a>.

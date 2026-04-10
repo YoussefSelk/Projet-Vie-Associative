@@ -122,6 +122,20 @@ class AuthController {
     }
 
     /**
+     * Genere un code de verification numerique sur 6 chiffres.
+     */
+    private function generateRegistrationVerificationCode(): string {
+        return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Hache un code de verification pour stockage en session.
+     */
+    private function hashVerificationCode(string $code): string {
+        return hash('sha256', $code);
+    }
+
+    /**
      * Constructeur
      * @param PDO $database Instance de connexion PDO
      */
@@ -199,8 +213,19 @@ class AuthController {
                 $_SESSION['reset_verification_attempts'] = 0;
                 $_SESSION['reset_verification_attempts_time'] = time();
                 $resetEmail = buildPasswordResetEmail($user['prenom'] ?? null, $resetToken);
-                sendEmail($mail, 'Code de reinitialisation', $resetEmail);
-                $_SESSION['reset_step'] = 2;
+                $emailSent = sendEmail($mail, 'Code de reinitialisation', $resetEmail);
+
+                if ($emailSent) {
+                    $_SESSION['reset_step'] = 2;
+                } else {
+                    unset($_SESSION['reset_mail'], $_SESSION['reset_token_hash'], $_SESSION['reset_token_expires_at']);
+                    $error_message = "Impossible d'envoyer le code de reinitialisation. Veuillez reessayer.";
+                    $_SESSION['reset_step'] = 1;
+
+                    ErrorHandler::logError('Echec envoi email reinitialisation', 'WARNING', [
+                        'recipient' => $mail,
+                    ]);
+                }
             } else {
                 $error_message = "Aucun compte trouvé avec cet email.";
                 $_SESSION['reset_step'] = 1;
@@ -438,9 +463,10 @@ class AuthController {
                 if ($existing_user) {
                     $error_message = 'Un compte avec cet email existe déjà';
                 } else {
-                    // Générer le code de vérification
-                    $code = random_int(100000, 999999);
-                    $_SESSION['code_verification'] = $code;
+                    // Générer un code robuste et ne stocker que son hash en session
+                    $code = $this->generateRegistrationVerificationCode();
+                    $_SESSION['code_verification_hash'] = $this->hashVerificationCode($code);
+                    $_SESSION['code_verification_expires_at'] = time() + 300;
                     $_SESSION['nom'] = $nom;
                     $_SESSION['prenom'] = $prenom;
                     $_SESSION['promo'] = $promo;
@@ -452,10 +478,32 @@ class AuthController {
                     // Envoyer l'email avec le code
                     $subject = 'Code de verification - Inscription EILCO';
                     $verificationEmail = buildRegistrationVerificationEmail($prenom, (string)$code);
-                    sendEmail($mail, $subject, $verificationEmail);
+                    $emailSent = sendEmail($mail, $subject, $verificationEmail);
 
-                    $_SESSION['reset_step'] = 1;
-                    $reset_step = 1;
+                    if ($emailSent) {
+                        $_SESSION['reset_step'] = 1;
+                        $reset_step = 1;
+                    } else {
+                        unset(
+                            $_SESSION['code_verification_hash'],
+                            $_SESSION['code_verification_expires_at'],
+                            $_SESSION['nom'],
+                            $_SESSION['prenom'],
+                            $_SESSION['promo'],
+                            $_SESSION['niveau'],
+                            $_SESSION['ing2_type'],
+                            $_SESSION['mail'],
+                            $_SESSION['password']
+                        );
+
+                        $error_message = "Impossible d'envoyer le code de verification. Veuillez reessayer.";
+                        $_SESSION['reset_step'] = 0;
+                        $reset_step = 0;
+
+                        ErrorHandler::logError('Echec envoi email verification inscription', 'WARNING', [
+                            'recipient' => $mail,
+                        ]);
+                    }
                 }
             }
         }
@@ -466,11 +514,16 @@ class AuthController {
 
             if (empty($verification_code)) {
                 $error_message = 'Veuillez entrer le code de vérification';
-            } elseif (!isset($_SESSION['code_verification'])) {
+            } elseif (!isset($_SESSION['code_verification_hash'], $_SESSION['code_verification_expires_at'])) {
                 $error_message = 'Le code de vérification a expiré. Veuillez recommencer.';
                 $_SESSION['reset_step'] = 0;
                 $reset_step = 0;
-            } elseif (!hash_equals((string)$_SESSION['code_verification'], (string)$verification_code)) {
+            } elseif (time() > (int)($_SESSION['code_verification_expires_at'] ?? 0)) {
+                $error_message = 'Le code de vérification a expiré. Veuillez recommencer.';
+                $_SESSION['reset_step'] = 0;
+                $reset_step = 0;
+                unset($_SESSION['code_verification_hash'], $_SESSION['code_verification_expires_at']);
+            } elseif (!hash_equals((string)$_SESSION['code_verification_hash'], $this->hashVerificationCode((string)$verification_code))) {
                 $_SESSION['verification_attempts']++;
                 $_SESSION['verification_attempts_time'] = time();
 
@@ -478,7 +531,7 @@ class AuthController {
                     $error_message = 'Trop de tentatives. Veuillez réessayer plus tard.';
                     $_SESSION['reset_step'] = 0;
                     $reset_step = 0;
-                    unset($_SESSION['code_verification']);
+                    unset($_SESSION['code_verification_hash'], $_SESSION['code_verification_expires_at']);
                 } else {
                     $error_message = 'Code de vérification incorrect.';
                 }
@@ -497,7 +550,7 @@ class AuthController {
                 if ($result) {
                     $success_message = 'Inscription réussie! Vous pouvez maintenant vous connecter.';
                     // Nettoyer la session
-                    unset($_SESSION['code_verification'], $_SESSION['nom'], $_SESSION['prenom'], 
+                      unset($_SESSION['code_verification_hash'], $_SESSION['code_verification_expires_at'], $_SESSION['nom'], $_SESSION['prenom'], 
                           $_SESSION['mail'], $_SESSION['password'], $_SESSION['promo'], 
                           $_SESSION['niveau'], $_SESSION['ing2_type'], $_SESSION['verification_attempts']);
                     $_SESSION['reset_step'] = 0;

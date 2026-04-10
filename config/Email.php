@@ -439,6 +439,80 @@ function buildTutorValidationNotificationEmail(
 }
 
 /**
+ * Template de notification pour validation BDE.
+ *
+ * @return array{html:string,text:string}
+ */
+function buildBdeValidationNotificationEmail(
+    string $bdeFullName,
+    string $creatorName,
+    string $typeLabel,
+    string $itemName,
+    ?string $actionUrl = null
+): array {
+    $body = [
+        $creatorName . ' a soumis un ' . $typeLabel . ' qui requiert votre validation BDE.',
+        'Merci de verifier les informations et de statuer depuis l\'espace de validation.',
+    ];
+
+    $data = [
+        'title' => 'Validation BDE requise',
+        'preheader' => 'Un nouveau ' . $typeLabel . ' attend une decision BDE.',
+        'intro' => 'Bonjour ' . trim($bdeFullName) . ',',
+        'body_lines' => $body,
+        'meta_lines' => [
+            ucfirst($typeLabel) . ': ' . $itemName,
+            'Niveau de validation: BDE',
+        ],
+        'accent' => '#b45309',
+    ];
+
+    if (!empty($actionUrl)) {
+        $data['button_label'] = 'Traiter la validation BDE';
+        $data['button_url'] = $actionUrl;
+    }
+
+    return renderProfessionalEmailTemplate($data);
+}
+
+/**
+ * Template de notification pour validation administrateur.
+ *
+ * @return array{html:string,text:string}
+ */
+function buildAdminValidationNotificationEmail(
+    string $adminFullName,
+    string $creatorName,
+    string $typeLabel,
+    string $itemName,
+    ?string $actionUrl = null
+): array {
+    $body = [
+        $creatorName . ' a soumis un ' . $typeLabel . ' en attente de validation administrateur.',
+        'Merci de controler la conformite du dossier avant decision finale.',
+    ];
+
+    $data = [
+        'title' => 'Validation administrateur requise',
+        'preheader' => 'Un nouveau ' . $typeLabel . ' attend une validation administrateur.',
+        'intro' => 'Bonjour ' . trim($adminFullName) . ',',
+        'body_lines' => $body,
+        'meta_lines' => [
+            ucfirst($typeLabel) . ': ' . $itemName,
+            'Niveau de validation: Administrateur',
+        ],
+        'accent' => '#7c2d12',
+    ];
+
+    if (!empty($actionUrl)) {
+        $data['button_label'] = 'Traiter la validation admin';
+        $data['button_url'] = $actionUrl;
+    }
+
+    return renderProfessionalEmailTemplate($data);
+}
+
+/**
  * Envoi d'email SMTP avec fallback texte pour les clients stricts.
  *
  * @param string|array{html?:string,text?:string} $message

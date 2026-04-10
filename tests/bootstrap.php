@@ -65,6 +65,64 @@ if (!function_exists('sendEmail')) {
         return true;
     }
 }
+if (!function_exists('buildPasswordResetEmail')) {
+    function buildPasswordResetEmail(?string $firstName, string $token): array {
+        return [
+            'html' => '<p>Code: ' . htmlspecialchars($token, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>',
+            'text' => 'Code: ' . $token,
+        ];
+    }
+}
+if (!function_exists('buildRegistrationVerificationEmail')) {
+    function buildRegistrationVerificationEmail(string $firstName, string $code): array {
+        return [
+            'html' => '<p>Verification: ' . htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</p>',
+            'text' => 'Verification: ' . $code,
+        ];
+    }
+}
+if (!function_exists('buildTutorValidationNotificationEmail')) {
+    function buildTutorValidationNotificationEmail(
+        string $tutorFullName,
+        string $creatorName,
+        string $typeLabel,
+        string $itemName,
+        ?string $actionUrl = null
+    ): array {
+        return [
+            'html' => '<p>Notification tuteur</p>',
+            'text' => 'Notification tuteur',
+        ];
+    }
+}
+if (!function_exists('buildBdeValidationNotificationEmail')) {
+    function buildBdeValidationNotificationEmail(
+        string $bdeFullName,
+        string $creatorName,
+        string $typeLabel,
+        string $itemName,
+        ?string $actionUrl = null
+    ): array {
+        return [
+            'html' => '<p>Notification BDE</p>',
+            'text' => 'Notification BDE',
+        ];
+    }
+}
+if (!function_exists('buildAdminValidationNotificationEmail')) {
+    function buildAdminValidationNotificationEmail(
+        string $adminFullName,
+        string $creatorName,
+        string $typeLabel,
+        string $itemName,
+        ?string $actionUrl = null
+    ): array {
+        return [
+            'html' => '<p>Notification admin</p>',
+            'text' => 'Notification admin',
+        ];
+    }
+}
 
 // Autoloader for test helpers
 spl_autoload_register(function (string $class): void {

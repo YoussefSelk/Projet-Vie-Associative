@@ -456,21 +456,36 @@ class ValidationController {
                 if ($action === 'force_approve') {
                     $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_bde = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
                     $success_msg = "Événement validé IMMÉDIATEMENT (Validation forcée).";
+                } elseif ($action === 'reject') {
+                    $motifRefus = $motif !== '' ? $motif : 'Refusé par l\'administration.';
+                    $this->db->prepare("UPDATE fiche_event SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?")->execute([$motifRefus, $event_id]);
+                    $success_msg = "Refus administrateur enregistré.";
                 } else {
                     $this->db->prepare("UPDATE fiche_event SET validation_admin = 1 WHERE event_id = ?")->execute([$event_id]);
+                    $success_msg = "Avis administrateur enregistré.";
                 }
-                $success_msg = "Action administrateur effectuée.";
             } 
             elseif (isset($_POST['validate_event_bde']) && $is_bde) {
-                $val = ($action === 'approve') ? 1 : 0;
-                $this->db->prepare("UPDATE fiche_event SET validation_bde = ? WHERE event_id = ?")->execute([$val, $event_id]);
-                $success_msg = "Avis BDE enregistré.";
+                if ($action === 'reject') {
+                    $motifRefus = $motif !== '' ? $motif : 'Refusé par le BDE.';
+                    $this->db->prepare("UPDATE fiche_event SET validation_bde = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?")->execute([$motifRefus, $event_id]);
+                    $success_msg = "Refus BDE enregistré.";
+                } else {
+                    $this->db->prepare("UPDATE fiche_event SET validation_bde = 1 WHERE event_id = ?")->execute([$event_id]);
+                    $success_msg = "Avis BDE enregistré.";
+                }
             } 
             elseif (isset($_POST['validate_event_tutor']) && $is_tutor) {
-                $val = ($action === 'approve') ? 1 : 0;
-                $this->db->prepare("UPDATE fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id SET fe.validation_tuteur = ? WHERE fe.event_id = ? AND fc.tuteur = ?")
-                         ->execute([$val, $event_id, $user_id]);
-                $success_msg = "Avis tuteur enregistré.";
+                if ($action === 'reject') {
+                    $motifRefus = $motif !== '' ? $motif : 'Refusé par le tuteur.';
+                    $this->db->prepare("UPDATE fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id SET fe.validation_tuteur = 0, fe.validation_finale = 0, fe.motif_refus = ? WHERE fe.event_id = ? AND fc.tuteur = ?")
+                             ->execute([$motifRefus, $event_id, $user_id]);
+                    $success_msg = "Refus tuteur enregistré.";
+                } else {
+                    $this->db->prepare("UPDATE fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id SET fe.validation_tuteur = 1 WHERE fe.event_id = ? AND fc.tuteur = ?")
+                             ->execute([$event_id, $user_id]);
+                    $success_msg = "Avis tuteur enregistré.";
+                }
             }
 
             // Vérification automatique pour validation_finale après chaque action
@@ -478,7 +493,9 @@ class ValidationController {
             $check->execute([$event_id]);
             $st = $check->fetch();
             if ($st && $st['validation_admin'] == 1 && $st['validation_tuteur'] == 1 && $st['validation_bde'] == 1) {
-                $this->db->prepare("UPDATE fiche_event SET validation_finale = 1 WHERE event_id = ?")->execute([$event_id]);
+                $this->db->prepare("UPDATE fiche_event SET validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
+            } elseif ($st && ((string)$st['validation_admin'] === '0' || (string)$st['validation_tuteur'] === '0' || (string)$st['validation_bde'] === '0')) {
+                $this->db->prepare("UPDATE fiche_event SET validation_finale = 0 WHERE event_id = ?")->execute([$event_id]);
             }
         }
     }

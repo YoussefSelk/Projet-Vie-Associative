@@ -86,33 +86,62 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
             <?php else: ?>
                 <div class="events-grid">
                     <?php foreach ($events as $event): 
+                        // Statut principal de la demande
+                        $validationFinaleRaw = $event['validation_finale'] ?? null;
+                        $validationFinale = ($validationFinaleRaw === null) ? null : (string)$validationFinaleRaw;
+                        $validationBde = ($event['validation_bde'] ?? null);
+                        $validationTuteur = ($event['validation_tuteur'] ?? null);
+                        $validationAdmin = ($event['validation_admin'] ?? null);
+                        $validationBdeState = ($validationBde === null) ? null : (string)$validationBde;
+                        $validationTuteurState = ($validationTuteur === null) ? null : (string)$validationTuteur;
+                        $validationAdminState = ($validationAdmin === null) ? null : (string)$validationAdmin;
+                        $rejectedBy = [];
+
+                        if ($validationBdeState === '0' || $validationBdeState === '-1') {
+                            $rejectedBy[] = 'BDE';
+                        }
+                        if ($validationTuteurState === '0' || $validationTuteurState === '-1') {
+                            $rejectedBy[] = 'tuteur';
+                        }
+                        if ($validationAdminState === '0' || $validationAdminState === '-1') {
+                            $rejectedBy[] = 'admin';
+                        }
+
+                        $isRejected = ($validationFinale === '-1')
+                            || ($validationFinale === '0')
+                            || !empty($rejectedBy);
+
+                        $allSignaturesApproved = (
+                            $validationBdeState === '1'
+                            && $validationTuteurState === '1'
+                            && $validationAdminState === '1'
+                        );
+                        $isApproved = ($validationFinale === '1') || $allSignaturesApproved;
+                        $isPending = !$isApproved && !$isRejected;
+
                         // Logique de filtrage
-                        $statusFilter = '';
-                        if ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus']))) {
+                        if ($isPending) {
                             $statusFilter = 'attente';
-                        } elseif ($event['validation_finale'] == 1) {
+                        } elseif ($isApproved) {
                             $statusFilter = 'approuve';
                         } else {
                             $statusFilter = 'refuse';
                         }
+
                         $searchData = strtolower(($event['titre'] ?? '') . ' ' . ($event['description'] ?? '') . ' ' . ($event['campus'] ?? '') . ' ' . ($event['type_event'] ?? ''));
                         $typeValue = strtolower(trim((string)($event['type_event'] ?? '')));
                         $isActivity = ($typeValue === 'activity');
                         
                         // Détermination du statut pour l'affichage
-                        $status = '';
-                        $statusClass = '';
-                        $isRejected = false;
-                        if ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus']))) {
+                        if ($isPending) {
                             $status = 'En attente';
                             $statusClass = 'badge-warning';
-                        } elseif ($event['validation_finale'] == 1) {
+                        } elseif ($isApproved) {
                             $status = 'Approuvé';
                             $statusClass = 'badge-success';
                         } else {
                             $status = 'Refusé';
                             $statusClass = 'badge-danger';
-                            $isRejected = true;
                         }
                     ?>
                         <div class="event-card" data-search="<?= htmlspecialchars($searchData) ?>" data-filter="<?= $statusFilter ?>">
@@ -138,29 +167,6 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                                 <i class="fas <?= $isActivity ? 'fa-shapes' : 'fa-calendar-check' ?>"></i>
                                                 <?= $isActivity ? 'Activité' : 'Événement' ?>
                                             </span>
-                                            <?php 
-                                            $status = '';
-                                            $statusClass = '';
-                                            $isRejected = false;
-                                            if ($event['validation_finale'] === null) {
-                                                $status = 'En attente';
-                                                $statusClass = 'badge-warning';
-                                            } elseif ($event['validation_finale'] == 0 && !empty($event['motif_refus'])) {
-                                                $status = 'Refusé';
-                                                $statusClass = 'badge-danger';
-                                                $isRejected = true;
-                                            } elseif ($event['validation_finale'] == 0) {
-                                                $status = 'En attente';
-                                                $statusClass = 'badge-warning';
-                                            } elseif ($event['validation_finale'] == 1) {
-                                                $status = 'Approuvé';
-                                                $statusClass = 'badge-success';
-                                            } else {
-                                                $status = 'Refusé';
-                                                $statusClass = 'badge-danger';
-                                                $isRejected = true;
-                                            }
-                                            ?>
                                             <span class="badge <?= $statusClass ?>"><?= $status ?></span>
                                         </div>
                                     </header>
@@ -169,10 +175,14 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                         <div class="refusal-reason">
                                             <small><strong>Motif :</strong> <?= htmlspecialchars($event['motif_refus']) ?></small>
                                         </div>
+                                    <?php elseif ($isRejected && !empty($rejectedBy)): ?>
+                                        <div class="refusal-reason">
+                                            <small><strong>Refus :</strong> <?= htmlspecialchars(ucfirst(implode(', ', $rejectedBy))) ?></small>
+                                        </div>
                                     <?php endif; ?>
 
                                     <?php
-                                        $eventStateFromValue = static function ($value) {
+                                        $eventSignatureState = static function ($value) {
                                             if ($value === 1 || $value === '1') {
                                                 return 'done';
                                             }
@@ -182,24 +192,19 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                             return 'pending';
                                         };
 
-                                        $eventRejected = (($event['validation_finale'] == -1 || $event['validation_finale'] == 0) && !empty($event['motif_refus']));
-                                        $eventFinallyApproved = ((int)($event['validation_finale'] ?? 0) === 1);
-                                        $encadrantDone = (($event['validation_tuteur'] ?? null) == 1 || ($event['validation_admin'] ?? null) == 1);
-                                        $encadrantRejected = (($event['validation_tuteur'] ?? null) == 0 || ($event['validation_admin'] ?? null) == 0);
-                                        $encadrantState = $encadrantDone ? 'done' : ($encadrantRejected ? 'rejected' : 'pending');
-
                                         $eventTrackingSteps = [
                                             ['label' => 'Demande envoyée', 'state' => 'done', 'icon' => 'fa-paper-plane', 'forced' => false],
-                                            ['label' => 'Validation BDE', 'state' => $eventStateFromValue($event['validation_bde'] ?? null), 'icon' => 'fa-people-group', 'forced' => false],
-                                            ['label' => 'Validation encadrant (Tuteur/Admin)', 'state' => $encadrantState, 'icon' => 'fa-user-check', 'forced' => false],
-                                            ['label' => 'Décision finale', 'state' => $eventRejected ? 'rejected' : ($eventFinallyApproved ? 'done' : 'pending'), 'icon' => 'fa-flag-checkered', 'forced' => false]
+                                            ['label' => 'Validation BDE', 'state' => $eventSignatureState($validationBde), 'icon' => 'fa-people-group', 'forced' => false],
+                                            ['label' => 'Validation tuteur', 'state' => $eventSignatureState($validationTuteur), 'icon' => 'fa-user-check', 'forced' => false],
+                                            ['label' => 'Validation admin', 'state' => $eventSignatureState($validationAdmin), 'icon' => 'fa-user-shield', 'forced' => false],
+                                            ['label' => 'Décision finale', 'state' => $isRejected ? 'rejected' : ($isApproved ? 'done' : 'pending'), 'icon' => 'fa-flag-checkered', 'forced' => false]
                                         ];
 
-                                        $eventIsForcedApproval = $eventFinallyApproved
+                                        $eventIsForcedApproval = $isApproved
                                             && (
-                                                (int)($event['validation_bde'] ?? 0) !== 1
-                                                || (int)($event['validation_admin'] ?? 0) !== 1
-                                                || (int)($event['validation_tuteur'] ?? 0) !== 1
+                                                (int)($validationBde ?? 0) !== 1
+                                                || (int)($validationAdmin ?? 0) !== 1
+                                                || (int)($validationTuteur ?? 0) !== 1
                                             );
 
                                         if ($eventIsForcedApproval) {
@@ -212,11 +217,13 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                             }
                                         }
 
-                                        $currentEventStepAssigned = false;
-                                        foreach ($eventTrackingSteps as $eventStepIndex => $eventStep) {
-                                            if ($eventStep['state'] === 'pending' && !$currentEventStepAssigned) {
-                                                $eventTrackingSteps[$eventStepIndex]['state'] = 'current';
-                                                $currentEventStepAssigned = true;
+                                        if ($isPending) {
+                                            $currentEventStepAssigned = false;
+                                            foreach ($eventTrackingSteps as $eventStepIndex => $eventStep) {
+                                                if ($eventStep['state'] === 'pending' && !$currentEventStepAssigned) {
+                                                    $eventTrackingSteps[$eventStepIndex]['state'] = 'current';
+                                                    $currentEventStepAssigned = true;
+                                                }
                                             }
                                         }
                                     ?>
@@ -224,7 +231,11 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                     <section class="request-tracker" aria-label="Suivi de validation de l'événement <?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?>">
                                         <h4 class="tracker-title"><i class="fas fa-route"></i> Suivi de validation</h4>
                                         <?php if ($eventIsForcedApproval): ?>
-                                            <p class="tracker-subtitle"><i class="fas fa-bolt"></i> Validation forcée administrativement</p>
+                                            <p class="tracker-subtitle tracker-subtitle-warning"><i class="fas fa-bolt"></i> Validation forcée administrativement</p>
+                                        <?php elseif ($isPending): ?>
+                                            <p class="tracker-subtitle tracker-subtitle-info"><i class="fas fa-hourglass-half"></i> En attente des validations BDE, tuteur et admin</p>
+                                        <?php elseif ($isRejected): ?>
+                                            <p class="tracker-subtitle tracker-subtitle-danger"><i class="fas fa-circle-xmark"></i> Demande refusée<?= !empty($rejectedBy) ? ' par ' . htmlspecialchars(implode(', ', $rejectedBy)) : '' ?></p>
                                         <?php endif; ?>
                                         <ol class="tracker-timeline">
                                             <?php foreach ($eventTrackingSteps as $eventStep): ?>
@@ -251,9 +262,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                         <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
                                             <i class="fas fa-eye"></i> Voir
                                         </a>
-                                        <?php 
-                                        $isPending = ($event['validation_finale'] === null || ($event['validation_finale'] == 0 && empty($event['motif_refus'])));
-                                        if ($isPending || $isRejected): ?>
+                                        <?php if ($isPending || $isRejected): ?>
                                             <a href="?page=update-event&id=<?= $event['event_id'] ?>" class="btn btn-warning btn-sm">
                                                 <i class="fas fa-edit"></i> Modifier
                                             </a>

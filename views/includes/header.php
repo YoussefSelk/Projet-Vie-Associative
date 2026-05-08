@@ -22,6 +22,7 @@ require_once("include.php");
 global $db;
 
 if(isset($_SESSION['id'])){
+    $user_permission = (int)($_SESSION['permission'] ?? 0);
     // Recuperer les clubs dont l'utilisateur est membre valide
     // Un club est considéré validé si validation_finale = 1
     $req_membre_club = $db->prepare("SELECT mc.* FROM membres_club mc LEFT JOIN fiche_club fc ON fc.club_id = mc.club_id WHERE mc.membre_id = ? AND mc.valide = 1 AND fc.validation_finale = 1");
@@ -111,6 +112,7 @@ else {
     $nb_badge_tuteur = 0;
     $nb_badge_bde = 0;
     $current_user = null;
+    $user_permission = 0;
 }
 ?>
 
@@ -174,13 +176,15 @@ else {
                             <i class="fas fa-user"></i> Mon Profil
                         </a>
                         <div class="dropdown-divider"></div>
-                        <a href="?page=my-clubs" class="dropdown-item">
-                            <i class="fas fa-folder-open"></i> Mes Demandes de Clubs
-                        </a>
-                        <?php if($is_membre_club == 1): ?>
-                            <a href="?page=my-events" class="dropdown-item">
-                                <i class="fas fa-calendar-alt"></i> Mes Événements
+                        <?php if (!in_array($user_permission, [2, 4, 5], true)): ?>
+                            <a href="?page=my-clubs" class="dropdown-item">
+                                <i class="fas fa-folder-open"></i> Mes Demandes de Clubs
                             </a>
+                            <?php if($is_membre_club == 1): ?>
+                                <a href="?page=my-events" class="dropdown-item">
+                                    <i class="fas fa-calendar-alt"></i> Mes Événements
+                                </a>
+                            <?php endif; ?>
                         <?php endif; ?>
                         <a href="?page=my-subscriptions" class="dropdown-item">
                             <i class="fas fa-bookmark"></i> Mes Inscriptions
@@ -217,7 +221,6 @@ else {
             <?php 
             $stmt = $db->query("SELECT creation_club_active FROM config LIMIT 1");
             $club_creation_active = $stmt->fetchColumn();
-            $user_permission = (int)($_SESSION['permission'] ?? 0);
             ?>
 
             <?php if ($user_permission == 1): ?>

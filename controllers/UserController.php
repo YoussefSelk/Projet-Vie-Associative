@@ -44,6 +44,31 @@ class UserController {
         
         $user_id = $_SESSION['id'];
         $user = $this->userModel->getUserById($user_id);
+        $user_permission = (int)($_SESSION['permission'] ?? 0);
+
+        if ($user_permission === 2) {
+            $stmt = $this->db->prepare("SELECT club_id, nom_club, campus FROM fiche_club WHERE tuteur = ? AND validation_finale = 1 ORDER BY nom_club");
+            $stmt->execute([$user_id]);
+            $tutor_clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM fiche_club WHERE validation_tuteur IS NULL AND validation_bde = 1 AND tuteur = ?");
+            $stmt->execute([$user_id]);
+            $pending_clubs_count = (int)$stmt->fetchColumn();
+
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM fiche_event f LEFT JOIN fiche_club fc ON fc.club_id = f.club_orga WHERE f.validation_tuteur IS NULL AND fc.tuteur = ?");
+            $stmt->execute([$user_id]);
+            $pending_events_count = (int)$stmt->fetchColumn();
+
+            return [
+                'user' => $user,
+                'tutor_clubs' => $tutor_clubs,
+                'tuteur_stats' => [
+                    'tutor_clubs_count' => count($tutor_clubs),
+                    'pending_clubs_count' => $pending_clubs_count,
+                    'pending_events_count' => $pending_events_count
+                ]
+            ];
+        }
         $stats = [];
         
         // Récupérer les adhésions aux clubs de l'utilisateur

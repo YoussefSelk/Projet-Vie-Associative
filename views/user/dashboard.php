@@ -25,6 +25,7 @@
  */
 $pageTitle = 'Tableau de bord - EILCO';
 $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
+$user_permission = (int)($_SESSION['permission'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -41,84 +42,239 @@ $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
             <div class="header-left">
                     <a href="?page=home" class="btn btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
                 </div>
-            <!-- Hero Welcome Section -->
-            <div class="dashboard-hero">
-                <div class="hero-content">
-                    <div class="hero-avatar">
-                        <?= strtoupper(substr($user['prenom'] ?? 'U', 0, 1) . substr($user['nom'] ?? 'U', 0, 1)) ?>
-                    </div>
-                    <h1>Bonjour, <?= htmlspecialchars($user['prenom'] ?? 'Utilisateur') ?> !</h1>
-                    <p>Bienvenue sur votre tableau de bord personnel</p>
-                </div>
-                <div class="hero-actions">
-                    <a href="?page=event-list" class="hero-btn">
-                        <i class="fas fa-calendar-alt"></i>
-                        Voir les événements
-                    </a>
-                    <a href="?page=clubs-browse" class="hero-btn">
-                        <i class="fas fa-users"></i>
-                        Découvrir les clubs
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon clubs">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3><?= $stats['clubs_count'] ?? 0 ?></h3>
-                        <p>Clubs rejoints</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon events">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3><?= $stats['subscriptions_count'] ?? 0 ?></h3>
-                        <p>Inscriptions</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon upcoming">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3><?= $stats['upcoming_count'] ?? 0 ?></h3>
-                        <p>Événements à venir</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon participated">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <div class="stat-content">
-                        <h3><?= count($past_events ?? []) ?></h3>
-                        <p>Événements participés</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Main Content Grid -->
-            <div class="content-grid">
-                <div class="main-column">
-                    <!-- Upcoming Events -->
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-calendar-alt"></i> Mes prochains événements</h3>
-                            <a href="?page=my-events" class="view-all-link">
-                                Voir tout <i class="fas fa-arrow-right"></i>
-                            </a>
+            <?php if ($user_permission === 2): ?>
+                <div class="dashboard-hero">
+                    <div class="hero-content">
+                        <div class="hero-avatar">
+                            <?= strtoupper(substr($user['prenom'] ?? 'T', 0, 1) . substr($user['nom'] ?? 'T', 0, 1)) ?>
                         </div>
-                        <div class="card-body">
-                            <?php if (!empty($upcoming_events)): ?>
+                        <h1>Espace tuteur</h1>
+                        <p>Gérez les validations et suivez vos clubs tutorés</p>
+                    </div>
+                    <div class="hero-actions">
+                        <a href="?page=tutoring" class="hero-btn">
+                            <i class="fas fa-user-graduate"></i>
+                            Accéder au tutorat
+                        </a>
+                        <a href="?page=tutoring" class="hero-btn">
+                            <i class="fas fa-clipboard-check"></i>
+                            Voir les validations
+                        </a>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon clubs">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><?= $tuteur_stats['tutor_clubs_count'] ?? 0 ?></h3>
+                            <p>Clubs tutorés</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon events">
+                            <i class="fas fa-folder-open"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><?= $tuteur_stats['pending_clubs_count'] ?? 0 ?></h3>
+                            <p>Clubs en attente</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon upcoming">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><?= $tuteur_stats['pending_events_count'] ?? 0 ?></h3>
+                            <p>Événements en attente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="main-column">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-users"></i> Clubs tutorés</h3>
+                                <a href="?page=tutoring" class="view-all-link">
+                                    Voir tout <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <?php if (!empty($tutor_clubs)): ?>
+                                    <div class="club-list">
+                                        <?php foreach ($tutor_clubs as $club): ?>
+                                            <a href="?page=club-view&id=<?= $club['club_id'] ?>" class="club-item">
+                                                <div class="club-icon">
+                                                    <i class="fas fa-building"></i>
+                                                </div>
+                                                <div class="club-details">
+                                                    <h4><?= htmlspecialchars($club['nom_club'], ENT_QUOTES, 'UTF-8') ?></h4>
+                                                    <p><i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($club['campus'] ?? 'Campus') ?></p>
+                                                </div>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="empty-state">
+                                        <i class="fas fa-users-slash"></i>
+                                        <p>Aucun club tutoré pour le moment</p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="side-column">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-clipboard-check"></i> Actions tuteur</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="profile-summary">
+                                    <div class="profile-info-list">
+                                        <div class="profile-info-item">
+                                            <i class="fas fa-folder-open"></i>
+                                            <span><?= $tuteur_stats['pending_clubs_count'] ?? 0 ?> clubs à valider</span>
+                                        </div>
+                                        <div class="profile-info-item">
+                                            <i class="fas fa-calendar-check"></i>
+                                            <span><?= $tuteur_stats['pending_events_count'] ?? 0 ?> événements à valider</span>
+                                        </div>
+                                    </div>
+                                    <a href="?page=tutoring" class="profile-edit-btn">
+                                        <i class="fas fa-user-graduate"></i>
+                                        Aller au tutorat
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <!-- Hero Welcome Section -->
+                <div class="dashboard-hero">
+                    <div class="hero-content">
+                        <div class="hero-avatar">
+                            <?= strtoupper(substr($user['prenom'] ?? 'U', 0, 1) . substr($user['nom'] ?? 'U', 0, 1)) ?>
+                        </div>
+                        <h1>Bonjour, <?= htmlspecialchars($user['prenom'] ?? 'Utilisateur') ?> !</h1>
+                        <p>Bienvenue sur votre tableau de bord personnel</p>
+                    </div>
+                    <div class="hero-actions">
+                        <a href="?page=event-list" class="hero-btn">
+                            <i class="fas fa-calendar-alt"></i>
+                            Voir les événements
+                        </a>
+                        <a href="?page=clubs-browse" class="hero-btn">
+                            <i class="fas fa-users"></i>
+                            Découvrir les clubs
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon clubs">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><?= $stats['clubs_count'] ?? 0 ?></h3>
+                            <p>Clubs rejoints</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon events">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><?= $stats['subscriptions_count'] ?? 0 ?></h3>
+                            <p>Inscriptions</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon upcoming">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><?= $stats['upcoming_count'] ?? 0 ?></h3>
+                            <p>Événements à venir</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon participated">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><?= count($past_events ?? []) ?></h3>
+                            <p>Événements participés</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Main Content Grid -->
+                <div class="content-grid">
+                    <div class="main-column">
+                        <!-- Upcoming Events -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-calendar-alt"></i> Mes prochains événements</h3>
+                                <a href="?page=my-events" class="view-all-link">
+                                    Voir tout <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                            <div class="card-body">
+                                <?php if (!empty($upcoming_events)): ?>
+                                    <div class="event-list">
+                                        <?php 
+                                        $months_fr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+                                        foreach (array_slice($upcoming_events, 0, 4) as $event): 
+                                            $date = strtotime($event['date_ev']);
+                                        ?>
+                                            <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="event-item">
+                                                <div class="event-date">
+                                                    <div class="day"><?= date('d', $date) ?></div>
+                                                    <div class="month"><?= $months_fr[date('n', $date) - 1] ?></div>
+                                                </div>
+                                                <div class="event-details">
+                                                    <h4><?= htmlspecialchars($event['titre'], ENT_QUOTES, 'UTF-8') ?></h4>
+                                                    <p>
+                                                        <i class="fas fa-building"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?>
+                                                        &bull;
+                                                        <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus']) ?>
+                                                    </p>
+                                                </div>
+                                                <span class="event-badge <?= $event['status'] ?>">
+                                                    <?= $event['status'] === 'soon' ? 'Bientôt' : 'À venir' ?>
+                                                </span>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="empty-state">
+                                        <i class="fas fa-calendar-times"></i>
+                                        <p>Aucun événement à venir</p>
+                                        <a href="?page=event-list" class="empty-state-btn">
+                                            <i class="fas fa-search"></i> Découvrir les événements
+                                        </a>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommended Events -->
+                        <?php if (!empty($recommended_events)): ?>
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-lightbulb"></i> Recommandés pour vous</h3>
+                                <span class="card-badge">Basé sur vos clubs</span>
+                            </div>
+                            <div class="card-body">
                                 <div class="event-list">
-                                    <?php 
-                                    $months_fr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
-                                    foreach (array_slice($upcoming_events, 0, 4) as $event): 
+                                    <?php foreach (array_slice($recommended_events, 0, 3) as $event): 
                                         $date = strtotime($event['date_ev']);
                                     ?>
                                         <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="event-item">
@@ -128,142 +284,100 @@ $pageCss = ['shared', 'buttons', 'dashboard', 'profiles'];
                                             </div>
                                             <div class="event-details">
                                                 <h4><?= htmlspecialchars($event['titre'], ENT_QUOTES, 'UTF-8') ?></h4>
-                                                <p>
-                                                    <i class="fas fa-building"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?>
-                                                    &bull;
-                                                    <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus']) ?>
-                                                </p>
+                                                <p><i class="fas fa-building"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?></p>
                                             </div>
-                                            <span class="event-badge <?= $event['status'] ?>">
-                                                <?= $event['status'] === 'soon' ? 'Bientôt' : 'À venir' ?>
+                                            <span class="event-badge recommended">
+                                                <i class="fas fa-star"></i> Recommandé
                                             </span>
                                         </a>
                                     <?php endforeach; ?>
                                 </div>
-                            <?php else: ?>
-                                <div class="empty-state">
-                                    <i class="fas fa-calendar-times"></i>
-                                    <p>Aucun événement à venir</p>
-                                    <a href="?page=event-list" class="empty-state-btn">
-                                        <i class="fas fa-search"></i> Découvrir les événements
-                                    </a>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Recommended Events -->
-                    <?php if (!empty($recommended_events)): ?>
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-lightbulb"></i> Recommandés pour vous</h3>
-                            <span class="card-badge">Basé sur vos clubs</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="event-list">
-                                <?php foreach (array_slice($recommended_events, 0, 3) as $event): 
-                                    $date = strtotime($event['date_ev']);
-                                ?>
-                                    <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="event-item">
-                                        <div class="event-date">
-                                            <div class="day"><?= date('d', $date) ?></div>
-                                            <div class="month"><?= $months_fr[date('n', $date) - 1] ?></div>
-                                        </div>
-                                        <div class="event-details">
-                                            <h4><?= htmlspecialchars($event['titre'], ENT_QUOTES, 'UTF-8') ?></h4>
-                                            <p><i class="fas fa-building"></i> <?= htmlspecialchars($event['nom_club'] ?? 'Club', ENT_QUOTES, 'UTF-8') ?></p>
-                                        </div>
-                                        <span class="event-badge recommended">
-                                            <i class="fas fa-star"></i> Recommandé
-                                        </span>
-                                    </a>
-                                <?php endforeach; ?>
                             </div>
                         </div>
+                        <?php endif; ?>
                     </div>
-                    <?php endif; ?>
-                </div>
-                
-                <div class="side-column">
-                    <!-- My Clubs -->
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-users"></i> Mes clubs</h3>
-                            <span class="card-badge"><?= count($my_clubs) ?></span>
-                        </div>
-                        <div class="card-body">
-                            <?php if (!empty($my_clubs)): ?>
-                                <div class="club-list">
-                                    <?php foreach ($my_clubs as $club): ?>
-                                        <a href="?page=club-view&id=<?= $club['club_id'] ?>" class="club-item">
-                                            <div class="club-icon">
-                                                <i class="fas fa-building"></i>
-                                            </div>
-                                            <div class="club-details">
-                                                <h4><?= htmlspecialchars($club['nom_club'], ENT_QUOTES, 'UTF-8') ?></h4>
-                                                <p><i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($club['campus']) ?></p>
-                                            </div>
+                    
+                    <div class="side-column">
+                        <!-- My Clubs -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-users"></i> Mes clubs</h3>
+                                <span class="card-badge"><?= count($my_clubs) ?></span>
+                            </div>
+                            <div class="card-body">
+                                <?php if (!empty($my_clubs)): ?>
+                                    <div class="club-list">
+                                        <?php foreach ($my_clubs as $club): ?>
+                                            <a href="?page=club-view&id=<?= $club['club_id'] ?>" class="club-item">
+                                                <div class="club-icon">
+                                                    <i class="fas fa-building"></i>
+                                                </div>
+                                                <div class="club-details">
+                                                    <h4><?= htmlspecialchars($club['nom_club'], ENT_QUOTES, 'UTF-8') ?></h4>
+                                                    <p><i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($club['campus']) ?></p>
+                                                </div>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="empty-state">
+                                        <i class="fas fa-users-slash"></i>
+                                        <p>Vous n'avez pas encore rejoint de club</p>
+                                        <a href="?page=club-list" class="empty-state-btn">
+                                            <i class="fas fa-search"></i> Découvrir les clubs
                                         </a>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="empty-state">
-                                    <i class="fas fa-users-slash"></i>
-                                    <p>Vous n'avez pas encore rejoint de club</p>
-                                    <a href="?page=club-list" class="empty-state-btn">
-                                        <i class="fas fa-search"></i> Découvrir les clubs
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <!-- Profile Summary -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-user-circle"></i> Mon profil</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="profile-summary">
+                                    <?php 
+                                    $profile_fields = ['mail', 'promo', 'nom', 'prenom'];
+                                    $filled = 0;
+                                    foreach ($profile_fields as $field) {
+                                        if (!empty($user[$field])) $filled++;
+                                    }
+                                    $completion = round(($filled / count($profile_fields)) * 100);
+                                    ?>
+                                    
+                                    <div class="profile-completion">
+                                        <div class="progress-header">
+                                            <span>Complétion du profil</span>
+                                            <span><?= $completion ?>%</span>
+                                        </div>
+                                        <div class="progress-track">
+                                            <div class="progress-fill" style="width: <?= $completion ?>%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="profile-info-list">
+                                        <div class="profile-info-item">
+                                            <i class="fas fa-envelope"></i>
+                                            <span><?= htmlspecialchars($user['mail'] ?? 'Non renseigné') ?></span>
+                                        </div>
+                                        <div class="profile-info-item">
+                                            <i class="fas fa-graduation-cap"></i>
+                                            <span><?= htmlspecialchars($user['promo'] ?? 'Non renseigné') ?></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <a href="?page=profile-edit" class="profile-edit-btn">
+                                        <i class="fas fa-edit"></i>
+                                        Modifier mon profil
                                     </a>
                                 </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    
-                    <!-- Profile Summary -->
-                    <div class="dashboard-card">
-                        <div class="card-header">
-                            <h3><i class="fas fa-user-circle"></i> Mon profil</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="profile-summary">
-                                <?php 
-                                $profile_fields = ['mail', 'promo', 'nom', 'prenom'];
-                                $filled = 0;
-                                foreach ($profile_fields as $field) {
-                                    if (!empty($user[$field])) $filled++;
-                                }
-                                $completion = round(($filled / count($profile_fields)) * 100);
-                                ?>
-                                
-                                <div class="profile-completion">
-                                    <div class="progress-header">
-                                        <span>Complétion du profil</span>
-                                        <span><?= $completion ?>%</span>
-                                    </div>
-                                    <div class="progress-track">
-                                        <div class="progress-fill" style="width: <?= $completion ?>%"></div>
-                                    </div>
-                                </div>
-                                
-                                <div class="profile-info-list">
-                                    <div class="profile-info-item">
-                                        <i class="fas fa-envelope"></i>
-                                        <span><?= htmlspecialchars($user['mail'] ?? 'Non renseigné') ?></span>
-                                    </div>
-                                    <div class="profile-info-item">
-                                        <i class="fas fa-graduation-cap"></i>
-                                        <span><?= htmlspecialchars($user['promo'] ?? 'Non renseigné') ?></span>
-                                    </div>
-                                </div>
-                                
-                                <a href="?page=profile-edit" class="profile-edit-btn">
-                                    <i class="fas fa-edit"></i>
-                                    Modifier mon profil
-                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
     </main>
 

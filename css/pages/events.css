@@ -2016,3 +2016,26 @@ body.my-subscriptions-page .event-card-actions .form-unsubscribe {
     width: 100%;
   }
 }
+
+/* Réserve l'espace du champ montant et cache/affiche sans déplacer les éléments */
+#montantGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 220px; /* réserve l'espace pour éviter les décalages */
+    transition: opacity 0.18s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#montantGroup.montant-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Ajustement responsive : réduire la largeur réservée sur petits écrans */
+@media (max-width: 600px) {
+    #montantGroup {
+        min-width: 0;
+    }
+}

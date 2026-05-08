@@ -166,16 +166,16 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                 </select>
                             </div>
                             
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label class="form-check">
-                                        <input type="checkbox" name="financement_bde" value="1">
+                            <div class="form-row" style="display: flex; align-items: center; gap: 16px;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-check" style="display: flex; align-items: center; gap: 8px;">
+                                        <input type="checkbox" name="financement_bde" value="1" id="financement_bde_checkbox">
                                         <span><i class="fas fa-hand-holding-usd"></i> Demande de financement BDE</span>
                                     </label>
                                 </div>
-                                <div class="form-group" id="montantGroup" style="display: none;">
-                                    <label><i class="fas fa-euro-sign"></i> Montant demandé (€)</label>
-                                    <input type="number" name="montant" class="form-control" placeholder="Ex: 100" min="0" value="0">
+                                <div class="form-group" id="montantGroup" class="montant-group montant-hidden" style="display: flex; align-items: center; min-width: 220px;">
+                                    <label style="margin: 0 8px 0 0;"><i class="fas fa-euro-sign"></i> Montant demandé (€)</label>
+                                    <input type="number" name="montant" class="form-control" placeholder="Ex: 100" min="0" value="0" style="max-width:160px;">
                                 </div>
                             </div>
 
@@ -240,12 +240,15 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
             });
         });
         
-        // Financement BDE toggle
-        const financementCheckbox = document.querySelector('input[name="financement_bde"]');
+        // Financement BDE toggle — toggle class au lieu de display pour éviter les sauts
+        const financementCheckbox = document.getElementById('financement_bde_checkbox');
         const montantGroup = document.getElementById('montantGroup');
         if (financementCheckbox && montantGroup) {
+            // initial state
+            montantGroup.classList.toggle('montant-visible', financementCheckbox.checked);
+
             financementCheckbox.addEventListener('change', function() {
-                montantGroup.style.display = this.checked ? 'block' : 'none';
+                montantGroup.classList.toggle('montant-visible', this.checked);
             });
         }
     </script>

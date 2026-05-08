@@ -714,6 +714,7 @@ class EventController {
             AND mc.valide = 1
             AND fc.validation_finale = 1
             AND fe.validation_finale = 1
+            AND fe.date_ev < CURDATE() 
             AND (fe.rapport_event IS NULL OR fe.rapport_event = '')
             ORDER BY fe.date_ev DESC
         ");

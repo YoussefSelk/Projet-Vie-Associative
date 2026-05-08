@@ -169,9 +169,15 @@ else {
                         <i class="fas fa-chevron-down"></i>
                     </button>
                     <div class="user-dropdown-menu" id="userDropdown">
-                        <a href="?page=dashboard" class="dropdown-item">
-                            <i class="fas fa-tachometer-alt"></i> Mon Tableau de bord
-                        </a>
+                        <?php if (in_array($user_permission, [4, 5], true)): ?>
+                            <a href="?page=admin" class="dropdown-item">
+                                <i class="fas fa-tachometer-alt"></i> Mon Tableau de bord
+                            </a>
+                        <?php else: ?>
+                            <a href="?page=dashboard" class="dropdown-item">
+                                <i class="fas fa-tachometer-alt"></i> Mon Tableau de bord
+                            </a>
+                        <?php endif; ?>
                         <a href="?page=profile" class="dropdown-item">
                             <i class="fas fa-user"></i> Mon Profil
                         </a>

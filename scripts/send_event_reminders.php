@@ -23,6 +23,7 @@ define('LOGS_PATH', ROOT_PATH . '/logs');
 
 require_once CONFIG_PATH . '/Environment.php';
 Environment::load();
+date_default_timezone_set(Environment::getTimezone());
 
 require_once CONFIG_PATH . '/ErrorHandler.php';
 require_once CONFIG_PATH . '/Database.php';

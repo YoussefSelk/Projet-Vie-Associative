@@ -23,6 +23,7 @@ Deployment instructions aligned with config/bootstrap.php, config/Environment.ph
 <h2>Production .env</h2>
 <pre><code>APP_ENV=production
 APP_DEBUG=false
+APP_TIMEZONE=Europe/Paris
 APP_URL=https://your-domain.example
 
 DB_HOST=prod-db-host
@@ -50,6 +51,15 @@ COOKIE_SECURE=true
 COOKIE_HTTPONLY=true
 COOKIE_SAMESITE=Strict
 SERVER_TYPE=auto</code></pre>
+
+<h2>Event Reminders (Local + Apache Production)</h2>
+<ol>
+  <li>Ensure reminder columns exist in <code>abonnements</code>: <code>reminder_48h_sent_at</code>, <code>reminder_24h_sent_at</code></li>
+  <li>Ensure CLI PHP uses the same project <code>.env</code> and timezone (<code>APP_TIMEZONE</code>)</li>
+  <li>Schedule reminders from CLI (not via browser):</li>
+</ol>
+
+<pre><code>*/15 * * * * /usr/bin/php /var/www/your-app/scripts/send_event_reminders.php --window=30 >> /var/www/your-app/logs/reminders.log 2>&1</code></pre>
 
 <hr>
 

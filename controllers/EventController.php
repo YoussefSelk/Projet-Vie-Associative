@@ -34,6 +34,55 @@ class EventController {
     }
 
     /**
+     * Envoie une notification e-mail au tuteur du club organisateur.
+     */
+    private function notifyTutorForEvent(int $clubId, string $eventName): bool
+    {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT u.id, u.nom, u.prenom, u.mail
+                FROM fiche_club fc
+                INNER JOIN users u ON u.id = CAST(fc.tuteur AS UNSIGNED)
+                WHERE fc.club_id = ?
+                LIMIT 1
+            ");
+            $stmt->execute([$clubId]);
+            $tutor = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$tutor || empty($tutor['mail'])) {
+                return false;
+            }
+
+            $creatorStmt = $this->db->prepare("SELECT nom, prenom FROM users WHERE id = ?");
+            $creatorStmt->execute([$_SESSION['id'] ?? 0]);
+            $creator = $creatorStmt->fetch(PDO::FETCH_ASSOC);
+            $creatorName = $creator ? trim(($creator['prenom'] ?? '') . ' ' . ($creator['nom'] ?? '')) : 'Un etudiant';
+
+            $actionUrl = null;
+            if (defined('BASE_URL') && is_string(BASE_URL) && BASE_URL !== '') {
+                $actionUrl = rtrim(BASE_URL, '/') . '/?page=tutoring';
+            }
+
+            $subject = 'Nouvelle demande de validation - evenement';
+            $message = buildTutorValidationNotificationEmail(
+                trim(($tutor['prenom'] ?? '') . ' ' . ($tutor['nom'] ?? '')),
+                $creatorName,
+                'evenement',
+                $eventName,
+                $actionUrl
+            );
+
+            return sendEmail((string)$tutor['mail'], $subject, $message);
+        } catch (\Throwable $e) {
+            ErrorHandler::logError('Failed to notify tutor for event: ' . $e->getMessage(), 'WARNING', [
+                'club_id' => $clubId,
+                'event_name' => $eventName
+            ]);
+            return false;
+        }
+    }
+
+    /**
      * Sanitise un chemin de logo en le contraignant au dossier uploads.
      */
     private function resolveSafeLogoPath(?string $rawLogo): ?string {
@@ -242,7 +291,7 @@ class EventController {
                 $error_msg = "Le dossier d'organisation (Gantt, Budget, Com) est obligatoire pour un événement.";
             } else {
                 // Récupérer le nom du club pour le nommage des fichiers
-                $stmtClub = $this->db->prepare("SELECT nom_club FROM fiche_club WHERE club_id = ?");
+                $stmtClub = $this->db->prepare("SELECT nom_club, tuteur FROM fiche_club WHERE club_id = ?");
                 $stmtClub->execute([$club_id]);
                 $clubInfo = $stmtClub->fetch(PDO::FETCH_ASSOC);
                 $club_name = preg_replace('/[^A-Za-z0-9]/', '', $clubInfo['nom_club'] ?? 'Club');
@@ -350,6 +399,7 @@ class EventController {
                     ];
 
                     if ($this->eventModel->createEvent($data)) {
+                        $this->notifyTutorForEvent((int)$club_id, $nom_event);
                         if ($type_event === 'activity') {
                             $success_msg = "L'activité a été créée avec succès. Elle est en attente de validation.";
                         } else {

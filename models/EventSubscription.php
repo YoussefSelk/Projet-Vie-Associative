@@ -183,6 +183,11 @@ class EventSubscription {
         $this->ensureReminderColumns();
         $column = $this->normalizeReminderColumn($reminderColumn);
         $windowMinutes = max(5, $windowMinutes);
+        $hoursBefore = max(1, $hoursBefore);
+
+        $now = new DateTimeImmutable('now');
+        $windowStart = $now->modify('+' . $hoursBefore . ' hours');
+        $windowEnd = $windowStart->modify('+' . $windowMinutes . ' minutes');
 
         $sql = "
             SELECT
@@ -204,14 +209,13 @@ class EventSubscription {
               AND u.mail IS NOT NULL
               AND u.mail <> ''
               AND a.$column IS NULL
-              AND TIMESTAMP(fe.date_ev, COALESCE(fe.horaire_debut, '00:00:00')) >= DATE_ADD(NOW(), INTERVAL :hours_before_start HOUR)
-              AND TIMESTAMP(fe.date_ev, COALESCE(fe.horaire_debut, '00:00:00')) < DATE_ADD(DATE_ADD(NOW(), INTERVAL :hours_before_end HOUR), INTERVAL :window_minutes MINUTE)
+              AND TIMESTAMP(fe.date_ev, COALESCE(fe.horaire_debut, '00:00:00')) >= :window_start
+              AND TIMESTAMP(fe.date_ev, COALESCE(fe.horaire_debut, '00:00:00')) < :window_end
         ";
 
         $stmt = $this->db->prepare($sql);
-          $stmt->bindValue(':hours_before_start', $hoursBefore, PDO::PARAM_INT);
-          $stmt->bindValue(':hours_before_end', $hoursBefore, PDO::PARAM_INT);
-        $stmt->bindValue(':window_minutes', $windowMinutes, PDO::PARAM_INT);
+        $stmt->bindValue(':window_start', $windowStart->format('Y-m-d H:i:s'), PDO::PARAM_STR);
+        $stmt->bindValue(':window_end', $windowEnd->format('Y-m-d H:i:s'), PDO::PARAM_STR);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

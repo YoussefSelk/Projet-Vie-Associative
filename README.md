@@ -41,6 +41,7 @@ Copy-Item .env.example .env</code></pre>
 <h2>Simple Technical Help (.env)</h2>
 <pre><code>APP_ENV=development
 APP_DEBUG=true
+APP_TIMEZONE=Europe/Paris
 APP_URL=http://localhost:8000
 APP_NAME="Vie Etudiante EILCO"
 

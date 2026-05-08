@@ -63,6 +63,7 @@ class Environment {
 
         $envDir = $path ?? dirname(__DIR__);
         $envFile = $envDir . '/.env';
+        $fallbackEnvFile = $envDir . '/.env.prod';
         
         // Utiliser phpdotenv si disponible et si .env existe
         if (class_exists('Dotenv\Dotenv') && file_exists($envFile)) {
@@ -91,6 +92,9 @@ class Environment {
         // Fallback : Parser .env personnalisé
         if (file_exists($envFile)) {
             self::parseEnvFile($envFile);
+        } elseif (file_exists($fallbackEnvFile)) {
+            // Compatibilite: certains environnements de production deploient uniquement .env.prod
+            self::parseEnvFile($fallbackEnvFile);
         } else {
             // En développement sans .env, utiliser les valeurs par défaut
             self::loadDefaults();
@@ -140,6 +144,7 @@ class Environment {
             // Par defaut, privilegier un mode sur pour eviter toute fuite d'information.
             'APP_ENV' => 'production',
             'APP_DEBUG' => 'false',
+            'APP_TIMEZONE' => 'Europe/Paris',
             'DB_HOST' => 'localhost',
             'DB_NAME' => 'test_projet_tech',
             'DB_USER' => 'root',
@@ -356,6 +361,19 @@ class Environment {
     }
 
     /**
+     * Retourne le fuseau horaire applicatif valide.
+     */
+    public static function getTimezone(): string
+    {
+        $timezone = (string) self::get('APP_TIMEZONE', 'Europe/Paris');
+        if (@timezone_open($timezone) === false) {
+            return 'Europe/Paris';
+        }
+
+        return $timezone;
+    }
+
+    /**
      * Récupère la configuration de sécurité
      * 
      * @return array Configuration [session_lifetime, csrf_lifetime, cookie_*]
@@ -371,3 +389,4 @@ class Environment {
         ];
     }
 }
+

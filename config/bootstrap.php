@@ -41,6 +41,7 @@ ob_start();
 // =============================================================================
 require_once CONFIG_PATH . '/Environment.php';
 Environment::load();
+date_default_timezone_set(Environment::getTimezone());
 
 // URL de base fiable (priorité APP_URL, fallback auto-détection durcie)
 define('BASE_URL', Environment::getBaseUrl());

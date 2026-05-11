@@ -447,6 +447,8 @@ class AuthController {
             // Validation des champs
             if (empty($nom) || empty($prenom) || empty($mail) || empty($password) || empty($cpassword)) {
                 $error_message = 'Tous les champs sont requis';
+            } elseif (empty($promo)) {
+                $error_message = 'Veuillez sélectionner votre statut';
             } elseif ($promo === 'etu' && empty($niveau)) {
                 $error_message = 'Veuillez sélectionner votre promotion';
             } elseif ($niveau === 'ING2' && empty($ing2_type)) {
@@ -537,7 +539,11 @@ class AuthController {
                 }
             } else {
                 // Code correct : créer l'utilisateur
-                $promo_value = $_SESSION['niveau'] ?? $_SESSION['promo'];
+                $sessionPromo = strtolower(trim((string)($_SESSION['promo'] ?? '')));
+                $sessionNiveau = trim((string)($_SESSION['niveau'] ?? ''));
+                $promo_value = ($sessionPromo === 'etu' && $sessionNiveau !== '')
+                    ? $sessionNiveau
+                    : $sessionPromo;
                 $result = $this->userModel->createUser(
                     $_SESSION['nom'],
                     $_SESSION['prenom'],

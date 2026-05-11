@@ -64,7 +64,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                                         <option value="">Sélectionnez votre statut</option>
                                         <option value="etu" <?= (isset($_POST['promo']) && $_POST['promo'] == "etu") ? 'selected' : '' ?>>Étudiant</option>
                                         <option value="tuteur" <?= (isset($_POST['promo']) && $_POST['promo'] == "tuteur") ? 'selected' : '' ?>>Futur tuteur</option>
-                                        <option value="admin" <?= (isset($_POST['promo']) && $_POST['promo'] == "admin") ? 'selected' : '' ?>>Personnel administratif</option>
                                     </select>
                                 </div>
 

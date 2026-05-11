@@ -128,12 +128,28 @@ class User {
      * @param string $password Mot de passe (haché ou non selon $isHashed)
      * @param string $promo Promotion (ex: CP1, ING1, etc.)
      * @param bool $isHashed Indique si le mot de passe est déjà haché
+     * @param int|null $permission Niveau de permission (null = déduit du statut/promo)
      * @return bool Succès de la création
      */
-    public function createUser($nom, $prenom, $mail, $password, $promo = 'etu', $isHashed = false) {
+    public function createUser($nom, $prenom, $mail, $password, $promo = 'etu', $isHashed = false, $permission = null) {
         // Si le mot de passe n'est pas déjà haché, le hacher
         $finalPassword = $isHashed ? $password : password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-        $stmt = $this->db->prepare("INSERT INTO users (nom, prenom, mail, password, promo, permission) VALUES (?, ?, ?, ?, ?, 0)");
-        return $stmt->execute([$nom, $prenom, $mail, $finalPassword, $promo]);
+
+        $finalPermission = $permission;
+        if ($finalPermission === null) {
+            $normalizedPromo = strtolower(trim((string)$promo));
+            $studentPromos = ['cp1', 'cp2', 'ing1', 'ing2', 'ing3', 'etu'];
+            $finalPermission = match (true) {
+                in_array($normalizedPromo, $studentPromos, true) => 1,
+                $normalizedPromo === 'tuteur' => 2,
+                $normalizedPromo === 'bde' => 3,
+                $normalizedPromo === 'admin' => 4,
+                $normalizedPromo === 'personnel' => 4,
+                default => 0
+            };
+        }
+
+        $stmt = $this->db->prepare("INSERT INTO users (nom, prenom, mail, password, promo, permission) VALUES (?, ?, ?, ?, ?, ?)");
+        return $stmt->execute([$nom, $prenom, $mail, $finalPassword, $promo, (int)$finalPermission]);
     }
 }

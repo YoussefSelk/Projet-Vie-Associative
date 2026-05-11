@@ -24,7 +24,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
 <!DOCTYPE html>
 <html lang="fr">
 <?php include VIEWS_PATH . '/includes/head.php'; ?>
-<body>
+<body class="pending-clubs-page">
     <header class="header">
         <?php include VIEWS_PATH . "/includes/header.php"; ?>
     </header>
@@ -55,9 +55,71 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                     <p>Tous les clubs ont été validés.</p>
                 </div>
             <?php else: ?>
+                <?php
+                    $campusList = array_values(array_unique(array_filter(array_map(
+                        fn($c) => trim((string)($c['campus'] ?? '')),
+                        $clubs
+                    ))));
+                    sort($campusList, SORT_NATURAL | SORT_FLAG_CASE);
+                ?>
+
+                <div class="filters-row pending-clubs-filters">
+                    <div class="filter-item filter-item-select">
+                        <label for="pendingCampusFilter">Filtrer par campus :</label>
+                        <select id="pendingCampusFilter" class="filter-select">
+                            <option value="">Tous les campus</option>
+                            <?php foreach ($campusList as $campus): ?>
+                                <option value="<?= htmlspecialchars(mb_strtolower($campus)) ?>"><?= htmlspecialchars($campus) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="filter-item filter-item-select">
+                        <label for="pendingStatusFilter">Filtrer par état de validation :</label>
+                        <select id="pendingStatusFilter" class="filter-select">
+                            <option value="">Toutes les fiches</option>
+                            <option value="a_valider">Fiches à valider</option>
+                            <option value="en_cours">Fiches en cours de traitement</option>
+                            <option value="valide">Fiches validées</option>
+                            <option value="refuse">Fiches refusées</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-item filter-item-action">
+                        <label class="filter-action-label" aria-hidden="true">Action</label>
+                        <button type="button" id="pendingResetFilters" class="filter-reset-btn">
+                            <i class="fas fa-undo"></i> Réinitialiser
+                        </button>
+                    </div>
+
+                    <div class="filter-item filter-item-results">
+                        <label class="filter-action-label" aria-hidden="true">Résultats</label>
+                        <div id="pendingResultsCount" class="browse-count"><?= count($clubs) ?> club(s)</div>
+                    </div>
+                </div>
+
                 <div class="validation-grid">
                     <?php foreach ($clubs as $club): ?>
-                        <div class="validation-card">
+                        <?php
+                            $validationFinale = isset($club['validation_finale']) ? (int)$club['validation_finale'] : null;
+                            $validationBde = isset($club['validation_bde']) ? (int)$club['validation_bde'] : null;
+                            $validationTuteur = isset($club['validation_tuteur']) ? (int)$club['validation_tuteur'] : null;
+                            $validationAdmin = isset($club['validation_admin']) ? (int)$club['validation_admin'] : null;
+
+                            $statusFilter = 'a_valider';
+                            if ($validationFinale === 1) {
+                                $statusFilter = 'valide';
+                            } elseif ($validationFinale === 0 || $validationFinale === -1) {
+                                $statusFilter = 'refuse';
+                            } elseif ($validationBde === 1 || $validationTuteur === 1 || $validationAdmin === 1) {
+                                $statusFilter = 'en_cours';
+                            }
+
+                            $campusNormalized = mb_strtolower(trim((string)($club['campus'] ?? '')));
+                        ?>
+                        <div class="validation-card"
+                            data-campus="<?= htmlspecialchars($campusNormalized) ?>"
+                            data-status="<?= htmlspecialchars($statusFilter) ?>">
                             <div class="validation-card-header">
                                 <h3><?= htmlspecialchars($club['nom_club']) ?></h3>
                                 <span class="badge badge-warning"><i class="fas fa-clock"></i> En attente</span>
@@ -112,12 +174,68 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <div id="pendingNoResults" class="empty-state" style="display:none; margin-top: 1rem;">
+                    <i class="fas fa-filter"></i>
+                    <h3>Aucun résultat</h3>
+                    <p>Aucun club ne correspond aux filtres sélectionnés.</p>
+                </div>
             <?php endif; ?>
         </div>
     </main>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const campusFilter = document.getElementById('pendingCampusFilter');
+            const statusFilter = document.getElementById('pendingStatusFilter');
+            const resetFiltersBtn = document.getElementById('pendingResetFilters');
+            const cards = Array.from(document.querySelectorAll('.validation-grid .validation-card'));
+            const noResults = document.getElementById('pendingNoResults');
+            const resultsCount = document.getElementById('pendingResultsCount');
+
+            function applyPendingFilters() {
+                if (!cards.length || !campusFilter || !statusFilter) {
+                    return;
+                }
+
+                const campus = (campusFilter.value || '').toLowerCase();
+                const status = statusFilter.value || '';
+                let visibleCount = 0;
+
+                cards.forEach(function(card) {
+                    const cardCampus = (card.dataset.campus || '').toLowerCase();
+                    const cardStatus = card.dataset.status || '';
+                    const campusOk = !campus || cardCampus === campus;
+                    const statusOk = !status || cardStatus === status;
+                    const visible = campusOk && statusOk;
+
+                    card.style.display = visible ? '' : 'none';
+                    if (visible) visibleCount++;
+                });
+
+                if (resultsCount) {
+                    resultsCount.textContent = visibleCount + ' club(s)';
+                }
+                if (noResults) {
+                    noResults.style.display = visibleCount === 0 ? '' : 'none';
+                }
+            }
+
+            if (campusFilter && statusFilter) {
+                campusFilter.addEventListener('change', applyPendingFilters);
+                statusFilter.addEventListener('change', applyPendingFilters);
+            }
+
+            if (resetFiltersBtn) {
+                resetFiltersBtn.addEventListener('click', function() {
+                    if (campusFilter) campusFilter.value = '';
+                    if (statusFilter) statusFilter.value = '';
+                    applyPendingFilters();
+                });
+            }
+
+            applyPendingFilters();
+
             document.querySelectorAll('.swal-action-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     const form = this.closest('form');

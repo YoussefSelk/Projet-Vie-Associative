@@ -221,39 +221,41 @@
 }
 
 /* ================================================
-   Card Component
+   Card Component (small screens only)
    ================================================ */
 
-.card {
-  background: var(--color-white);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  transition: var(--transition-base);
-  margin-bottom: 20px;
-}
+@media (max-width: 768px) {
+  .card {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: var(--transition-base);
+    margin-bottom: 20px;
+  }
 
-.card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
-}
+  .card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
 
-.card-header {
-  padding: 15px 20px;
-  background: var(--color-gray-100);
-  border-bottom: 1px solid var(--color-gray-200);
-  font-weight: 600;
-  color: var(--color-gray-800);
-}
+  .card-header {
+    padding: 15px 20px;
+    background: var(--color-gray-100);
+    border-bottom: 1px solid var(--color-gray-200);
+    font-weight: 600;
+    color: var(--color-gray-800);
+  }
 
-.card-body {
-  padding: 20px;
-}
+  .card-body {
+    padding: 20px;
+  }
 
-.card-footer {
-  padding: 15px 20px;
-  background: var(--color-gray-100);
-  border-top: 1px solid var(--color-gray-200);
+  .card-footer {
+    padding: 15px 20px;
+    background: var(--color-gray-100);
+    border-top: 1px solid var(--color-gray-200);
+  }
 }
 
 /* ================================================
@@ -267,7 +269,8 @@
   margin-bottom: 30px;
 }
 
-.stat-card {
+.dashboard-wrapper .stat-card,
+.admin-dashboard .stat-card {
   background: var(--color-white);
   border-radius: var(--radius-lg);
   padding: 25px;
@@ -278,12 +281,14 @@
   transition: var(--transition-base);
 }
 
-.stat-card:hover {
+.dashboard-wrapper .stat-card:hover,
+.admin-dashboard .stat-card:hover {
   box-shadow: var(--shadow-lg);
   transform: translateY(-3px);
 }
 
-.stat-card .stat-icon {
+.dashboard-wrapper .stat-card .stat-icon,
+.admin-dashboard .stat-card .stat-icon {
   width: 60px;
   height: 60px;
   border-radius: var(--radius-md);
@@ -294,23 +299,29 @@
   color: var(--color-white);
 }
 
-.stat-card .stat-icon.primary {
+.dashboard-wrapper .stat-card .stat-icon.primary,
+.admin-dashboard .stat-card .stat-icon.primary {
   background: var(--color-primary);
 }
-.stat-card .stat-icon.success {
+.dashboard-wrapper .stat-card .stat-icon.success,
+.admin-dashboard .stat-card .stat-icon.success {
   background: var(--color-success);
 }
-.stat-card .stat-icon.warning {
+.dashboard-wrapper .stat-card .stat-icon.warning,
+.admin-dashboard .stat-card .stat-icon.warning {
   background: var(--color-warning);
 }
-.stat-card .stat-icon.danger {
+.dashboard-wrapper .stat-card .stat-icon.danger,
+.admin-dashboard .stat-card .stat-icon.danger {
   background: var(--color-danger);
 }
-.stat-card .stat-icon.info {
+.dashboard-wrapper .stat-card .stat-icon.info,
+.admin-dashboard .stat-card .stat-icon.info {
   background: var(--color-info);
 }
 
-.stat-card .stat-content h3 {
+.dashboard-wrapper .stat-card .stat-content h3,
+.admin-dashboard .stat-card .stat-content h3 {
   font-size: 2rem;
   font-weight: 700;
   color: var(--color-gray-800);
@@ -318,25 +329,29 @@
   line-height: 1;
 }
 
-.stat-card .stat-content p {
+.dashboard-wrapper .stat-card .stat-content p,
+.admin-dashboard .stat-card .stat-content p {
   color: var(--color-gray-600);
   margin: 5px 0 0 0;
   font-size: 0.9rem;
 }
 
-.stat-card .stat-trend {
+.dashboard-wrapper .stat-card .stat-trend,
+.admin-dashboard .stat-card .stat-trend {
   margin-left: auto;
   font-size: 0.85rem;
   padding: 4px 8px;
   border-radius: var(--radius-sm);
 }
 
-.stat-card .stat-trend.up {
+.dashboard-wrapper .stat-card .stat-trend.up,
+.admin-dashboard .stat-card .stat-trend.up {
   background: rgba(40, 167, 69, 0.1);
   color: var(--color-success);
 }
 
-.stat-card .stat-trend.down {
+.dashboard-wrapper .stat-card .stat-trend.down,
+.admin-dashboard .stat-card .stat-trend.down {
   background: rgba(220, 53, 69, 0.1);
   color: var(--color-danger);
 }
@@ -417,7 +432,7 @@
   margin-bottom: 30px;
 }
 
-.action-btn {
+.quick-actions .action-btn {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -431,13 +446,13 @@
   transition: var(--transition-base);
 }
 
-.action-btn:hover {
+.quick-actions .action-btn:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
   background: rgba(0, 102, 204, 0.05);
 }
 
-.action-btn i {
+.quick-actions .action-btn i {
   font-size: 1.3rem;
   color: var(--color-primary);
 }
@@ -522,7 +537,7 @@
    Status Badges
    ================================================ */
 
-.badge {
+.validation-page .badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: var(--radius-full);
@@ -531,23 +546,23 @@
   text-transform: uppercase;
 }
 
-.badge-success {
+.validation-page .badge-success {
   background: rgba(40, 167, 69, 0.1);
   color: var(--color-success);
 }
-.badge-warning {
+.validation-page .badge-warning {
   background: rgba(255, 193, 7, 0.2);
   color: #d39e00;
 }
-.badge-danger {
+.validation-page .badge-danger {
   background: rgba(220, 53, 69, 0.1);
   color: var(--color-danger);
 }
-.badge-info {
+.validation-page .badge-info {
   background: rgba(23, 162, 184, 0.1);
   color: var(--color-info);
 }
-.badge-primary {
+.validation-page .badge-primary {
   background: rgba(0, 102, 204, 0.1);
   color: var(--color-primary);
 }
@@ -806,9 +821,6 @@
 }
 .text-info {
   color: var(--color-info) !important;
-}
-.text-muted {
-  color: var(--color-gray-600) !important;
 }
 
 .fw-bold {
@@ -1130,38 +1142,6 @@
 .empty-state-small i {
   font-size: 2rem;
   margin-bottom: 10px;
-}
-
-/* ================================================
-   Cards
-   ================================================ */
-
-.card {
-  background: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.card-header {
-  padding: 20px;
-  background: var(--color-gray-100);
-  border-bottom: 1px solid var(--color-gray-200);
-}
-
-.card-header h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: var(--color-gray-800);
-}
-
-.card-header h3 i {
-  margin-right: 8px;
-  color: var(--color-primary);
-}
-
-.card-body {
-  padding: 20px;
 }
 
 /* ================================================

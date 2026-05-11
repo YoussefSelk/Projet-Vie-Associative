@@ -141,7 +141,8 @@ class User {
             $studentPromos = ['cp1', 'cp2', 'ing1', 'ing2', 'ing3', 'etu'];
             $finalPermission = match (true) {
                 in_array($normalizedPromo, $studentPromos, true) => 1,
-                $normalizedPromo === 'tuteur' => 2,
+                // Un "futur tuteur" doit être validé par un admin avant d'obtenir la permission 2.
+                $normalizedPromo === 'tuteur' => 1,
                 $normalizedPromo === 'bde' => 3,
                 $normalizedPromo === 'admin' => 4,
                 $normalizedPromo === 'personnel' => 4,

@@ -281,22 +281,22 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
             }
 
             function applyPendingFilters() {
-                if (!cards.length || !campusFilter || !statusFilter) return;
+                if (!cards.length) return;
 
-                const campus = (campusFilter.value || '').toLowerCase();
-                const status = statusFilter.value || '';
+                const campus = String(campusFilter ? (campusFilter.value || '') : '').trim().toLowerCase();
+                const status = String(statusFilter ? (statusFilter.value || '') : '').trim();
                 let visibleCount = 0;
 
-                cards.forEach(function(card) {
-                    const cardCampus = (card.dataset.campus || '').toLowerCase();
-                    const cardStatus = card.dataset.status || '';
-                    const campusOk = !campus || cardCampus === campus;
-                    const statusOk = !status || cardStatus === status;
+                for (const card of cards) {
+                    const cardCampus = String(card.dataset.campus || '').trim().toLowerCase();
+                    const cardStatus = String(card.dataset.status || '').trim();
+                    const campusOk = (campus === '' || campus === 'all') ? true : (cardCampus === campus);
+                    const statusOk = (status === '' || status === 'all') ? true : (cardStatus === status);
                     const visible = campusOk && statusOk;
 
                     card.style.display = visible ? '' : 'none';
                     if (visible) visibleCount++;
-                });
+                }
 
                 if (resultsCount) resultsCount.textContent = visibleCount + ' club(s)';
                 if (noResults) noResults.style.display = visibleCount === 0 ? '' : 'none';

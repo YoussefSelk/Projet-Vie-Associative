@@ -425,31 +425,19 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         var rejectedCards = document.querySelectorAll('#rejectedEventsCards > .validation-card-advanced');
         var rejectedEventsSection = document.querySelector('.rejected-events-card');
         var rejectedPaginationWrapper = document.getElementById('rejectedEventsPagination');
+        // Simple mode: no pagination, direct filtering only.
         var currentCampusFilter = 'all';
         var currentStatusFilter = 'all';
-        var pendingPagination = null;
-        var rejectedPagination = null;
-
-        if (cardsContainer && paginationWrapper && typeof PaginationComponent === 'function') {
-            pendingPagination = new PaginationComponent({
-                itemsSelector: '#validationCards',
-                paginationSelector: '#pendingEventsPagination',
-                perPage: 6,
-                perPageOptions: [6, 9, 12, 18]
-            });
+        if (paginationWrapper) {
+            paginationWrapper.style.display = 'none';
         }
-
-        if (rejectedCardsContainer && rejectedPaginationWrapper && typeof PaginationComponent === 'function') {
-            rejectedPagination = new PaginationComponent({
-                itemsSelector: '#rejectedEventsCards',
-                paginationSelector: '#rejectedEventsPagination',
-                perPage: 6,
-                perPageOptions: [6, 9, 12, 18]
-            });
+        if (rejectedPaginationWrapper) {
+            rejectedPaginationWrapper.style.display = 'none';
         }
 
         function filterCards() {
             var visibleCount = 0;
+            var rejectedVisibleCount = 0;
             var totalVisibleCount = 0;
             currentCampusFilter = campusFilter ? (campusFilter.value || 'all') : 'all';
             currentStatusFilter = statusFilter ? (statusFilter.value || 'all') : 'all';
@@ -469,45 +457,26 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                     || (currentStatusFilter === 'validated' && status === 'validated');
 
                 if (showPendingArea && matchesCampus && matchesStatus) {
-                    card.classList.remove('filter-hidden');
-                    if (!pendingPagination) {
-                        card.style.display = '';
-                    }
+                    card.style.display = '';
                     visibleCount++;
                     totalVisibleCount++;
                 } else {
-                    card.classList.add('filter-hidden');
                     card.style.display = 'none';
                 }
             });
 
-            if (pendingPagination) {
-                pendingPagination.currentPage = 1;
-                pendingPagination.update();
-            }
-
             if (rejectedCards && rejectedCards.length) {
-                var rejectedVisibleCount = 0;
                 rejectedCards.forEach(function(card) {
                     var campusRejected = (card.dataset.campus || '').toLowerCase();
                     var matchesCampusRejected = currentCampusFilter === 'all' || campusRejected === currentCampusFilter;
                     if ((currentStatusFilter === 'all' || currentStatusFilter === 'rejected') && matchesCampusRejected) {
-                        card.classList.remove('filter-hidden');
-                        if (!rejectedPagination) {
-                            card.style.display = '';
-                        }
+                        card.style.display = '';
                         rejectedVisibleCount++;
                         totalVisibleCount++;
                     } else {
-                        card.classList.add('filter-hidden');
                         card.style.display = 'none';
                     }
                 });
-
-                if (rejectedPagination) {
-                    rejectedPagination.currentPage = 1;
-                    rejectedPagination.update();
-                }
 
                 if (rejectedEventsSection) {
                     rejectedEventsSection.style.display = ((currentStatusFilter === 'all' || currentStatusFilter === 'rejected') && rejectedVisibleCount > 0) ? '' : 'none';
@@ -521,14 +490,24 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
             }
 
             if (noResults && cardsContainer) {
-                if (showPendingArea && visibleCount === 0 && cards.length > 0) {
-                    noResults.style.display = '';
+                if (showPendingArea) {
+                    if (visibleCount === 0 && cards.length > 0) {
+                        noResults.style.display = '';
+                        cardsContainer.style.display = 'none';
+                        if (paginationWrapper) paginationWrapper.style.display = 'none';
+                    } else {
+                        noResults.style.display = 'none';
+                        cardsContainer.style.display = '';
+                        if (paginationWrapper) paginationWrapper.style.display = '';
+                    }
+                } else {
+                    if (rejectedVisibleCount === 0) {
+                        noResults.style.display = '';
+                    } else {
+                        noResults.style.display = 'none';
+                    }
                     cardsContainer.style.display = 'none';
                     if (paginationWrapper) paginationWrapper.style.display = 'none';
-                } else {
-                    noResults.style.display = 'none';
-                    cardsContainer.style.display = '';
-                    if (paginationWrapper) paginationWrapper.style.display = '';
                 }
             }
         }

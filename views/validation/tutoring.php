@@ -255,34 +255,36 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                                     <?php endif; ?>
                                 </div>
                                 <div class="card-actions">
-                                    <button type="button" class="btn-view-details btn-swal-club-details"
-                                        data-club='<?= htmlspecialchars(json_encode($club), ENT_QUOTES, "UTF-8") ?>'
-                                        data-members='<?= htmlspecialchars(json_encode($clubMembers), ENT_QUOTES, "UTF-8") ?>'>
-                                        <i class="fas fa-eye"></i> Voir détails
-                                    </button>
-                                    <?php if ($is_admin || $is_tutor): ?>
-                                    <button type="button" class="btn-approve btn-swal-club-approve"
-                                        data-id="<?= $club['club_id'] ?>"
-                                        data-name="<?= htmlspecialchars($club['nom_club']) ?>">
-                                        <i class="fas fa-check"></i> Approuver
-                                    </button>
-                                    <?php endif; ?>
-                                    <?php if ($is_admin): ?>
-                                    <button type="button" class="btn-force btn-swal-club-force"
-                                        data-id="<?= $club['club_id'] ?>"
-                                        data-name="<?= htmlspecialchars($club['nom_club']) ?>"
-                                        title="Valider sans attendre le tuteur">
-                                        <i class="fas fa-bolt"></i> Forcer
-                                    </button>
-                                    <?php endif; ?>
-                                    <?php if ($is_admin || $is_tutor): ?>
-                                    <button type="button" class="btn-reject btn-swal-club-reject"
-                                        data-id="<?= $club['club_id'] ?>"
-                                        data-name="<?= htmlspecialchars($club['nom_club']) ?>">
-                                        <i class="fas fa-times"></i> Rejeter
-                                    </button>
-                                    <?php endif; ?>
-                                </div>
+    <button type="button" class="btn-view-details btn-swal-club-details"
+        data-club='<?= htmlspecialchars(json_encode($club), ENT_QUOTES, "UTF-8") ?>'
+        data-members='<?= htmlspecialchars(json_encode($clubMembers), ENT_QUOTES, "UTF-8") ?>'>
+        <i class="fas fa-eye"></i> Voir détails
+    </button>
+    <?php if (!in_array($statusFilter, ['valide', 'refuse'])): ?>
+        <?php if ($is_admin || $is_tutor): ?>
+        <button type="button" class="btn-approve btn-swal-club-approve"
+            data-id="<?= $club['club_id'] ?>"
+            data-name="<?= htmlspecialchars($club['nom_club']) ?>">
+            <i class="fas fa-check"></i> Approuver
+        </button>
+        <?php endif; ?>
+        <?php if ($is_admin): ?>
+        <button type="button" class="btn-force btn-swal-club-force"
+            data-id="<?= $club['club_id'] ?>"
+            data-name="<?= htmlspecialchars($club['nom_club']) ?>"
+            title="Valider sans attendre le tuteur">
+            <i class="fas fa-bolt"></i> Forcer
+        </button>
+        <?php endif; ?>
+        <?php if ($is_admin || $is_tutor): ?>
+        <button type="button" class="btn-reject btn-swal-club-reject"
+            data-id="<?= $club['club_id'] ?>"
+            data-name="<?= htmlspecialchars($club['nom_club']) ?>">
+            <i class="fas fa-times"></i> Rejeter
+        </button>
+        <?php endif; ?>
+    <?php endif; ?>
+</div>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -403,40 +405,42 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
 
 
                                 <div class="card-actions">
-                                    <button type="button" class="btn-view-details btn-swal-event-details"
-                                        data-event='<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>'>
-                                        <i class="fas fa-eye"></i> Voir détails
-                                    </button>
-                                    <?php 
-                                    if ($is_admin) {
-                                        $btn_name = 'validate_event_admin';
-                                    } elseif ($is_bde) {
-                                        $btn_name = 'validate_event_bde';
-                                    } else {
-                                        $btn_name = 'validate_event_tutor';
-                                    }
-                                    ?>
-                                    <button type="button" class="btn-approve btn-swal-event-approve"
-                                        data-id="<?= $event['event_id'] ?>"
-                                        data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
-                                        data-validate-field="<?= $btn_name ?>">
-                                        <i class="fas fa-check"></i> Approuver
-                                    </button>
-                                    <?php if ($is_admin): ?>
-                                    <button type="button" class="btn-force btn-swal-event-force"
-                                        data-id="<?= $event['event_id'] ?>"
-                                        data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
-                                        title="Valider sans attendre le tuteur">
-                                        <i class="fas fa-bolt"></i> Forcer
-                                    </button>
-                                    <?php endif; ?>
-                                    <button type="button" class="btn-reject btn-swal-event-reject"
-                                        data-id="<?= $event['event_id'] ?>"
-                                        data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
-                                        data-validate-field="<?= $btn_name ?>">
-                                        <i class="fas fa-times"></i> Rejeter
-                                    </button>
-                                </div>
+    <button type="button" class="btn-view-details btn-swal-event-details"
+        data-event='<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>'>
+        <i class="fas fa-eye"></i> Voir détails
+    </button>
+    <?php if (!in_array($statusFilter, ['valide', 'refuse'])): ?>
+        <?php 
+        if ($is_admin) {
+            $btn_name = 'validate_event_admin';
+        } elseif ($is_bde) {
+            $btn_name = 'validate_event_bde';
+        } else {
+            $btn_name = 'validate_event_tutor';
+        }
+        ?>
+        <button type="button" class="btn-approve btn-swal-event-approve"
+            data-id="<?= $event['event_id'] ?>"
+            data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
+            data-validate-field="<?= $btn_name ?>">
+            <i class="fas fa-check"></i> Approuver
+        </button>
+        <?php if ($is_admin): ?>
+        <button type="button" class="btn-force btn-swal-event-force"
+            data-id="<?= $event['event_id'] ?>"
+            data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
+            title="Valider sans attendre le tuteur">
+            <i class="fas fa-bolt"></i> Forcer
+        </button>
+        <?php endif; ?>
+        <button type="button" class="btn-reject btn-swal-event-reject"
+            data-id="<?= $event['event_id'] ?>"
+            data-name="<?= htmlspecialchars($event['titre'] ?? 'Événement') ?>"
+            data-validate-field="<?= $btn_name ?>">
+            <i class="fas fa-times"></i> Rejeter
+        </button>
+    <?php endif; ?>
+</div>
                             </div>
                         </div>
                     <?php endforeach; ?>

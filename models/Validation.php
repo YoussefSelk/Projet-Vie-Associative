@@ -45,7 +45,33 @@ class Validation {
      * @return array Liste des clubs en attente de validation BDE
      */
     public function getPendingClubsForBDE() {
-        $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND (validation_bde IS NULL OR validation_bde = 0)");
+        $stmt = $this->db->prepare("
+            SELECT
+                fc.*,
+                tut.nom AS tuteur_nom,
+                tut.prenom AS tuteur_prenom,
+                resp.nom AS responsable_nom,
+                resp.prenom AS responsable_prenom,
+                resp.mail AS responsable_mail
+            FROM fiche_club fc
+            LEFT JOIN users tut ON tut.id = fc.tuteur
+            LEFT JOIN users resp ON resp.id = (
+                SELECT mc.membre_id
+                FROM membres_club mc
+                WHERE mc.club_id = fc.club_id
+                  AND mc.valide = 1
+                ORDER BY
+                  CASE
+                    WHEN mc.fonction IN ('Président','President') THEN 0
+                    WHEN mc.fonction IN ('Vice-Président','Vice-President','Vice-président','Vice-president') THEN 1
+                    ELSE 2
+                  END,
+                  mc.id ASC
+                LIMIT 1
+            )
+            WHERE (fc.validation_finale IS NULL OR fc.validation_finale = 0)
+              AND (fc.validation_bde IS NULL OR fc.validation_bde = 0)
+        ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -58,7 +84,34 @@ class Validation {
      * @return array Liste des clubs validés par le BDE mais en attente de validation finale
      */
     public function getPendingClubs() {
-        $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE (validation_finale IS NULL OR validation_finale = 0) AND validation_bde = 1 AND (validation_admin IS NULL OR validation_admin = 0)");
+        $stmt = $this->db->prepare("
+            SELECT
+                fc.*,
+                tut.nom AS tuteur_nom,
+                tut.prenom AS tuteur_prenom,
+                resp.nom AS responsable_nom,
+                resp.prenom AS responsable_prenom,
+                resp.mail AS responsable_mail
+            FROM fiche_club fc
+            LEFT JOIN users tut ON tut.id = fc.tuteur
+            LEFT JOIN users resp ON resp.id = (
+                SELECT mc.membre_id
+                FROM membres_club mc
+                WHERE mc.club_id = fc.club_id
+                  AND mc.valide = 1
+                ORDER BY
+                  CASE
+                    WHEN mc.fonction IN ('Président','President') THEN 0
+                    WHEN mc.fonction IN ('Vice-Président','Vice-President','Vice-président','Vice-president') THEN 1
+                    ELSE 2
+                  END,
+                  mc.id ASC
+                LIMIT 1
+            )
+            WHERE (fc.validation_finale IS NULL OR fc.validation_finale = 0)
+              AND fc.validation_bde = 1
+              AND (fc.validation_admin IS NULL OR fc.validation_admin = 0)
+        ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -69,7 +122,68 @@ class Validation {
      * @return array Liste des clubs rejetés
      */
     public function getRejectedClubs() {
-        $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE validation_finale = -1");
+        $stmt = $this->db->prepare("
+            SELECT
+                fc.*,
+                tut.nom AS tuteur_nom,
+                tut.prenom AS tuteur_prenom,
+                resp.nom AS responsable_nom,
+                resp.prenom AS responsable_prenom,
+                resp.mail AS responsable_mail
+            FROM fiche_club fc
+            LEFT JOIN users tut ON tut.id = fc.tuteur
+            LEFT JOIN users resp ON resp.id = (
+                SELECT mc.membre_id
+                FROM membres_club mc
+                WHERE mc.club_id = fc.club_id
+                  AND mc.valide = 1
+                ORDER BY
+                  CASE
+                    WHEN mc.fonction IN ('Président','President') THEN 0
+                    WHEN mc.fonction IN ('Vice-Président','Vice-President','Vice-président','Vice-president') THEN 1
+                    ELSE 2
+                  END,
+                  mc.id ASC
+                LIMIT 1
+            )
+            WHERE fc.validation_finale = -1
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupère tous les clubs validés.
+     *
+     * @return array Liste des clubs validés
+     */
+    public function getValidatedClubs() {
+        $stmt = $this->db->prepare("
+            SELECT
+                fc.*,
+                tut.nom AS tuteur_nom,
+                tut.prenom AS tuteur_prenom,
+                resp.nom AS responsable_nom,
+                resp.prenom AS responsable_prenom,
+                resp.mail AS responsable_mail
+            FROM fiche_club fc
+            LEFT JOIN users tut ON tut.id = fc.tuteur
+            LEFT JOIN users resp ON resp.id = (
+                SELECT mc.membre_id
+                FROM membres_club mc
+                WHERE mc.club_id = fc.club_id
+                  AND mc.valide = 1
+                ORDER BY
+                  CASE
+                    WHEN mc.fonction IN ('Président','President') THEN 0
+                    WHEN mc.fonction IN ('Vice-Président','Vice-President','Vice-président','Vice-president') THEN 1
+                    ELSE 2
+                  END,
+                  mc.id ASC
+                LIMIT 1
+            )
+            WHERE fc.validation_finale = 1
+        ");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

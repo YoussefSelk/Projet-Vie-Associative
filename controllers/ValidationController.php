@@ -224,13 +224,21 @@ class ValidationController {
     
     // Récupération des listes selon le rôle :
     // - BDE (permission 3) : voit les clubs en attente de validation_bde
-    // - Admin (permission >= 4) : ne voit que les clubs déjà validés par le BDE (sauf force_approve ci-dessus)
+    // - Admin (permission >= 4) : voit les clubs validés BDE en attente admin
     if ($is_admin) {
-        $clubs = $this->validationModel->getPendingClubs();
+        $pending_clubs = $this->validationModel->getPendingClubs();
     } else {
-        $clubs = $this->validationModel->getPendingClubsForBDE();
+        $pending_clubs = $this->validationModel->getPendingClubsForBDE();
     }
     $rejected_clubs = $this->validationModel->getRejectedClubs();
+    $validated_clubs = $this->validationModel->getValidatedClubs();
+
+    // Envoyer dès le départ toutes les fiches nécessaires aux filtres front.
+    $clubs = array_merge(
+        $pending_clubs ?: [],
+        $validated_clubs ?: [],
+        $rejected_clubs ?: []
+    );
 
     return [
         'clubs' => $clubs,
@@ -352,8 +360,89 @@ class ValidationController {
     }
     
     // Récupération sécurisée des listes (on force un tableau vide si null)
-    $events = $this->validationModel->getPendingEvents() ?: [];
-    $rejected_events = $this->validationModel->getRejectedEvents() ?: [];
+    if ($is_admin) {
+        $pendingStmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club,
+                   u.prenom AS responsable_prenom, u.nom AS responsable_nom, u.mail AS responsable_mail, u.promo AS responsable_promo
+            FROM fiche_event fe
+            LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            LEFT JOIN users u ON fe.id_responsable = u.id
+            WHERE fe.validation_bde = 1
+              AND (fe.validation_admin IS NULL OR fe.validation_admin = 0)
+              AND (fe.validation_finale IS NULL OR (fe.validation_finale = 0 AND (fe.motif_refus IS NULL OR fe.motif_refus = '')))
+            ORDER BY fe.date_depot DESC
+        ");
+        $pendingStmt->execute();
+        $pending_events = $pendingStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $validatedStmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club,
+                   u.prenom AS responsable_prenom, u.nom AS responsable_nom, u.mail AS responsable_mail, u.promo AS responsable_promo
+            FROM fiche_event fe
+            LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            LEFT JOIN users u ON fe.id_responsable = u.id
+            WHERE fe.validation_bde = 1
+              AND fe.validation_finale = 1
+            ORDER BY fe.date_depot DESC
+        ");
+        $validatedStmt->execute();
+        $validated_events = $validatedStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $rejectedStmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club,
+                   u.prenom AS responsable_prenom, u.nom AS responsable_nom, u.mail AS responsable_mail, u.promo AS responsable_promo
+            FROM fiche_event fe
+            LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            LEFT JOIN users u ON fe.id_responsable = u.id
+            WHERE fe.validation_bde = 1
+              AND fe.validation_finale = 0
+              AND fe.motif_refus IS NOT NULL AND fe.motif_refus != ''
+            ORDER BY fe.date_depot DESC
+        ");
+        $rejectedStmt->execute();
+        $rejected_events = $rejectedStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } else {
+        $pendingStmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club,
+                   u.prenom AS responsable_prenom, u.nom AS responsable_nom, u.mail AS responsable_mail, u.promo AS responsable_promo
+            FROM fiche_event fe
+            LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            LEFT JOIN users u ON fe.id_responsable = u.id
+            WHERE (fe.validation_bde IS NULL OR fe.validation_bde = 0)
+              AND (fe.validation_finale IS NULL OR (fe.validation_finale = 0 AND (fe.motif_refus IS NULL OR fe.motif_refus = '')))
+            ORDER BY fe.date_depot DESC
+        ");
+        $pendingStmt->execute();
+        $pending_events = $pendingStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $validatedStmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club,
+                   u.prenom AS responsable_prenom, u.nom AS responsable_nom, u.mail AS responsable_mail, u.promo AS responsable_promo
+            FROM fiche_event fe
+            LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            LEFT JOIN users u ON fe.id_responsable = u.id
+            WHERE fe.validation_bde = 1
+              AND (fe.validation_finale IS NULL OR fe.validation_finale = 1 OR (fe.validation_finale = 0 AND (fe.motif_refus IS NULL OR fe.motif_refus = '')))
+            ORDER BY fe.date_depot DESC
+        ");
+        $validatedStmt->execute();
+        $validated_events = $validatedStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        $rejectedStmt = $this->db->prepare("
+            SELECT fe.*, fc.nom_club,
+                   u.prenom AS responsable_prenom, u.nom AS responsable_nom, u.mail AS responsable_mail, u.promo AS responsable_promo
+            FROM fiche_event fe
+            LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
+            LEFT JOIN users u ON fe.id_responsable = u.id
+            WHERE fe.validation_finale = 0
+              AND fe.motif_refus IS NOT NULL AND fe.motif_refus != ''
+            ORDER BY fe.date_depot DESC
+        ");
+        $rejectedStmt->execute();
+        $rejected_events = $rejectedStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    $events = array_merge($pending_events, $validated_events);
 
     return [
         'events' => $events,
@@ -384,7 +473,9 @@ class ValidationController {
     $user_permission = (int)($_SESSION['permission'] ?? 0);
     $is_admin = ($user_permission >= 4); 
     $is_bde = ($user_permission == 3);   
-    $is_tutor = ($user_permission == 2); 
+    $is_tutor_scope = !$is_admin;
+    // En mode tutoring, tout non-admin agit avec le scope tuteur (ses clubs uniquement)
+    $is_tutor = $is_tutor_scope;
     
     if (!in_array($user_permission, [2, 3, 4, 5])) {
         ErrorHandler::renderHttpError(403, "Accès refusé.");
@@ -510,9 +601,21 @@ class ValidationController {
     // Clubs en attente
         // Flux strict : les tuteurs et admins ne voient que les clubs où validation_bde = 1
         if ($is_admin) {
-            $pending_clubs = $this->db->query("SELECT fc.*, u.nom as tuteur_nom FROM fiche_club fc LEFT JOIN users u ON fc.tuteur = u.id WHERE (fc.validation_finale IS NULL OR fc.validation_finale = 0) AND fc.validation_bde = 1")->fetchAll(PDO::FETCH_ASSOC);
-        } elseif ($is_tutor) {
-            $stmt = $this->db->prepare("SELECT * FROM fiche_club WHERE tuteur = ? AND validation_tuteur IS NULL AND validation_bde = 1");
+            $pending_clubs = $this->db->query("
+                SELECT fc.*, u.nom as tuteur_nom, u.prenom as tuteur_prenom
+                FROM fiche_club fc
+                LEFT JOIN users u ON fc.tuteur = u.id
+                WHERE fc.validation_bde = 1
+                   OR fc.validation_finale IN (1, -1, 0)
+            ")->fetchAll(PDO::FETCH_ASSOC);
+        } elseif ($is_tutor_scope) {
+            // Tutor scope: ne charger que les fiches des clubs tutores par l'utilisateur connecte
+            $stmt = $this->db->prepare("
+                SELECT fc.*, u.nom as tuteur_nom, u.prenom as tuteur_prenom
+                FROM fiche_club fc
+                LEFT JOIN users u ON fc.tuteur = u.id
+                WHERE fc.tuteur = ?
+            ");
             $stmt->execute([$user_id]);
             $pending_clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else { $pending_clubs = []; }
@@ -530,21 +633,7 @@ class ValidationController {
                 LEFT JOIN users u ON fe.id_responsable = u.id
                 WHERE fe.validation_finale IS NULL
             ")->fetchAll(PDO::FETCH_ASSOC);
-
-        } elseif ($is_bde) {
-            $pending_events = $this->db->query("
-                SELECT fe.*, fc.nom_club, fc.logo_club,
-                    u.prenom AS responsable_prenom,
-                    u.nom    AS responsable_nom,
-                    u.mail   AS responsable_mail,
-                    u.promo  AS responsable_promo
-                FROM fiche_event fe
-                INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
-                LEFT JOIN users u ON fe.id_responsable = u.id
-                WHERE fe.validation_bde IS NULL
-            ")->fetchAll(PDO::FETCH_ASSOC);
-
-        } elseif ($is_tutor) {
+        } elseif ($is_tutor_scope) {
             $stmt = $this->db->prepare("
                 SELECT fe.*, fc.nom_club, fc.logo_club,
                     u.prenom AS responsable_prenom,
@@ -554,7 +643,7 @@ class ValidationController {
                 FROM fiche_event fe
                 INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
                 LEFT JOIN users u ON fe.id_responsable = u.id
-                WHERE fc.tuteur = ? AND fe.validation_tuteur IS NULL
+                WHERE fc.tuteur = ?
             ");
             $stmt->execute([$user_id]);
             $pending_events = $stmt->fetchAll(PDO::FETCH_ASSOC);

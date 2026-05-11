@@ -324,7 +324,7 @@ else {
                                 <span class="action-badge"><?= $nb_clubs_bde ?></span>
                             <?php endif; ?>
                         </a>
-                        <a href="?page=tutoring" class="quick-dropdown-item">
+                        <a href="?page=pending-events" class="quick-dropdown-item">
                             <i class="fas fa-calendar-check"></i> Valider les événements
                             <?php if ($nb_events_bde > 0): ?>
                                 <span class="action-badge"><?= $nb_events_bde ?></span>

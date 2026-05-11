@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Liste des evenements en attente de validation (BDE)
  * 
@@ -71,29 +71,50 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                     </div>
                 </div>
             </div>
-
             <!-- Search & Filter Section -->
             <div class="search-section">
-                <div class="search-row">
-                    <div class="search-input-wrapper">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchInput" placeholder="Rechercher par titre, club, campus, lieu..." autocomplete="off">
+                <?php
+                    $campus_values = [];
+                    foreach (($events ?? []) as $evf) {
+                        $camp = trim((string)($evf['campus'] ?? ''));
+                        if ($camp !== '') $campus_values[$camp] = true;
+                    }
+                    foreach (($rejected_events ?? []) as $evf) {
+                        $camp = trim((string)($evf['campus'] ?? ''));
+                        if ($camp !== '') $campus_values[$camp] = true;
+                    }
+                    $campus_options = array_keys($campus_values);
+                    sort($campus_options, SORT_NATURAL | SORT_FLAG_CASE);
+                    $all_events_count = count($events ?? []) + count($rejected_events ?? []);
+                ?>
+                <div class="search-row" style="display:grid; grid-template-columns: 1fr 1fr auto auto; gap:12px; align-items:end;">
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="eventCampusFilter" style="font-weight:600; color:#334155;">Filtrer par campus :</label>
+                        <select id="eventCampusFilter" class="form-control">
+                            <option value="all">Tous les campus</option>
+                            <?php foreach ($campus_options as $campus_option): ?>
+                                <option value="<?= strtolower(htmlspecialchars($campus_option, ENT_QUOTES, 'UTF-8')) ?>"><?= htmlspecialchars($campus_option, ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" data-filter="all">
-                            <i class="fas fa-layer-group"></i> Tout
-                            <span class="count"><?= count($events ?? []) ?></span>
-                        </button>
-                        <button class="filter-tab" data-filter="pending">
-                            <i class="fas fa-clock"></i> En attente
-                        </button>
-                        <button class="filter-tab" data-filter="partial">
-                            <i class="fas fa-check"></i> Partiellement validés
-                        </button>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="eventStatusFilter" style="font-weight:600; color:#334155;">Filtrer par etat de validation :</label>
+                        <select id="eventStatusFilter" class="form-control">
+                            <option value="all">Toutes les fiches</option>
+                            <option value="pending">Fiches a valider</option>
+                            <option value="partial">Fiches en cours de traitement</option>
+                            <option value="validated">Fiches validees</option>
+                            <option value="rejected">Fiches refusees</option>
+                        </select>
+                    </div>
+                    <button type="button" id="eventFiltersReset" class="btn btn-outline" style="height:44px;">
+                        <i class="fas fa-undo"></i> Reinitialiser
+                    </button>
+                    <div id="eventFilterCount" class="campus-badge" style="justify-self:end; min-width:92px; text-align:center; font-weight:700;">
+                        <?= (int)$all_events_count ?> fiche(s)
                     </div>
                 </div>
             </div>
-
             <!-- Pending Events -->
             <?php if (empty($events)): ?>
                 <div class="card">
@@ -113,7 +134,18 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         $has_tuteur = ($event['validation_tuteur'] ?? null) == 1;
                         $has_admin = ($event['validation_admin'] ?? null) == 1;
                         $is_partial = $has_bde || $has_tuteur || $has_admin;
+                        $is_fully_validated = isset($event['validation_finale']) && ((int)$event['validation_finale'] === 1);
+                        $is_rejected = isset($event['validation_finale']) && (((int)$event['validation_finale'] === 0) || ((int)$event['validation_finale'] === -1));
+                        $is_actionable = !$is_fully_validated && !$is_rejected;
                         $filter_type = $is_partial ? 'partial' : 'pending';
+                        $status_type = 'pending';
+                        if ($is_fully_validated) {
+                            $status_type = 'validated';
+                        } elseif ($is_rejected) {
+                            $status_type = 'rejected';
+                        } elseif ($is_partial) {
+                            $status_type = 'partial';
+                        }
                         $is_event_type = false;
                         if (isset($event['is_event'])) {
                             $is_event_type = ((int)$event['is_event'] === 1);
@@ -127,6 +159,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                     ?>
                         <div class="validation-card-advanced event-card" 
                              data-type="<?= $filter_type ?>" 
+                             data-status="<?= $status_type ?>"
+                             data-campus="<?= strtolower(htmlspecialchars((string)($event['campus'] ?? ''), ENT_QUOTES, 'UTF-8')) ?>"
                              data-search="<?= strtolower(htmlspecialchars(($event['titre'] ?? '') . ' ' . ($event['nom_club'] ?? '') . ' ' . ($event['campus'] ?? '') . ' ' . ($event['lieu'] ?? ''))) ?>">
                             <div class="card-main">
                                 <div class="card-content">
@@ -153,7 +187,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                             <i class="fas <?= $is_event_type ? 'fa-calendar-check' : 'fa-shapes' ?>"></i>
                                             <?= $is_event_type ? 'Événement' : 'Activité' ?>
                                         </span>
-                                        <?php if ($is_partial): ?>
+                                        <?php if ($is_fully_validated): ?>
+                                            <span class="badge badge-success"><i class="fas fa-check-circle"></i> Validé</span>
+                                        <?php elseif ($is_rejected): ?>
+                                            <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Refusé</span>
+                                        <?php elseif ($is_partial): ?>
                                             <span class="badge badge-info"><i class="fas fa-spinner"></i> Validation partielle</span>
                                         <?php else: ?>
                                             <span class="badge badge-warning"><i class="fas fa-clock"></i> En attente</span>
@@ -217,29 +255,31 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                     <button type="button" class="btn-view-details" onclick='openEventModal(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)'>
                                         <i class="fas fa-eye"></i> Voir détails
                                     </button>
-                                    <form method="POST" class="form-approve-event">
-                                        <?= Security::csrfField() ?>
-                                        <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
-                                        <input type="hidden" name="action" value="approve">
-                                        <input type="hidden" name="validate_event" value="1">
-                                        <button type="submit" class="btn-approve">
-                                            <i class="fas fa-check"></i> Approuver
+                                    <?php if ($is_actionable): ?>
+                                        <form method="POST" class="form-approve-event">
+                                            <?= Security::csrfField() ?>
+                                            <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
+                                            <input type="hidden" name="action" value="approve">
+                                            <input type="hidden" name="validate_event" value="1">
+                                            <button type="submit" class="btn-approve">
+                                                <i class="fas fa-check"></i> Approuver
+                                            </button>
+                                        </form>
+                                        <?php if ($is_admin): ?>
+                                        <form method="POST" class="form-force-event">
+                                            <?= Security::csrfField() ?>
+                                            <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
+                                            <input type="hidden" name="action" value="force_approve">
+                                            <input type="hidden" name="validate_event" value="1">
+                                            <button type="submit" class="btn-force" title="Valider immédiatement (Admin)">
+                                                <i class="fas fa-bolt"></i> Forcer
+                                            </button>
+                                        </form>
+                                        <?php endif; ?>
+                                        <button type="button" class="btn-reject" onclick='openEventModalReject(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)'>
+                                            <i class="fas fa-times"></i> Rejeter
                                         </button>
-                                    </form>
-                                    <?php if ($is_admin): ?>
-                                    <form method="POST" class="form-force-event">
-                                        <?= Security::csrfField() ?>
-                                        <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
-                                        <input type="hidden" name="action" value="force_approve">
-                                        <input type="hidden" name="validate_event" value="1">
-                                        <button type="submit" class="btn-force" title="Valider immédiatement (Admin)">
-                                            <i class="fas fa-bolt"></i> Forcer
-                                        </button>
-                                    </form>
                                     <?php endif; ?>
-                                    <button type="button" class="btn-reject" onclick='openEventModalReject(<?= htmlspecialchars(json_encode($event), ENT_QUOTES, "UTF-8") ?>)'>
-                                        <i class="fas fa-times"></i> Rejeter
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -266,7 +306,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 <div class="card-body">
                     <div class="validation-cards-container" id="rejectedEventsCards">
                         <?php foreach ($rejected_events as $event): ?>
-                            <div class="validation-card-advanced event-card rejected-event">
+                            <div class="validation-card-advanced event-card rejected-event" data-status="rejected" data-campus="<?= strtolower(htmlspecialchars((string)($event['campus'] ?? ''), ENT_QUOTES, 'UTF-8')) ?>" data-search="<?= strtolower(htmlspecialchars(($event['titre'] ?? '') . ' ' . ($event['nom_club'] ?? '') . ' ' . ($event['campus'] ?? '') . ' ' . ($event['lieu'] ?? '') . ' ' . ($event['motif_refus'] ?? ''))) ?>">
                                 <div class="card-main">
                                     <div class="card-content">
                                         <div class="card-title-row">
@@ -373,15 +413,20 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         }
 
         // ---- Search & Filter ----
-        var searchInput = document.getElementById('searchInput');
-        var filterTabs = document.querySelectorAll('.filter-tab');
+        var campusFilter = document.getElementById('eventCampusFilter');
+        var statusFilter = document.getElementById('eventStatusFilter');
+        var resetFiltersBtn = document.getElementById('eventFiltersReset');
+        var filterCountBadge = document.getElementById('eventFilterCount');
         var cards = document.querySelectorAll('#validationCards > .validation-card-advanced');
         var noResults = document.getElementById('noResults');
         var cardsContainer = document.getElementById('validationCards');
         var paginationWrapper = document.getElementById('pendingEventsPagination');
         var rejectedCardsContainer = document.getElementById('rejectedEventsCards');
+        var rejectedCards = document.querySelectorAll('#rejectedEventsCards > .validation-card-advanced');
+        var rejectedEventsSection = document.querySelector('.rejected-events-card');
         var rejectedPaginationWrapper = document.getElementById('rejectedEventsPagination');
-        var currentFilter = 'all';
+        var currentCampusFilter = 'all';
+        var currentStatusFilter = 'all';
         var pendingPagination = null;
         var rejectedPagination = null;
 
@@ -404,17 +449,32 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         }
 
         function filterCards() {
-            var searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
             var visibleCount = 0;
+            var totalVisibleCount = 0;
+            currentCampusFilter = campusFilter ? (campusFilter.value || 'all') : 'all';
+            currentStatusFilter = statusFilter ? (statusFilter.value || 'all') : 'all';
+            var showRejectedOnly = currentStatusFilter === 'rejected';
+            var showPendingArea = !showRejectedOnly;
+
+            if (cardsContainer) cardsContainer.style.display = showPendingArea ? '' : 'none';
+            if (paginationWrapper) paginationWrapper.style.display = showPendingArea ? '' : 'none';
+
             cards.forEach(function(card) {
-                var matchesSearch = card.dataset.search.includes(searchTerm);
-                var matchesFilter = currentFilter === 'all' || card.dataset.type === currentFilter;
-                if (matchesSearch && matchesFilter) {
+                var status = card.dataset.status || 'pending';
+                var campus = (card.dataset.campus || '').toLowerCase();
+                var matchesCampus = currentCampusFilter === 'all' || campus === currentCampusFilter;
+                var matchesStatus = (currentStatusFilter === 'all')
+                    || (currentStatusFilter === 'pending' && status === 'pending')
+                    || (currentStatusFilter === 'partial' && status === 'partial')
+                    || (currentStatusFilter === 'validated' && status === 'validated');
+
+                if (showPendingArea && matchesCampus && matchesStatus) {
                     card.classList.remove('filter-hidden');
                     if (!pendingPagination) {
                         card.style.display = '';
                     }
                     visibleCount++;
+                    totalVisibleCount++;
                 } else {
                     card.classList.add('filter-hidden');
                     card.style.display = 'none';
@@ -426,8 +486,42 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 pendingPagination.update();
             }
 
+            if (rejectedCards && rejectedCards.length) {
+                var rejectedVisibleCount = 0;
+                rejectedCards.forEach(function(card) {
+                    var campusRejected = (card.dataset.campus || '').toLowerCase();
+                    var matchesCampusRejected = currentCampusFilter === 'all' || campusRejected === currentCampusFilter;
+                    if ((currentStatusFilter === 'all' || currentStatusFilter === 'rejected') && matchesCampusRejected) {
+                        card.classList.remove('filter-hidden');
+                        if (!rejectedPagination) {
+                            card.style.display = '';
+                        }
+                        rejectedVisibleCount++;
+                        totalVisibleCount++;
+                    } else {
+                        card.classList.add('filter-hidden');
+                        card.style.display = 'none';
+                    }
+                });
+
+                if (rejectedPagination) {
+                    rejectedPagination.currentPage = 1;
+                    rejectedPagination.update();
+                }
+
+                if (rejectedEventsSection) {
+                    rejectedEventsSection.style.display = ((currentStatusFilter === 'all' || currentStatusFilter === 'rejected') && rejectedVisibleCount > 0) ? '' : 'none';
+                }
+            } else if (rejectedEventsSection) {
+                rejectedEventsSection.style.display = 'none';
+            }
+
+            if (filterCountBadge) {
+                filterCountBadge.textContent = totalVisibleCount + ' fiche(s)';
+            }
+
             if (noResults && cardsContainer) {
-                if (visibleCount === 0 && cards.length > 0) {
+                if (showPendingArea && visibleCount === 0 && cards.length > 0) {
                     noResults.style.display = '';
                     cardsContainer.style.display = 'none';
                     if (paginationWrapper) paginationWrapper.style.display = 'none';
@@ -439,15 +533,15 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
             }
         }
 
-        if (searchInput) searchInput.addEventListener('input', filterCards);
-        filterTabs.forEach(function(tab) {
-            tab.addEventListener('click', function() {
-                filterTabs.forEach(function(t) { t.classList.remove('active'); });
-                this.classList.add('active');
-                currentFilter = this.dataset.filter;
+        if (campusFilter) campusFilter.addEventListener('change', filterCards);
+        if (statusFilter) statusFilter.addEventListener('change', filterCards);
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', function() {
+                if (campusFilter) campusFilter.value = 'all';
+                if (statusFilter) statusFilter.value = 'all';
                 filterCards();
             });
-        });
+        }
 
         filterCards();
 
@@ -564,24 +658,30 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
 
         window.openEventModal = function(ev) {
             var isAdmin = <?= json_encode($is_admin) ?>;
+            var isFinalValidated = parseInt(ev.validation_finale, 10) === 1;
+            var isRejected = parseInt(ev.validation_finale, 10) === 0 || parseInt(ev.validation_finale, 10) === -1;
+            var isLocked = isFinalValidated || isRejected;
             var swalOptions = {
                 title: '<i class="fas fa-calendar-alt" style="color:#3b82f6;"></i> ' + esc(ev.titre || 'Sans titre'),
                 html: buildDetailHtml(ev),
                 width: 700,
                 showCloseButton: true,
-                showCancelButton: true,
-                showDenyButton: true,
-                confirmButtonText: '<i class="fas fa-check"></i> Approuver',
+                showCancelButton: !isLocked,
+                showDenyButton: !isLocked,
+                confirmButtonText: isLocked ? 'Fermer' : '<i class="fas fa-check"></i> Approuver',
                 denyButtonText: '<i class="fas fa-times"></i> Rejeter',
-                cancelButtonText: 'Fermer',
+                cancelButtonText: isLocked ? '' : 'Fermer',
                 confirmButtonColor: '#28a745',
                 denyButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
                 customClass: { popup: 'swal-detail-popup' },
                 reverseButtons: false,
-                footer: isAdmin ? '<button id="swalForceBtn" class="btn-force" style="background:#d97706;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:600;"><i class="fas fa-bolt"></i> Forcer la validation</button>' : ''
+                footer: (!isLocked && isAdmin) ? '<button id="swalForceBtn" class="btn-force" style="background:#d97706;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:600;"><i class="fas fa-bolt"></i> Forcer la validation</button>' : ''
             };
             Swal.fire(swalOptions).then(function(result) {
+                if (isLocked) {
+                    return;
+                }
                 if (result.isConfirmed) {
                     document.getElementById('swalApproveEventId').value = ev.event_id;
                     document.getElementById('swalApproveForm').submit();
@@ -590,7 +690,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 }
             });
             // Bind force button inside modal
-            if (isAdmin) {
+            if (!isLocked && isAdmin) {
                 var forceBtn = document.getElementById('swalForceBtn');
                 if (forceBtn) {
                     forceBtn.addEventListener('click', function() {
@@ -706,3 +806,5 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
     <?php include VIEWS_PATH . '/includes/footer.php'; ?>
 </body>
 </html>
+
+

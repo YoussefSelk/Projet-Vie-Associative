@@ -262,8 +262,9 @@ class EventController {
             ErrorHandler::renderHttpError(403, "Vous n'avez pas les permissions nécessaires pour créer un événement.");
         }
         
-        $error_msg = '';
-        $success_msg = '';
+        $error_msg = (string)($_SESSION['flash_error'] ?? '');
+        $success_msg = (string)($_SESSION['flash_success'] ?? '');
+        unset($_SESSION['flash_error'], $_SESSION['flash_success']);
 
         // 1. Détermination de la liste des clubs selon le profil
         if ($user_permission === 1) {
@@ -426,7 +427,7 @@ class EventController {
                         if ($type_event === 'activity') {
                             $success_msg = "L'activité a été créée avec succès. Elle est en attente de validation.";
                         } else {
-                            $success_msg = "L'événement a été créé avec succès. Il est en attente de validation (BDE & Tuteur).";
+                            $success_msg = "L'événement a été créé avec succès. Il est en attente de validation (BDE, Tuteur & Admin).";
                         }
                     } else {
                         $label = ($type_event === 'activity') ? "de l'activité" : "de l'événement";
@@ -437,6 +438,7 @@ class EventController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            $_SESSION['flash_success'] = $success_msg;
             redirect($_SERVER['REQUEST_URI']);
         }
 

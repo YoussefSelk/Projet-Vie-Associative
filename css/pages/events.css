@@ -1770,8 +1770,8 @@ body.event-list-page .event-card-actions .btn {
    ================================================ */
 body.my-events-page .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+  gap: 28px;
   align-items: stretch;
 }
 
@@ -1781,9 +1781,9 @@ body.my-events-page .event-card {
   flex-direction: column;
   min-height: 100%;
   border: 1px solid #d6e1ee;
-  border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-  box-shadow: 0 12px 30px rgba(15, 42, 67, 0.1);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 14px 34px rgba(15, 42, 67, 0.09);
   overflow: hidden;
   transition:
     transform 0.22s ease,
@@ -1805,18 +1805,17 @@ body.my-events-page .event-card-inner {
 }
 
 body.my-events-page .event-left {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 3;
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
 }
 
 body.my-events-page .event-date-badge {
   position: static;
-  min-width: 54px;
-  padding: 8px 10px;
-  border-radius: 9px;
-  box-shadow: 0 8px 16px rgba(0, 102, 204, 0.24);
+  min-width: 58px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 102, 204, 0.22);
 }
 
 body.my-events-page .event-date-badge .day {
@@ -1833,25 +1832,33 @@ body.my-events-page .event-body {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  padding: 20px 18px 16px;
+  padding: 24px 22px 20px;
 }
 
 body.my-events-page .event-head {
   display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  flex-direction: row;
+  gap: 18px;
   align-items: flex-start;
-  padding-right: 82px;
+  justify-content: space-between;
+  min-height: 0;
+  text-align: left;
+}
+
+body.my-events-page .event-head-main {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 body.my-events-page .event-title {
   margin: 0;
   color: #0f172a;
-  font-size: 1.35rem;
-  line-height: 1.25;
-  font-weight: 700;
+  max-width: 100%;
+  font-size: 1.28rem;
+  line-height: 1.28;
+  font-weight: 800;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1859,72 +1866,131 @@ body.my-events-page .event-title {
 body.my-events-page .event-head-right {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 10px;
+  max-width: 100%;
 }
 
 body.my-events-page .event-body .badge,
 body.my-events-page .event-body .campus-badge {
-  font-size: 0.76rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.74rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
+  line-height: 1.15;
+  white-space: normal;
+  text-align: center;
+  background: #eef6ff;
+  color: #005eb8;
+  border: 1px solid #cfe4ff;
 }
 
 body.my-events-page .event-body .type-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   margin-left: 0;
-  padding: 5px 10px;
+  padding: 6px 10px;
   border-radius: 999px;
   font-size: 0.74rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   border: 1px solid transparent;
+}
+
+body.my-events-page .event-body .badge-success,
+body.my-events-page .event-body .badge-warning,
+body.my-events-page .event-body .badge-danger {
+  border: 1px solid transparent;
+}
+
+body.my-events-page .event-body .badge-success {
+  background: #22a847;
+  color: #ffffff;
+}
+
+body.my-events-page .event-body .badge-warning {
+  background: #fff7d6;
+  color: #8a5a00;
+  border-color: #f5d56f;
+}
+
+body.my-events-page .event-body .badge-danger {
+  background: #e3344b;
+  color: #ffffff;
 }
 
 body.my-events-page .event-body .type-badge.event {
   color: #0f4fb0;
-  background: linear-gradient(180deg, #e8f2ff 0%, #dbeafe 100%);
-  border-color: #a6c7fb;
+  background: #eef6ff;
+  border-color: #cfe4ff;
 }
 
 body.my-events-page .event-body .type-badge.activity {
-  color: #0f5a49;
-  background: linear-gradient(180deg, #e8fbf5 0%, #d1fae5 100%);
-  border-color: #98e8c9;
+  color: #005eb8;
+  background: #eef6ff;
+  border-color: #cfe4ff;
 }
 
 body.my-events-page .event-card .refusal-reason {
-  margin: 10px 0 8px;
+  margin: 14px 0 2px;
   border-radius: 8px;
   border-left-width: 3px;
-  padding: 8px 10px;
+  padding: 10px 12px;
+}
+
+body.my-events-page .event-description-block {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid #e3edf8;
+  border-radius: 10px;
+  background: #fcfdff;
+}
+
+body.my-events-page .event-section-title {
+  margin: 0 0 8px;
+  color: #0f2f55;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 body.my-events-page .request-tracker {
-  margin: 12px 0;
-  padding: 14px;
-  border-radius: 12px;
+  width: min(100%, 450px);
+  margin: 18px auto 0;
+  padding: 16px 18px;
+  border-radius: 10px;
+  background: #f8fbff;
+  border: 1px solid #dce8f5;
 }
 
 body.my-events-page .tracker-title {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-size: 0.95rem;
 }
 
 body.my-events-page .tracker-step {
-  min-height: 32px;
+  min-height: 30px;
 }
 
 body.my-events-page .tracker-label {
-  font-size: 0.84rem;
+  font-size: 0.86rem;
 }
 
 body.my-events-page .event-description {
-  margin: 4px 0 12px;
-  font-size: 1.02rem;
-  line-height: 1.5;
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.55;
   color: #334155;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -1934,39 +2000,63 @@ body.my-events-page .event-description {
 
 body.my-events-page .event-meta-row {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 0;
   color: #1e3a5f;
-  font-size: 1.02rem;
+  font-size: 0.98rem;
 }
 
 body.my-events-page .event-meta-row .meta-item {
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid #e3edf8;
+  border-radius: 9px;
+  background: #f8fbff;
+  font-size: 0.96rem;
+  white-space: nowrap;
+}
+
+body.my-events-page .event-meta-row .meta-item span {
+  color: #0f2f55;
 }
 
 body.my-events-page .event-meta-row .meta-item i {
-  width: 14px;
+  width: 16px;
+  color: #0066cc;
+  text-align: center;
 }
 
 body.my-events-page .event-actions {
-  margin-top: auto;
+  margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid #e2e8f0;
   display: flex;
+  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
+body.my-events-page .event-actions form {
+  display: inline-flex !important;
+  margin-left: 0 !important;
+}
+
 body.my-events-page .event-actions .btn {
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: 700;
   padding: 9px 14px;
 }
 
 @media (max-width: 900px) {
   body.my-events-page .events-grid {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
     gap: 18px;
   }
 }
@@ -1978,8 +2068,18 @@ body.my-events-page .event-actions .btn {
 
   body.my-events-page .event-head {
     flex-direction: column;
+    gap: 12px;
+    min-height: 0;
     align-items: flex-start;
-    padding-right: 78px;
+    text-align: left;
+  }
+
+  body.my-events-page .event-left {
+    justify-content: flex-start;
+  }
+
+  body.my-events-page .event-body {
+    padding: 20px 18px 18px;
   }
 
   body.my-events-page .event-title {
@@ -1989,6 +2089,19 @@ body.my-events-page .event-actions .btn {
   body.my-events-page .event-actions .btn {
     flex: 1 1 auto;
     justify-content: center;
+  }
+
+  body.my-events-page .request-tracker {
+    width: 100%;
+  }
+
+  body.my-events-page .event-meta-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body.my-events-page .event-meta-row .meta-item {
+    width: 100%;
   }
 }
 

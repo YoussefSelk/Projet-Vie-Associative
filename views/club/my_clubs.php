@@ -97,7 +97,7 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                                     // Détermine le statut basé sur validation_finale
                                     if ($club['validation_finale'] == 1) {
                                         // Club validé avec succès
-                                        $status = 'Validé';
+                                        $status = !empty(trim((string)($club['motif_forcage'] ?? ''))) ? 'Approuvé par forçage' : 'Validé';
                                         $statusClass = 'status-approved';
                                     } elseif (($club['validation_finale'] == -1 || $club['validation_finale'] === 0) && !empty($club['motif_refus'])) {
                                         // Club refusé (validation_finale = -1 et motif_refus n'est pas vide)
@@ -153,11 +153,7 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                                 ];
 
                                 $clubIsForcedApproval = $isClubFinallyApproved
-                                    && (
-                                        (int)($club['validation_bde'] ?? 0) !== 1
-                                        || (int)($club['validation_admin'] ?? 0) !== 1
-                                        || (int)($club['validation_tuteur'] ?? 0) !== 1
-                                    );
+                                    && !empty(trim((string)($club['motif_forcage'] ?? '')));
 
                                 if ($clubIsForcedApproval) {
                                     foreach ($clubTrackingSteps as $stepIndex => $step) {

@@ -118,6 +118,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                         );
                         $isApproved = ($validationFinale === '1') || $allSignaturesApproved;
                         $isPending = !$isApproved && !$isRejected;
+                        $isForcedApproval = !empty(trim((string)($event['motif_forcage'] ?? '')));
 
                         // Logique de filtrage
                         if ($isPending) {
@@ -137,7 +138,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                             $status = 'En attente';
                             $statusClass = 'badge-warning';
                         } elseif ($isApproved) {
-                            $status = 'Approuvé';
+                            $status = $isForcedApproval ? 'Validation forcée par admin' : 'Approuvé';
                             $statusClass = 'badge-success';
                         } else {
                             $status = 'Refusé';
@@ -146,29 +147,30 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                     ?>
                         <div class="event-card" data-search="<?= htmlspecialchars($searchData) ?>" data-filter="<?= $statusFilter ?>">
                             <div class="event-card-inner">
-                                <aside class="event-left">
-                                    <div class="event-date-badge">
-                                        <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
-                                        <span class="month"><?php 
-                                            $moisFr = ['jan', 'fév', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
-                                            echo $moisFr[date('n', strtotime($event['date_ev'] ?? 'now')) - 1];
-                                        ?></span>
-                                    </div>
-                                </aside>
-
                                 <div class="event-body">
                                     <header class="event-head">
-                                        <h3 class="event-title"><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h3>
-                                        <div class="event-head-right">
-                                            <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
-                                                <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
-                                            </span>
-                                            <span class="type-badge <?= $isActivity ? 'activity' : 'event' ?>">
-                                                <i class="fas <?= $isActivity ? 'fa-shapes' : 'fa-calendar-check' ?>"></i>
-                                                <?= $isActivity ? 'Activité' : 'Événement' ?>
-                                            </span>
-                                            <span class="badge <?= $statusClass ?>"><?= $status ?></span>
+                                        <div class="event-head-main">
+                                            <h3 class="event-title"><?= htmlspecialchars($event['titre'] ?? 'Sans titre') ?></h3>
+                                            <div class="event-head-right">
+                                                <span class="campus-badge <?= strtolower($event['campus'] ?? 'calais') ?>">
+                                                    <i class="fas fa-map-marker-alt"></i> <?= htmlspecialchars($event['campus'] ?? 'N/A') ?>
+                                                </span>
+                                                <span class="type-badge <?= $isActivity ? 'activity' : 'event' ?>">
+                                                    <i class="fas <?= $isActivity ? 'fa-shapes' : 'fa-calendar-check' ?>"></i>
+                                                    <?= $isActivity ? 'Activité' : 'Événement' ?>
+                                                </span>
+                                                <span class="badge <?= $statusClass ?>"><?= $status ?></span>
+                                            </div>
                                         </div>
+                                        <aside class="event-left">
+                                            <div class="event-date-badge" aria-label="Date de l'événement">
+                                                <span class="day"><?= date('d', strtotime($event['date_ev'] ?? 'now')) ?></span>
+                                                <span class="month"><?php
+                                                    $moisFr = ['jan', 'fév', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
+                                                    echo $moisFr[date('n', strtotime($event['date_ev'] ?? 'now')) - 1];
+                                                ?></span>
+                                            </div>
+                                        </aside>
                                     </header>
 
                                     <?php if ($isRejected && !empty($event['motif_refus'])): ?>
@@ -180,6 +182,26 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                             <small><strong>Refus :</strong> <?= htmlspecialchars(ucfirst(implode(', ', $rejectedBy))) ?></small>
                                         </div>
                                     <?php endif; ?>
+
+                                    <section class="event-description-block">
+                                        <h4 class="event-section-title">Description</h4>
+                                        <p class="event-description">
+                                            <?php if (!empty(trim((string)($event['description'] ?? '')))): ?>
+                                                <?= htmlspecialchars(mb_substr((string)$event['description'], 0, 160)) ?><?= mb_strlen((string)$event['description']) > 160 ? '...' : '' ?>
+                                            <?php else: ?>
+                                                Aucune description renseignée
+                                            <?php endif; ?>
+                                        </p>
+                                    </section>
+
+                                    <div class="event-meta-row" aria-label="Informations pratiques de l'événement">
+                                        <div class="meta-item"><i class="fas fa-calendar-alt"></i> <span>Date : <?= htmlspecialchars(date('d/m/Y', strtotime($event['date_ev'] ?? 'now'))) ?></span></div>
+                                        <?php if (!empty($event['horaire_debut']) || !empty($event['horaire_fin'])): ?>
+                                            <div class="meta-item"><i class="fas fa-clock"></i> <span>Horaire : <?= htmlspecialchars((!empty($event['horaire_debut']) ? substr($event['horaire_debut'],0,5) : '?') . ' - ' . (!empty($event['horaire_fin']) ? substr($event['horaire_fin'],0,5) : '?')) ?></span></div>
+                                        <?php else: ?>
+                                            <div class="meta-item"><i class="fas fa-clock"></i> <span>Horaire : non renseigné</span></div>
+                                        <?php endif; ?>
+                                    </div>
 
                                     <?php
                                         $eventSignatureState = static function ($value) {
@@ -201,11 +223,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                         ];
 
                                         $eventIsForcedApproval = $isApproved
-                                            && (
-                                                (int)($validationBde ?? 0) !== 1
-                                                || (int)($validationAdmin ?? 0) !== 1
-                                                || (int)($validationTuteur ?? 0) !== 1
-                                            );
+                                            && !empty(trim((string)($event['motif_forcage'] ?? '')));
 
                                         if ($eventIsForcedApproval) {
                                             foreach ($eventTrackingSteps as $eventStepIndex => $eventStep) {
@@ -246,17 +264,6 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
                                             <?php endforeach; ?>
                                         </ol>
                                     </section>
-
-                                    <?php if (!empty($event['description'])): ?>
-                                        <p class="event-description"><?= htmlspecialchars(mb_substr($event['description'], 0, 120)) ?><?= mb_strlen($event['description']) > 120 ? '...' : '' ?></p>
-                                    <?php endif; ?>
-
-                                    <div class="event-meta-row">
-                                        <div class="meta-item"><i class="fas fa-calendar-alt"></i> <?= htmlspecialchars(date('d/m/Y', strtotime($event['date_ev'] ?? 'now'))) ?></div>
-                                        <?php if (!empty($event['horaire_debut']) || !empty($event['horaire_fin'])): ?>
-                                            <div class="meta-item"><i class="fas fa-clock"></i> <?= htmlspecialchars((!empty($event['horaire_debut']) ? substr($event['horaire_debut'],0,5) : '?') . ' - ' . (!empty($event['horaire_fin']) ? substr($event['horaire_fin'],0,5) : '?')) ?></div>
-                                        <?php endif; ?>
-                                    </div>
 
                                     <footer class="event-actions">
                                         <a href="?page=event-view&id=<?= $event['event_id'] ?>" class="btn btn-primary btn-sm">
@@ -309,7 +316,6 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
 
     document.addEventListener('DOMContentLoaded', function() {
         cleanupStaleSwalOverlay();
-
         // Initialize search for my events
         if (document.querySelector('#myEventSearch')) {
             window.myEventSearch = new SearchComponent({

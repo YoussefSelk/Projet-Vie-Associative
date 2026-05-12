@@ -100,6 +100,20 @@ class ValidationController {
     }
 
     /**
+     * Nettoie le motif de validation forcee sans le confondre avec motif_refus.
+     */
+    private function normalizeMotifForcage($value): ?string {
+        $motif = trim((string)($value ?? ''));
+        if ($motif === '') {
+            return null;
+        }
+
+        return function_exists('mb_substr')
+            ? mb_substr($motif, 0, 1000, 'UTF-8')
+            : substr($motif, 0, 1000);
+    }
+
+    /**
      * Affiche la liste des clubs en attente de validation BDE
      * Requiert permission 3 (membre BDE)
      * 
@@ -159,6 +173,7 @@ class ValidationController {
         $club_id = $_POST['club_id'] ?? null;
         $action = $_POST['action'] ?? null;
         $remarques = trim($_POST['remarques'] ?? '');
+        $motifForcage = $this->normalizeMotifForcage($_POST['motif_forcage'] ?? null);
 
         if (!$club_id || !$action) {
             $error_msg = "Données manquantes.";
@@ -170,12 +185,16 @@ class ValidationController {
 
             // --- CAS 1 : FORCE APPROVE (Admin uniquement - Validation immédiate compl\u00e8te) ---
             if ($action === 'force_approve' && $is_admin) {
-                $stmt = $this->db->prepare("UPDATE fiche_club SET validation_bde = 1, validation_admin = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL WHERE club_id = ?");
-                if ($stmt->execute([$club_id])) {
-                    $success_msg = "Club valid IMM\u00c9DIATEMENT (Validation forcée : BDE + Tuteur + Admin).";
-                    $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'validée');
+                if ($motifForcage === null) {
+                    $error_msg = "Le motif du forçage est obligatoire.";
                 } else {
-                    $error_msg = "Erreur lors de la validation forcée.";
+                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_bde = 1, validation_admin = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL, motif_forcage = ? WHERE club_id = ?");
+                    if ($stmt->execute([$motifForcage, $club_id])) {
+                        $success_msg = "Club validé IMMÉDIATEMENT (Validation forcée : BDE + Tuteur + Admin).";
+                        $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'validée');
+                    } else {
+                        $error_msg = "Erreur lors de la validation forcée.";
+                    }
                 }
 
             // --- CAS 2 : APPROVE (Selon le rôle de l'utilisateur) ---
@@ -210,17 +229,34 @@ class ValidationController {
                     $error_msg = "Erreur lors de la validation.";
                 }
 
-            // --- CAS 3 : REJET (Réinitialise tout) ---
+            // --- CAS 3 : REJET (Marque uniquement le rôle rejetant) ---
             } elseif ($action === 'reject') {
-                $stmt = $this->db->prepare("UPDATE fiche_club SET validation_bde = 0, validation_admin = 0, validation_tuteur = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?");
+                if ($is_admin) {
+                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?");
+                } else {
+                    $stmt = $this->db->prepare("UPDATE fiche_club SET validation_bde = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?");
+                }
+
                 if ($stmt->execute([$remarques, $club_id])) {
-                    $success_msg = "Club rejeté. Toutes les validations ont été annulées.";
+                    $success_msg = "Club rejeté.";
                     $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'rejetée', $remarques);
                 } else {
                     $error_msg = "Erreur lors du rejet.";
                 }
             }
         }
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error_msg !== '' && $success_msg === '') {
+        if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest') {
+            http_response_code(422);
+            header('Content-Type: text/plain; charset=UTF-8');
+            echo $error_msg;
+            exit;
+        }
+
+        $_SESSION['flash_error'] = $error_msg;
+        redirect($_SERVER['REQUEST_URI']);
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
@@ -284,6 +320,7 @@ class ValidationController {
             $event_id = $_POST['event_id'] ?? null;
             $action = $_POST['action'] ?? null;
             $remarques = trim($_POST['remarques'] ?? $_POST['motif'] ?? '');
+            $motifForcage = $this->normalizeMotifForcage($_POST['motif_forcage'] ?? null);
 
         if (!$event_id || !$action) {
             $error_msg = "Données manquantes.";
@@ -297,14 +334,18 @@ class ValidationController {
 
             // --- CAS 1 : FORCE APPROVE (Administration uniquement) ---
             if ($action === 'force_approve' && $is_admin) {
-                $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_bde = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL WHERE event_id = ?");
-                if ($stmt->execute([$event_id])) {
-                    $success_msg = "Événement validé IMMÉDIATEMENT par l'administration (Validation forcée).";
-                    if ($eventClubId > 0) {
-                        $this->notifyLeadershipRequestStatus($eventClubId, $eventClubName, 'evenement', $eventTitle, 'validée');
-                    }
+                if ($motifForcage === null) {
+                    $error_msg = "Le motif du forçage est obligatoire.";
                 } else {
-                    $error_msg = "Erreur lors de la validation forcée.";
+                    $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_bde = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL, motif_forcage = ? WHERE event_id = ?");
+                    if ($stmt->execute([$motifForcage, $event_id])) {
+                        $success_msg = "Événement validé IMMÉDIATEMENT par l'administration (Validation forcée).";
+                        if ($eventClubId > 0) {
+                            $this->notifyLeadershipRequestStatus($eventClubId, $eventClubName, 'evenement', $eventTitle, 'validée');
+                        }
+                    } else {
+                        $error_msg = "Erreur lors de la validation forcée.";
+                    }
                 }
 
             // --- CAS 2 : APPROVE (Validation selon le rôle + Vérification croisée) ---
@@ -344,8 +385,12 @@ class ValidationController {
 
             // --- CAS 3 : REJET (Validation finale = 0) ---
             } elseif ($action === 'reject') {
-                // On remet tout à 0 pour bloquer l'événement
-                $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = 0, validation_admin = 0, validation_tuteur = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?");
+                // Marquer uniquement le refus du rôle courant et la validation finale, sans écraser les autres signatures
+                if ($is_admin) {
+                    $stmt = $this->db->prepare("UPDATE fiche_event SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?");
+                } else {
+                    $stmt = $this->db->prepare("UPDATE fiche_event SET validation_bde = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?");
+                }
                 if ($stmt->execute([$remarques, $event_id])) {
                     $success_msg = "Événement rejeté.";
                     if ($eventClubId > 0) {
@@ -504,12 +549,17 @@ class ValidationController {
             $club_id = $_POST['club_id'] ?? null;
             $action = $_POST['action'] ?? null;
             $motif = trim($_POST['motif'] ?? '');
+            $motifForcage = $this->normalizeMotifForcage($_POST['motif_forcage'] ?? null);
 
             if ($club_id && $action) {
                 if ($is_admin) {
                     if ($action === 'force_approve') {
-                        $this->db->prepare("UPDATE fiche_club SET validation_bde = 1, validation_admin = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL WHERE club_id = ?")->execute([$club_id]);
-                        $success_msg = "Club validé IMMÉDIATEMENT (Validation forcée : BDE + Tuteur + Admin).";
+                        if ($motifForcage === null) {
+                            $error_msg = "Le motif du forçage est obligatoire.";
+                        } else {
+                            $this->db->prepare("UPDATE fiche_club SET validation_bde = 1, validation_admin = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL, motif_forcage = ? WHERE club_id = ?")->execute([$motifForcage, $club_id]);
+                            $success_msg = "Club validé IMMÉDIATEMENT (Validation forcée : BDE + Tuteur + Admin).";
+                        }
                     } elseif ($action === 'approve') {
                         $this->db->prepare("UPDATE fiche_club SET validation_admin = 1 WHERE club_id = ?")->execute([$club_id]);
                         // Vérification croisée : BDE + Tuteur + Admin = validation finale
@@ -523,7 +573,7 @@ class ValidationController {
                             $success_msg = "Approbation admin enregistrée. En attente des autres signatures requises.";
                         }
                     } elseif ($action === 'reject') {
-                        $this->db->prepare("UPDATE fiche_club SET validation_bde = 0, validation_admin = 0, validation_tuteur = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?")->execute([$motif, $club_id]);
+                        $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?")->execute([$motif, $club_id]);
                         $success_msg = "Club rejeté par l'administrateur.";
                     }
                 } elseif ($is_tutor) {
@@ -553,12 +603,17 @@ class ValidationController {
         $event_id = $_POST['event_id'] ?? null;
         $action = $_POST['action'] ?? null;
         $motif = trim($_POST['motif'] ?? '');
+        $motifForcage = $this->normalizeMotifForcage($_POST['motif_forcage'] ?? null);
 
         if ($event_id && $action) {
             if (isset($_POST['validate_event_admin']) && $is_admin) {
                 if ($action === 'force_approve') {
-                    $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_bde = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
-                    $success_msg = "Événement validé IMMÉDIATEMENT (Validation forcée).";
+                    if ($motifForcage === null) {
+                        $error_msg = "Le motif du forçage est obligatoire.";
+                    } else {
+                        $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_bde = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL, motif_forcage = ? WHERE event_id = ?")->execute([$motifForcage, $event_id]);
+                        $success_msg = "Événement validé IMMÉDIATEMENT (Validation forcée).";
+                    }
                 } elseif ($action === 'reject') {
                     $motifRefus = $motif !== '' ? $motif : 'Refusé par l\'administration.';
                     $this->db->prepare("UPDATE fiche_event SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?")->execute([$motifRefus, $event_id]);

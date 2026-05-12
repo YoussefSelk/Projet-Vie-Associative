@@ -222,6 +222,15 @@ $can_view_soutenance = ($user_permission >= 2);
                             </div>
                         </div>
                         <?php endif; ?>
+
+                        <?php if (!empty(trim((string)($club['motif_forcage'] ?? ''))) && isset($_SESSION['id'])): ?>
+                        <div class="club-section" style="margin-bottom: 30px;">
+                            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; color: #d97706;"><i class="fas fa-bolt"></i> Motif de validation forcée</h3>
+                            <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 8px; color: #92400e;">
+                                <p class="club-remarks" style="margin: 0; font-style: italic;"><?= nl2br(htmlspecialchars((string)$club['motif_forcage'], ENT_QUOTES, 'UTF-8')) ?></p>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         
                         <div class="club-actions" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; display: flex; gap: 15px; flex-wrap: wrap;">
     

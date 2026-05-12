@@ -187,7 +187,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                             <?= $is_event_type ? 'Événement' : 'Activité' ?>
                                         </span>
                                         <?php if ($is_fully_validated): ?>
-                                            <span class="badge badge-success"><i class="fas fa-check-circle"></i> Validé</span>
+                                            <span class="badge badge-success"><i class="fas fa-check-circle"></i> <?= !empty(trim((string)($event['motif_forcage'] ?? ''))) ? 'Approuvé par forçage' : 'Validé' ?></span>
                                         <?php elseif ($is_rejected): ?>
                                             <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Refusé</span>
                                         <?php elseif ($is_partial): ?>
@@ -270,6 +270,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                             <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                                             <input type="hidden" name="action" value="force_approve">
                                             <input type="hidden" name="validate_event" value="1">
+                                            <input type="hidden" name="motif_forcage" value="">
                                             <button type="submit" class="btn-force" title="Valider immédiatement (Admin)">
                                                 <i class="fas fa-bolt"></i> Forcer
                                             </button>
@@ -367,6 +368,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         <input type="hidden" name="event_id" id="swalForceEventId" value="">
         <input type="hidden" name="action" value="force_approve">
         <input type="hidden" name="validate_event" value="1">
+        <input type="hidden" name="motif_forcage" id="swalForceEventMotif" value="">
     </form>
 
     <script>
@@ -667,6 +669,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         Swal.fire({
                             title: 'Forcer la validation ?',
                             html: '<p>L\'événement <strong>«\u00a0' + esc(ev.titre) + '\u00a0»</strong> sera validé immédiatement (Admin + BDE + Tuteur).</p><p style="color:#d97706;font-size:0.9em;margin-top:8px;"><i class="fas fa-exclamation-triangle"></i> Cette action contourne le circuit de validation normal.</p>',
+                            input: 'textarea',
+                            inputLabel: 'Motif du forçage',
+                            inputPlaceholder: 'Expliquez pourquoi cette validation est forcée. Ce message sera visible par l’étudiant.',
+                            inputAttributes: { maxlength: 1000, 'aria-label': 'Motif du forçage' },
+                            inputValidator: function(value) {
+                                if (!value || !value.trim()) return 'Le motif du forçage est obligatoire.';
+                                if (value.trim().length > 1000) return 'Le motif ne peut pas dépasser 1000 caractères.';
+                            },
                             icon: 'warning',
                             showCancelButton: true,
                             confirmButtonText: '<i class="fas fa-bolt"></i> Oui, forcer',
@@ -676,6 +686,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         }).then(function(r) {
                             if (r.isConfirmed) {
                                 document.getElementById('swalForceEventId').value = ev.event_id;
+                                document.getElementById('swalForceEventMotif').value = (r.value || '').trim();
                                 document.getElementById('swalForceForm').submit();
                             }
                         });
@@ -746,6 +757,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 Swal.fire({
                     title: 'Forcer la validation ?',
                     html: '<p>L\'événement sera <strong>validé immédiatement</strong> (Admin + BDE + Tuteur).</p><p style="color:#d97706;font-size:0.9em;"><i class="fas fa-exclamation-triangle"></i> Cette action contourne le circuit de validation normal.</p>',
+                    input: 'textarea',
+                    inputLabel: 'Motif du forçage',
+                    inputPlaceholder: 'Expliquez pourquoi cette validation est forcée. Ce message sera visible par l’étudiant.',
+                    inputAttributes: { maxlength: 1000, 'aria-label': 'Motif du forçage' },
+                    inputValidator: function(value) {
+                        if (!value || !value.trim()) return 'Le motif du forçage est obligatoire.';
+                        if (value.trim().length > 1000) return 'Le motif ne peut pas dépasser 1000 caractères.';
+                    },
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonText: '<i class="fas fa-bolt"></i> Oui, forcer',
@@ -753,7 +772,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                     confirmButtonColor: '#d97706',
                     cancelButtonColor: '#6c757d'
                 }).then(function(result) {
-                    if (result.isConfirmed) form.submit();
+                    if (result.isConfirmed) {
+                        var motifInput = form.querySelector('input[name="motif_forcage"]');
+                        if (motifInput) motifInput.value = (result.value || '').trim();
+                        form.submit();
+                    }
                 });
             });
         });

@@ -114,7 +114,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                             if ($statusFilter === 'valide') {
                                 $statusBadgeClass = 'badge-success';
                                 $statusBadgeIcon = 'fa-check-circle';
-                                $statusLabel = 'Validée';
+                                $statusLabel = !empty(trim((string)($club['motif_forcage'] ?? ''))) ? 'Approuvée par forçage' : 'Validée';
                             } elseif ($statusFilter === 'refuse') {
                                 $statusBadgeClass = 'badge-danger';
                                 $statusBadgeIcon = 'fa-times-circle';
@@ -246,6 +246,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                     <input type="hidden" name="club_id" id="swalForceClubId" value="">
                     <input type="hidden" name="action" value="force_approve">
                     <input type="hidden" name="validate_club" value="1">
+                    <input type="hidden" name="motif_forcage" id="swalForceClubMotif" value="">
                 </form>
                 <?php endif; ?>
 
@@ -488,6 +489,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                     Swal.fire({
                         title: 'Forcer la validation ?',
                         html: '<p>Le club <strong>&laquo; ' + esc(clubName) + ' &raquo;</strong> sera valide immediatement.</p><p style="color:#d97706;font-size:0.9em;"><i class="fas fa-exclamation-triangle"></i> Cette action contourne le circuit normal.</p>',
+                        input: 'textarea',
+                        inputLabel: 'Motif du forçage',
+                        inputPlaceholder: 'Expliquez pourquoi cette validation est forcée. Ce message sera visible par l’étudiant.',
+                        inputAttributes: { maxlength: 1000, 'aria-label': 'Motif du forçage' },
+                        inputValidator: function(value) {
+                            if (!value || !value.trim()) return 'Le motif du forçage est obligatoire.';
+                            if (value.trim().length > 1000) return 'Le motif ne peut pas dépasser 1000 caractères.';
+                        },
                         icon: 'warning',
                         showCancelButton: true,
                         confirmButtonText: '<i class="fas fa-bolt"></i> Oui, forcer',
@@ -497,9 +506,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                     }).then(function(result) {
                         if (result.isConfirmed) {
                             const forceId = document.getElementById('swalForceClubId');
+                            const forceMotif = document.getElementById('swalForceClubMotif');
                             const forceForm = document.getElementById('swalForceClubForm');
                             if (forceId && forceForm) {
                                 forceId.value = clubId;
+                                if (forceMotif) forceMotif.value = (result.value || '').trim();
                                 forceForm.submit();
                             }
                         }

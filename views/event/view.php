@@ -245,7 +245,18 @@ $pageCss = ['shared', 'buttons', 'events'];
                                     </div>
                                 </div>
                             <?php endif; ?>
-                        
+
+                            <?php if (!empty(trim((string)($event['motif_forcage'] ?? ''))) && isset($_SESSION['id'])): ?>
+                                <div class="event-reserved-section mb-20">
+                                    <div class="event-reserved-card" style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e;">
+                                        <h4 class="event-reserved-subtitle" style="color: #d97706;">
+                                            <i class="fas fa-bolt"></i> Motif de validation forcée
+                                        </h4>
+                                        <p style="margin: 0; font-style: italic;"><?= nl2br(htmlspecialchars((string)$event['motif_forcage'], ENT_QUOTES, 'UTF-8')) ?></p>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                         <div class="event-actions">
                             <a href="?page=event-list" class="btn btn-outline">
                                 <i class="fas fa-calendar-alt"></i> Voir tous les événements

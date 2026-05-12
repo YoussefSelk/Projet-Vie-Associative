@@ -179,7 +179,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                         if ($validationFinale === 1) {
                             $statusFilter = 'valide';
                             $badgeClass = 'badge-success';
-                            $badgeText = 'Validé';
+                            $badgeText = !empty(trim((string)($club['motif_forcage'] ?? ''))) ? 'Approuvé par forçage' : 'Validé';
                             $badgeIcon = 'fa-check-circle';
                         } elseif ($validationFinale === 0 || $validationFinale === -1) {
                             $statusFilter = 'refuse';
@@ -300,7 +300,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                         if ($validationFinale === 1) {
                             $statusFilter = 'valide';
                             $badgeClass = 'badge-success';
-                            $badgeText = 'Validé';
+                            $badgeText = !empty(trim((string)($event['motif_forcage'] ?? ''))) ? 'Approuvé par forçage' : 'Validé';
                             $badgeIcon = 'fa-check-circle';
                         } elseif ($validationFinale === 0 || $validationFinale === -1) {
                             $statusFilter = 'refuse';
@@ -521,6 +521,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
 
             fetch(window.location.href, {
                 method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 body: formData
             })
             .then(response => {
@@ -528,11 +529,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                     Swal.fire({ icon: 'success', title: 'Succès', text: 'Action effectuée avec succès.', timer: 1500, showConfirmButton: false })
                         .then(() => window.location.reload());
                 } else {
-                    throw new Error('Erreur serveur');
+                    return response.text().then(message => {
+                        throw new Error(message || 'Erreur serveur');
+                    });
                 }
             })
-            .catch(() => {
-                Swal.fire({ icon: 'error', title: 'Erreur', text: 'Une erreur est survenue. Veuillez réessayer.' });
+            .catch(error => {
+                Swal.fire({ icon: 'error', title: 'Erreur', text: error.message || 'Une erreur est survenue. Veuillez réessayer.' });
             });
         }
 
@@ -711,17 +714,29 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
             btn.addEventListener('click', function() {
                 const clubId   = this.dataset.id;
                 const clubName = this.dataset.name;
-                SwalHelper.confirm(
-                    'Forcer la validation ?',
-                    'Le club "' + clubName + '" sera validé immédiatement sans attendre le tuteur.',
-                    'Oui, forcer',
-                    'Annuler'
-                ).then(result => {
+                Swal.fire({
+                    title: 'Forcer la validation ?',
+                    html: 'Le club "' + esc(clubName) + '" sera validé immédiatement sans attendre le tuteur.',
+                    input: 'textarea',
+                    inputLabel: 'Motif du forçage',
+                    inputPlaceholder: 'Expliquez pourquoi cette validation est forcée. Ce message sera visible par l’étudiant.',
+                    inputAttributes: { maxlength: 1000, 'aria-label': 'Motif du forçage' },
+                    inputValidator: value => {
+                        if (!value || !value.trim()) return 'Le motif du forçage est obligatoire.';
+                        if (value.trim().length > 1000) return 'Le motif ne peut pas dépasser 1000 caractères.';
+                    },
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, forcer',
+                    cancelButtonText: 'Annuler',
+                    confirmButtonColor: '#d97706'
+                }).then(result => {
                     if (result.isConfirmed) {
                         const fd = new FormData();
                         fd.append('csrf_token', csrfToken);
                         fd.append('club_id', clubId);
                         fd.append('action', 'force_approve');
+                        fd.append('motif_forcage', result.value.trim());
                         fd.append('validate_club_admin', '1');
                         submitAction(fd);
                     }
@@ -883,17 +898,29 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
             btn.addEventListener('click', function() {
                 const eventId   = this.dataset.id;
                 const eventName = this.dataset.name;
-                SwalHelper.confirm(
-                    'Forcer la validation ?',
-                    'L\'événement "' + eventName + '" sera validé immédiatement sans attendre le tuteur.',
-                    'Oui, forcer',
-                    'Annuler'
-                ).then(result => {
+                Swal.fire({
+                    title: 'Forcer la validation ?',
+                    html: 'L\'événement "' + esc(eventName) + '" sera validé immédiatement sans attendre le tuteur.',
+                    input: 'textarea',
+                    inputLabel: 'Motif du forçage',
+                    inputPlaceholder: 'Expliquez pourquoi cette validation est forcée. Ce message sera visible par l’étudiant.',
+                    inputAttributes: { maxlength: 1000, 'aria-label': 'Motif du forçage' },
+                    inputValidator: value => {
+                        if (!value || !value.trim()) return 'Le motif du forçage est obligatoire.';
+                        if (value.trim().length > 1000) return 'Le motif ne peut pas dépasser 1000 caractères.';
+                    },
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, forcer',
+                    cancelButtonText: 'Annuler',
+                    confirmButtonColor: '#d97706'
+                }).then(result => {
                     if (result.isConfirmed) {
                         const fd = new FormData();
                         fd.append('csrf_token', csrfToken);
                         fd.append('event_id', eventId);
                         fd.append('action', 'force_approve');
+                        fd.append('motif_forcage', result.value.trim());
                         fd.append('validate_event_admin', '1');
                         submitAction(fd);
                     }

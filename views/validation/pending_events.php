@@ -590,13 +590,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 filesHtml += '</div></div>';
             }
 
-            var idMetaHtml = '';
-            if (ev.event_id || ev.club_id) {
-                idMetaHtml = '<div class="swal-detail-section swal-detail-section-compact"><div class="swal-detail-label"><i class="fas fa-fingerprint"></i> Identifiants</div><div class="swal-keyline">' +
-                    '<span><strong>Event ID:</strong> ' + esc(ev.event_id || 'N/A') + '</span>' +
-                    '<span><strong>Club ID:</strong> ' + esc(ev.club_id || 'N/A') + '</span>' +
-                '</div></div>';
-            }
 
             return '<div class="swal-detail-content">' +
                  '<div class="swal-detail-hero">' +
@@ -631,7 +624,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div><div class="swal-badges-row">' +
                     valBadge('BDE', ev.validation_bde) + valBadge('Tuteur', ev.validation_tuteur) + valBadge('Admin', ev.validation_admin) +
                 '</div></div>' +
-                idMetaHtml +
             '</div>';
         }
 

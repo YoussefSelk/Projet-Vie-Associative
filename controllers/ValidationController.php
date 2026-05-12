@@ -149,8 +149,9 @@ class ValidationController {
     public function validateClub() {
     checkPermission(3);
     
-    $error_msg = '';
-    $success_msg = '';
+    $error_msg = (string)($_SESSION['flash_error'] ?? '');
+    $success_msg = (string)($_SESSION['flash_success'] ?? '');
+    unset($_SESSION['flash_error'], $_SESSION['flash_success']);
     $user_permission = (int)($_SESSION['permission'] ?? 0);
     $is_admin = ($user_permission >= 4); 
 
@@ -221,6 +222,11 @@ class ValidationController {
             }
         }
     }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+        $_SESSION['flash_success'] = $success_msg;
+        redirect($_SERVER['REQUEST_URI']);
+    }
     
     // Récupération des listes selon le rôle :
     // - BDE (permission 3) : voit les clubs en attente de validation_bde
@@ -267,8 +273,9 @@ class ValidationController {
     // Vérifie que l'utilisateur a au moins le niveau BDE (3)
     checkPermission(3);
     
-    $error_msg = '';
-    $success_msg = '';
+    $error_msg = (string)($_SESSION['flash_error'] ?? '');
+    $success_msg = (string)($_SESSION['flash_success'] ?? '');
+    unset($_SESSION['flash_error'], $_SESSION['flash_success']);
     $user_permission = (int)($_SESSION['permission'] ?? 0);
     $is_admin = ($user_permission >= 4); 
 
@@ -357,6 +364,11 @@ class ValidationController {
         if ($event_id && $this->validationModel->deleteRejectedEvent($event_id)) {
             $success_msg = "Événement supprimé avec succès.";
         }
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+        $_SESSION['flash_success'] = $success_msg;
+        redirect($_SERVER['REQUEST_URI']);
     }
     
     // Récupération sécurisée des listes (on force un tableau vide si null)
@@ -481,8 +493,9 @@ class ValidationController {
         ErrorHandler::renderHttpError(403, "Accès refusé.");
     }
 
-    $error_msg = '';
-    $success_msg = '';
+    $error_msg = (string)($_SESSION['flash_error'] ?? '');
+    $success_msg = (string)($_SESSION['flash_success'] ?? '');
+    unset($_SESSION['flash_error'], $_SESSION['flash_success']);
 
     // --- 1. TRAITEMENT DES ACTIONS (POST) ---
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -589,6 +602,11 @@ class ValidationController {
                 $this->db->prepare("UPDATE fiche_event SET validation_finale = 0 WHERE event_id = ?")->execute([$event_id]);
             }
         }
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+        $_SESSION['flash_success'] = $success_msg;
+        redirect($_SERVER['REQUEST_URI']);
     }
 
     // --- 2. RÉCUPÉRATION DES DONNÉES POUR LA VUE ---

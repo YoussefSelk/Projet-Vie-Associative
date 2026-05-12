@@ -139,6 +139,10 @@ class ClubController {
             }
         }
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
+        }
+
         return [
             'clubs'         => $clubs,
             'tuteurs'       => $tuteurs,
@@ -400,6 +404,10 @@ class ClubController {
                     $error_msg = "Vous n'avez pas la permission de supprimer ce club.";
                 }
             }
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
         }
 
         return [

@@ -146,30 +146,44 @@ $pageCss = ['shared', 'buttons', 'events'];
                             $est_autorise = ($user_permission > 2) || ($user_permission === 2 && $user_id_session === $id_tuteur_responsable) || ($est_membre_du_club);
 
                             if ($est_autorise): ?>
-                                <div class="event-section" style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                                    
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                        <h3 style="color: #1e293b; margin: 0; font-size: 1.25rem;">
-                                            <i class="fas fa-folder-open" style="color: #64748b;"></i> Dossier Administratif & Technique
+                                <div class="event-section event-reserved-card">
+                                    <div class="event-reserved-header">
+                                        <h3 class="event-reserved-title">
+                                            <i class="fas fa-folder-open"></i> Espace réservé
                                         </h3>
-                                        <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">
-                                            <i class="fas fa-shield-alt"></i> Accès Réservé
+                                        <span class="event-reserved-tag">
+                                            <i class="fas fa-shield-alt"></i> Réservé
                                         </span>
                                     </div>
+                                    
+                                    <div class="event-reserved-section">
+                                        <h3><i class="fas fa-user-friends"></i> Inscrits (<?= (int)($subscription_count ?? 0) ?>)</h3>
+                                        <?php if (!empty($subscribers)): ?>
+                                            <ul class="event-subscribers-list">
+                                                <?php foreach ($subscribers as $subscriber): ?>
+                                                    <?php
+                                                        $fullName = trim((string)($subscriber['prenom'] ?? '') . ' ' . (string)($subscriber['nom'] ?? ''));
+                                                        $displayName = $fullName !== '' ? $fullName : 'Utilisateur';
+                                                    ?>
+                                                    <li><?= htmlspecialchars($displayName) ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        <?php else: ?>
+                                            <p>Aucun inscrit pour le moment.</p>
+                                        <?php endif; ?>
+                                    </div>
 
-                                    <div style="display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap;">
+                                    <div class="event-reserved-grid">
                                         <?php if ($event['financement_bde']): ?>
-                                        <div style="background: #fff; padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; flex: 1; min-width: 150px;">
-                                            <small style="color: #64748b; text-transform: uppercase; font-weight: 700; font-size: 0.7rem;">Budget BDE</small>
-                                            <p style="margin: 5px 0 0 0; font-weight: 600; color: #059669;"><?= htmlspecialchars($event['montant']) ?> €</p>
+                                        <div class="event-reserved-item">
+                                            <small>Budget BDE</small>
+                                            <p><?= htmlspecialchars($event['montant']) ?> €</p>
                                         </div>
                                         <?php endif; ?>
                                     </div>
 
-                                    <div style="margin-bottom: 25px;">
-                                        <h4 style="font-size: 0.95rem; color: #475569; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">
-                                            Documents de planification
-                                        </h4>
+                                    <div class="event-reserved-section">
+                                        <h4 class="event-reserved-subtitle">Documents de planification</h4>
                                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                             <?php if (!empty($event['doc_organisation'])): ?>
                                                 <a href="<?= htmlspecialchars($event['doc_organisation']) ?>" class="btn btn-sm" style="background: #0ea5e9; color: white;" target="_blank">
@@ -203,8 +217,8 @@ $pageCss = ['shared', 'buttons', 'events'];
                                         </div>
                                     </div>
 
-                                    <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
-                                        <h4 style="font-size: 0.95rem; color: #475569; margin-bottom: 12px;">Bilan & Souvenirs</h4>
+                                    <div class="event-reserved-section event-reserved-section--bordered">
+                                        <h4 class="event-reserved-subtitle">Bilan & Souvenirs</h4>
                                         
                                         <?php if (!empty($event['rapport_event'])): ?>
                                             <div class="mb-20">

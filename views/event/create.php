@@ -81,7 +81,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                 <ul>
                                     <li>Dépôt au moins <strong>2 semaines à l'avance</strong>.</li>
                                     <li>Réservation de salle via le secrétariat uniquement.</li>
-                                    <li>Autorisation spéciale requise pour les événements avec alcool.</li>
                                     <li>Rapport d'événement obligatoire après réalisation.</li>
                                 </ul>
                             </details>

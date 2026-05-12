@@ -109,9 +109,9 @@ class Validation {
                 LIMIT 1
             )
             WHERE (fc.validation_finale IS NULL OR fc.validation_finale = 0)
-              AND fc.validation_bde = 1
-              AND (fc.validation_admin IS NULL OR fc.validation_admin = 0)
         ");
+        // AND fc.validation_bde = 1
+        //       AND (fc.validation_admin IS NULL OR fc.validation_admin = 0)
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

@@ -108,7 +108,7 @@ class ValidationController {
     public function pendingClubs() {
         checkPermission(3);
         
-        $clubs = $this->validationModel->getPendingClubsForBDE();
+        $clubs = $this->validationModel->getPendingClubs();
         
         return [
             'clubs' => $clubs

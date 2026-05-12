@@ -238,12 +238,12 @@ function emailHtmlToText(string $html): string {
  * @return array{html:string,text:string}
  */
 function renderProfessionalEmailTemplate(array $data): array {
-    $brand = emailEscape((string)($data['brand'] ?? 'Vie Etudiante EILCO'));
+    $brand = emailEscape((string)($data['brand'] ?? 'Vie Étudiante EILCO'));
     $title = emailEscape((string)($data['title'] ?? 'Notification'));
     $intro = emailEscape((string)($data['intro'] ?? 'Bonjour,'));
     $preheader = emailEscape((string)($data['preheader'] ?? $title));
     $accent = emailEscape((string)($data['accent'] ?? '#0a5bd3'));
-    $footer = emailEscape((string)($data['footer'] ?? 'Equipe Vie Etudiante EILCO'));
+    $footer = emailEscape((string)($data['footer'] ?? 'Équipe Vie Étudiante EILCO'));
     $bodyLines = $data['body_lines'] ?? [];
     $metaLines = $data['meta_lines'] ?? [];
     $buttonLabel = isset($data['button_label']) ? emailEscape((string)$data['button_label']) : '';
@@ -312,7 +312,7 @@ function renderProfessionalEmailTemplate(array $data): array {
                                     $bodyHtml .
                                     $metaHtml .
                                     $buttonHtml .
-                                    '<p style="margin:0; font-size:13px; line-height:1.6; color:#5f7088;">Ceci est un e-mail automatique, merci de ne pas y repondre directement.</p>' .
+                                    '<p style="margin:0; font-size:13px; line-height:1.6; color:#5f7088;">Ceci est un e-mail automatique, merci de ne pas y répondre directement.</p>' .
                                 '</td>' .
                             '</tr>' .
                         '</table>' .
@@ -347,7 +347,7 @@ function renderProfessionalEmailTemplate(array $data): array {
     }
 
     $textParts[] = '';
-    $textParts[] = 'Ceci est un e-mail automatique, merci de ne pas y repondre directement.';
+    $textParts[] = 'Ceci est un e-mail automatique, merci de ne pas y répondre directement.';
     $textParts[] = $footer;
 
     return [
@@ -363,16 +363,16 @@ function renderProfessionalEmailTemplate(array $data): array {
  */
 function buildRegistrationVerificationEmail(string $firstName, string $code): array {
     return renderProfessionalEmailTemplate([
-        'title' => 'Code de verification de votre compte',
+        'title' => 'Code de vérification de votre compte',
         'preheader' => 'Utilisez votre code pour finaliser votre inscription.',
         'intro' => 'Bonjour ' . trim($firstName) . ',',
         'body_lines' => [
-            'Nous avons recu une demande de creation de compte sur la plateforme Vie Etudiante.',
+            'Nous avons reçu une demande de création de compte sur la plateforme Vie Étudiante.',
             'Saisissez le code ci-dessous pour finaliser votre inscription.',
             'Le code expire dans 5 minutes.',
         ],
         'meta_lines' => [
-            'Code de verification: ' . $code,
+            'Code de vérification: ' . $code,
         ],
     ]);
 }
@@ -387,16 +387,16 @@ function buildPasswordResetEmail(?string $firstName, string $token): array {
     $intro = $recipient !== '' ? ('Bonjour ' . $recipient . ',') : 'Bonjour,';
 
     return renderProfessionalEmailTemplate([
-        'title' => 'Code de reinitialisation de mot de passe',
-        'preheader' => 'Votre code temporaire de reinitialisation est disponible.',
+        'title' => 'Code de réinitialisation de mot de passe',
+        'preheader' => 'Votre code temporaire de réinitialisation est disponible.',
         'intro' => $intro,
         'body_lines' => [
-            'Une demande de reinitialisation a ete enregistree pour votre compte.',
-            'Utilisez le code ci-dessous pour definir un nouveau mot de passe.',
+            'Une demande de réinitialisation a été enregistrée pour votre compte.',
+            'Utilisez le code ci-dessous pour définir un nouveau mot de passe.',
             'Le code expire dans 5 minutes.',
         ],
         'meta_lines' => [
-            'Code de reinitialisation: ' . $token,
+            'Code de réinitialisation: ' . $token,
         ],
         'accent' => '#0f766e',
     ]);
@@ -415,8 +415,8 @@ function buildTutorValidationNotificationEmail(
     ?string $actionUrl = null
 ): array {
     $body = [
-        $creatorName . ' a cree un nouveau ' . $typeLabel . ' qui requiert votre validation.',
-        'Connectez-vous a la plateforme pour approuver ou rejeter cette demande.',
+        $creatorName . ' a créé un nouveau ' . $typeLabel . ' qui requiert votre validation.',
+        'Connectez-vous à la plateforme pour approuver ou rejeter cette demande.',
     ];
 
     $data = [
@@ -431,7 +431,7 @@ function buildTutorValidationNotificationEmail(
     ];
 
     if (!empty($actionUrl)) {
-        $data['button_label'] = 'Acceder aux validations';
+        $data['button_label'] = 'Accéder aux validations';
         $data['button_url'] = $actionUrl;
     }
 
@@ -452,12 +452,12 @@ function buildBdeValidationNotificationEmail(
 ): array {
     $body = [
         $creatorName . ' a soumis un ' . $typeLabel . ' qui requiert votre validation BDE.',
-        'Merci de verifier les informations et de statuer depuis l\'espace de validation.',
+        'Merci de vérifier les informations et de statuer depuis l\'espace de validation.',
     ];
 
     $data = [
         'title' => 'Validation BDE requise',
-        'preheader' => 'Un nouveau ' . $typeLabel . ' attend une decision BDE.',
+        'preheader' => 'Un nouveau ' . $typeLabel . ' attend une décision BDE.',
         'intro' => 'Bonjour ' . trim($bdeFullName) . ',',
         'body_lines' => $body,
         'meta_lines' => [
@@ -489,7 +489,7 @@ function buildAdminValidationNotificationEmail(
 ): array {
     $body = [
         $creatorName . ' a soumis un ' . $typeLabel . ' en attente de validation administrateur.',
-        'Merci de controler la conformite du dossier avant decision finale.',
+        'Merci de contrôler la conformité du dossier avant décision finale.',
     ];
 
     $data = [
@@ -513,7 +513,7 @@ function buildAdminValidationNotificationEmail(
 }
 
 /**
- * Template de rappel pour un evenement a venir (J-48 / J-24).
+ * Template de rappel pour un événement à venir (J-48 / J-24).
  *
  * @return array{html:string,text:string}
  */
@@ -529,15 +529,15 @@ function buildEventReminderEmail(
     $accent = $hoursBefore <= 24 ? '#b91c1c' : '#1d4ed8';
 
     return renderProfessionalEmailTemplate([
-        'title' => 'Rappel evenement: J-' . $hoursBefore . 'h',
-        'preheader' => 'Votre evenement approche. Pensez a preparer votre participation.',
+        'title' => 'Rappel événement: J-' . $hoursBefore . 'h',
+        'preheader' => 'Votre événement approche. Pensez à préparer votre participation.',
         'intro' => 'Bonjour ' . trim($fullName) . ',',
         'body_lines' => [
-            'Vous etes inscrit a un evenement prevu dans environ ' . $hoursBefore . ' heures.',
-            'Ce message est un rappel automatique pour vous aider a anticiper votre participation.',
+            'Vous êtes inscrit à un événement prévu dans environ ' . $hoursBefore . ' heures.',
+            'Ce message est un rappel automatique pour vous aider à anticiper votre participation.',
         ],
         'meta_lines' => [
-            'Evenement: ' . $eventTitle,
+            'Événement: ' . $eventTitle,
             'Date et heure: ' . $eventDateTimeLabel,
             'Campus: ' . $campus,
             'Lieu: ' . $lieu,
@@ -580,11 +580,11 @@ function buildLeadershipRequestStatusEmail(
     }
 
     $data = [
-        'title' => 'Mise a jour de votre demande ' . $normalizedType,
-        'preheader' => 'Le statut de votre demande a ete mis a jour.',
+        'title' => 'Mise à jour de votre demande ' . $normalizedType,
+        'preheader' => 'Le statut de votre demande a été mis à jour.',
         'intro' => 'Bonjour ' . trim($fullName) . ',',
         'body_lines' => [
-            'La demande de ' . $normalizedType . ' de votre club a ete mise a jour.',
+            'La demande de ' . $normalizedType . ' de votre club a été mise à jour.',
             'Veuillez consulter le statut ci-dessous.',
         ],
         'meta_lines' => $metaLines,

@@ -70,24 +70,24 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                     </div>
 
                     <div class="filter-item filter-item-select">
-                        <label for="pendingStatusFilter">Filtrer par etat de validation :</label>
+                        <label for="pendingStatusFilter">Filtrer par état de validation :</label>
                         <select id="pendingStatusFilter" class="filter-select">
                             <option value="">Toutes les fiches</option>
                             <option value="en_cours">Fiches en cours de traitement</option>
-                            <option value="valide">Fiches validees</option>
-                            <option value="refuse">Fiches refusees</option>
+                            <option value="valide">Fiches validées</option>
+                            <option value="refuse">Fiches refusées</option>
                         </select>
                     </div>
 
                     <div class="filter-item filter-item-action">
                         <label class="filter-action-label" aria-hidden="true">Action</label>
                         <button type="button" id="pendingResetFilters" class="filter-reset-btn">
-                            <i class="fas fa-undo"></i> Reinitialiser
+                            <i class="fas fa-undo"></i> Réinitialiser
                         </button>
                     </div>
 
                     <div class="filter-item filter-item-results">
-                        <label class="filter-action-label" aria-hidden="true">Resultats</label>
+                        <label class="filter-action-label" aria-hidden="true">Résultats</label>
                         <div id="pendingResultsCount" class="browse-count"><?= count($clubs) ?> club(s)</div>
                     </div>
                 </div>
@@ -114,11 +114,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                             if ($statusFilter === 'valide') {
                                 $statusBadgeClass = 'badge-success';
                                 $statusBadgeIcon = 'fa-check-circle';
-                                $statusLabel = 'Validee';
+                                $statusLabel = 'Validée';
                             } elseif ($statusFilter === 'refuse') {
                                 $statusBadgeClass = 'badge-danger';
                                 $statusBadgeIcon = 'fa-times-circle';
-                                $statusLabel = 'Refusee';
+                                $statusLabel = 'Refusée';
                             } elseif ($statusFilter === 'en_cours') {
                                 $statusBadgeClass = 'badge-info';
                                 $statusBadgeIcon = 'fa-spinner';
@@ -251,8 +251,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
 
                 <div id="pendingNoResults" class="empty-state-advanced" style="display:none; margin-top: 1rem;">
                     <div class="empty-icon empty-icon-search"><i class="fas fa-filter"></i></div>
-                    <h3>Aucun resultat</h3>
-                    <p>Aucun club ne correspond aux filtres selectionnes.</p>
+                    <h3>Aucun résultat</h3>
+                    <p>Aucun club ne correspond aux filtres sélectionnés.</p>
                 </div>
             <?php endif; ?>
         </div>
@@ -352,14 +352,14 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                             '<div class="swal-member-info">' +
                                 '<span class="swal-member-name">' + esc(fullName) + '</span>' +
                                 '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
-                                    '<span class="swal-member-role">' + esc(roleLine || 'Role non renseigne') + '</span>' +
+                                    '<span class="swal-member-role">' + esc(roleLine || 'Rôle non renseigné') + '</span>' +
                                     soutenanceTag +
                                 '</div>' +
                                 mailLine +
                             '</div>' +
                         '</div>';
                     }).join('') + '</div>'
-                    : '<div class="swal-empty-state"><i class="fas fa-users"></i> Aucun membre renseigne</div>';
+                    : '<div class="swal-empty-state"><i class="fas fa-users"></i> Aucun membre renseigné</div>';
 
                 return '<div class="swal-detail-content">' +
                     '<div class="swal-detail-hero">' +
@@ -373,11 +373,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                     '<div class="swal-detail-grid">' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-tag"></i> Type</div><div class="swal-detail-value">' + esc(club.type_club || 'N/A') + '</div></div>' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (club.campus || 'calais').toLowerCase() + '">' + esc(club.campus || 'N/A') + '</span></div></div>' +
-                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-envelope"></i> Contact</div><div class="swal-detail-value">' + esc(contact || 'Non renseigne') + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-envelope"></i> Contact</div><div class="swal-detail-value">' + esc(contact || 'Non renseigné') + '</div></div>' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-fingerprint"></i> Club ID</div><div class="swal-detail-value">' + esc(club.club_id || 'N/A') + '</div></div>' +
-                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-user"></i> Responsable</div><div class="swal-detail-value">' + esc(responsable || club.responsable || 'Non renseigne') + '</div></div>' +
-                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-chalkboard-teacher"></i> Tuteur</div><div class="swal-detail-value">' + esc(tuteur || 'Non assigne') + '</div></div>' +
-                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-inbox"></i> Depot</div><div class="swal-detail-value">' + esc(dateDepot || 'N/A') + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-user"></i> Responsable</div><div class="swal-detail-value">' + esc(responsable || club.responsable || 'Non renseigné') + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-chalkboard-teacher"></i> Tuteur</div><div class="swal-detail-value">' + esc(tuteur || 'Non assigné') + '</div></div>' +
+                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-inbox"></i> Dépôt</div><div class="swal-detail-value">' + esc(dateDepot || 'N/A') + '</div></div>' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-layer-group"></i> Statut fiche</div><div class="swal-detail-value">' + esc(club.statut || club.status || 'En attente') + '</div></div>' +
                     '</div>' +
                     '<div class="swal-detail-section">' +
@@ -385,7 +385,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                         '<div class="swal-detail-description">' + esc(club.description || 'Aucune description fournie.') + '</div>' +
                     '</div>' +
                     '<div class="swal-detail-section">' +
-                        '<div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> Etat des validations</div>' +
+                        '<div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div>' +
                         '<div class="swal-badges-row">' +
                             statusBadge('Admin', club.validation_admin) +
                             statusBadge('BDE', club.validation_bde) +
@@ -394,7 +394,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                         '</div>' +
                     '</div>' +
                     '<div class="swal-detail-section swal-detail-section-compact">' +
-                        '<div class="swal-detail-label"><i class="fas fa-chart-pie"></i> Resume de la fiche</div>' +
+                        '<div class="swal-detail-label"><i class="fas fa-chart-pie"></i> Résumé de la fiche</div>' +
                         '<div class="swal-keyline">' +
                             '<span><strong>Membres:</strong> ' + list.length + '</span>' +
                             '<span><strong>Soutenance:</strong> ' + soutenanceCount + '</span>' +
@@ -433,7 +433,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                         html: '<p style="margin-bottom:12px;">Approuver le club <strong>&laquo; ' + esc(clubName) + ' &raquo;</strong> ?</p>',
                         input: 'textarea',
                         inputLabel: 'Remarques (optionnel)',
-                        inputPlaceholder: 'Ajoutez un commentaire pour l\'etudiant...',
+                        inputPlaceholder: 'Ajoutez un commentaire pour l\'étudiant...',
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonText: '<i class="fas fa-check"></i> Approuver',

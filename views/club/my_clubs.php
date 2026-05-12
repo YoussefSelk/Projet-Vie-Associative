@@ -147,8 +147,8 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                                 $clubTrackingSteps = [
                                     ['label' => 'Demande envoyée', 'state' => 'done', 'icon' => 'fa-paper-plane', 'forced' => false],
                                     ['label' => 'Validation BDE', 'state' => $clubStateFromValue($club['validation_bde'] ?? null), 'icon' => 'fa-people-group', 'forced' => false],
-                                    ['label' => 'Validation Admin', 'state' => $clubStateFromValue($club['validation_admin'] ?? null), 'icon' => 'fa-user-shield', 'forced' => false],
                                     ['label' => 'Validation Tuteur', 'state' => $clubStateFromValue($club['validation_tuteur'] ?? null), 'icon' => 'fa-user-check', 'forced' => false],
+                                    ['label' => 'Validation Admin', 'state' => $clubStateFromValue($club['validation_admin'] ?? null), 'icon' => 'fa-user-shield', 'forced' => false],
                                     ['label' => 'Décision finale', 'state' => $isClubRejected ? 'rejected' : ($isClubFinallyApproved ? 'done' : 'pending'), 'icon' => 'fa-flag-checkered', 'forced' => false]
                                 ];
 
@@ -194,8 +194,24 @@ $pageCss = ['shared', 'buttons', 'tables', 'search', 'pagination', 'clubs'];
                             </section>
 
                             <?php if (($club['validation_finale'] == -1 || $club['validation_finale'] === 0) && !empty($club['motif_refus'])): ?>
+                                <?php
+                                    // Déterminer qui a refusé
+                                    $refuser_source = '';
+                                    if ($club['validation_bde'] === 0 && ($club['validation_finale'] == -1 || $club['validation_finale'] === 0)) {
+                                        $refuser_source = 'BDE';
+                                    } elseif ($club['validation_admin'] === 0 && ($club['validation_finale'] == -1 || $club['validation_finale'] === 0)) {
+                                        $refuser_source = 'Administration';
+                                    } elseif ($club['validation_tuteur'] === 0 && ($club['validation_finale'] == -1 || $club['validation_finale'] === 0)) {
+                                        $refuser_source = 'Tuteur';
+                                    }
+                                ?>
                                 <div class="refusal-reason">
-                                    <h5><i class="fas fa-times-circle"></i> Motif du refus :</h5>
+                                    <h5><i class="fas fa-times-circle"></i> Motif du refus 
+                                        <?php if ($refuser_source): ?>
+                                            <span class="refusal-source">(par <?= htmlspecialchars($refuser_source) ?>)</span>
+                                        <?php endif; ?>
+                                        :
+                                    </h5>
                                     <p><?= htmlspecialchars($club['motif_refus']) ?></p>
                                 </div>
                             <?php endif; ?>

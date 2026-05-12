@@ -379,9 +379,8 @@ class ValidationController {
             FROM fiche_event fe
             LEFT JOIN fiche_club fc ON fe.club_orga = fc.club_id
             LEFT JOIN users u ON fe.id_responsable = u.id
-            WHERE fe.validation_bde = 1
-              AND (fe.validation_admin IS NULL OR fe.validation_admin = 0)
-              AND (fe.validation_finale IS NULL OR (fe.validation_finale = 0 AND (fe.motif_refus IS NULL OR fe.motif_refus = '')))
+            WHERE 
+              (fe.validation_finale IS NULL OR (fe.validation_finale = 0 AND (fe.motif_refus IS NULL OR fe.motif_refus = '')))
             ORDER BY fe.date_depot DESC
         ");
         $pendingStmt->execute();

@@ -228,7 +228,8 @@ public function getAllValidatedEvents() {
         }
 
         if (empty($fields)) {
-            return false;
+            // No editable fields changed; still reset validations to restart the workflow.
+            $fields = [];
         }
 
         // AJOUT FORCÉ : Réinitialisation des validations

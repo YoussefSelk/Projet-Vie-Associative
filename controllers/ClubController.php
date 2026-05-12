@@ -130,7 +130,7 @@ class ClubController {
                     'campus' => $new_campus
                 ];
 
-                if ($this->clubModel->updateClub($club_id, $data)) {
+                if ($this->clubModel->updateClub($club_id, $data, true)) {
                     $success_msg = "Informations mises à jour avec succès.";
                     $req_club = $this->clubModel->getClubById($club_id);
                 } else {
@@ -573,9 +573,7 @@ class ClubController {
                                 'campus' => $campus
                             ];
 
-                            // Admin keeps validation state; non-admin resubmits for validation.
-                            $resetValidation = !$isAdmin;
-                            if ($this->clubModel->updateClub($club_id, $data, $resetValidation)) {
+                            if ($this->clubModel->updateClub($club_id, $data, true)) {
                                 // Ne pas supprimer le Président (créateur)
                                 $this->db->prepare("DELETE FROM membres_club WHERE club_id = ? AND fonction != 'Président'")->execute([$club_id]);
                                 

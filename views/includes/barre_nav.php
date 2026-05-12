@@ -60,7 +60,7 @@ $campuses = [
                     <span>Accueil</span>
                 </a>
             </li>
-            
+
             <!-- Campus Dropdowns -->
             <?php foreach ($campuses as $campus_name => $campus_data): ?>
             <li class="nav-item nav-dropdown">

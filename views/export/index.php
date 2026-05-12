@@ -58,34 +58,36 @@ $pageCss   = ['shared', 'buttons', 'forms', 'export'];
 
             <div class="export-grid">
 
-                <!-- Carte : liste complète des clubs -->
+                <!-- Carte : export global des clubs validés -->
                 <div class="export-card">
                     <div class="export-card-header">
                         <div class="export-card-icon">
                             <i class="fas fa-list-ul"></i>
                         </div>
                         <div>
-                            <h3 class="export-card-title">Liste complète des clubs</h3>
-                            <p class="export-card-desc">Tous les clubs validés de la plateforme avec leur tuteur référent.</p>
+                            <h3 class="export-card-title">Export global des clubs validés</h3>
+                            <p class="export-card-desc">Tous les clubs validés, avec tuteur, membres, événements et participants regroupés sur une ligne par club dans un tableau Excel.</p>
                         </div>
                     </div>
 
                     <div class="export-columns-preview">
                         <span class="export-col-badge">Nom du club</span>
-                        <span class="export-col-badge">Type</span>
+                        <span class="export-col-badge">Type de club</span>
                         <span class="export-col-badge">Campus</span>
-                        <span class="export-col-badge">Tuteur référent</span>
-                        <span class="export-col-badge">Statut</span>
+                        <span class="export-col-badge">Tuteur</span>
+                        <span class="export-col-badge">Membres et rôles</span>
+                        <span class="export-col-badge">Événements</span>
+                        <span class="export-col-badge">Participants</span>
                     </div>
 
                     <button class="btn-export"
                             onclick="triggerExport(
-                                'Liste des clubs',
-                                'Exporter tous les clubs validés de la plateforme.',
+                                'Exporter tous les clubs validés',
+                                'Exporter tous les clubs validés dans un CSV global, sans sélection de club.',
                                 'index.php?page=export-clubs'
                             )">
                         <i class="fas fa-download"></i>
-                        Exporter les clubs
+                        Exporter tous les clubs validés
                     </button>
                 </div>
 
@@ -99,6 +101,37 @@ $pageCss   = ['shared', 'buttons', 'forms', 'export'];
             </h2>
 
             <div class="export-grid">
+                <!-- Carte : clubs par utilisateur -->
+                <div class="export-card accent-teal">
+                    <div class="export-card-header">
+                        <div class="export-card-icon">
+                            <i class="fas fa-user-tag"></i>
+                        </div>
+                        <div>
+                            <h3 class="export-card-title">Clubs par utilisateur</h3>
+                            <p class="export-card-desc">Tous les utilisateurs membres d'au moins un club validé, avec leurs clubs, rôles et statuts.</p>
+                        </div>
+                    </div>
+
+                    <div class="export-columns-preview">
+                        <span class="export-col-badge">Utilisateur</span>
+                        <span class="export-col-badge">Email</span>
+                        <span class="export-col-badge">Promo</span>
+                        <span class="export-col-badge">Nombre de clubs</span>
+                        <span class="export-col-badge">Clubs et rôles</span>
+                    </div>
+
+                    <button class="btn-export"
+                            onclick="triggerExport(
+                                'Clubs par utilisateur',
+                                'Exporter la liste des utilisateurs avec leurs clubs validés.',
+                                'index.php?page=export-user-clubs'
+                            )">
+                        <i class="fas fa-download"></i>
+                        Exporter les clubs par utilisateur
+                    </button>
+                </div>
+
 
                 <!-- Carte : membres d'un club spécifique -->
                 <div class="export-card accent-green">
@@ -128,6 +161,7 @@ $pageCss   = ['shared', 'buttons', 'forms', 'export'];
                         </label>
                         <select id="club-members-select">
                             <option value="">— Choisir un club —</option>
+                            <option value="all">Tous les clubs</option>
                             <?php foreach ($clubs as $club): ?>
                                 <option value="<?= (int)$club['club_id'] ?>">
                                     [<?= htmlspecialchars($club['campus']) ?>] <?= htmlspecialchars($club['nom_club']) ?>

@@ -173,4 +173,5 @@ class HomeController {
             'updated_at' => date('Y-m-d')
         ];
     }
+
 }

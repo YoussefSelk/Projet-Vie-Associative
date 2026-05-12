@@ -35,7 +35,7 @@ return [
         'method' => 'legal',
         'view' => '/home/legal.php'
     ],
-    
+
     'calendar-data' => [
         'permission' => null,
         'auth' => false,
@@ -353,6 +353,14 @@ return [
         'auth' => true,
         'controller' => 'ExportController',
         'method' => 'exportClubs',
+        'view' => null
+    ],
+
+    'export-user-clubs' => [
+        'permission' => 2,
+        'auth' => true,
+        'controller' => 'ExportController',
+        'method' => 'exportUserClubs',
         'view' => null
     ],
 

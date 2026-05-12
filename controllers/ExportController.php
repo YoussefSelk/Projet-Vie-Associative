@@ -89,45 +89,265 @@ class ExportController
         checkPermission(2);
         $this->verifierRateLimit();
 
-        $stmt = $this->db->query("
-            SELECT
-                fc.nom_club                                          AS 'Nom du club',
-                fc.type_club                                         AS 'Type',
-                fc.campus                                            AS 'Campus',
-                COALESCE(
-                    CONCAT(t.prenom, ' ', t.nom),
-                    'Non renseigné'
-                )                                                    AS 'Tuteur référent',
-                CASE
-                    WHEN fc.validation_finale = 1 THEN 'Validé'
-                    WHEN fc.validation_finale = 0 THEN 'Refusé'
-                    ELSE 'En attente'
-                END                                                  AS 'Statut'
-            FROM fiche_club fc
-            LEFT JOIN users t ON t.id = CAST(fc.tuteur AS UNSIGNED)
-            WHERE fc.validation_finale = 1
-            ORDER BY fc.campus ASC, fc.nom_club ASC
-        ");
-        $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $clubs = $this->fetchValidatedClubsForGlobalExport();
+        $clubIds = array_map(static fn(array $club): int => (int)$club['club_id'], $clubs);
 
-        $this->journaliserExport('export_clubs', null);
-        $this->envoyerCsv($lignes, 'clubs_' . date('Y-m-d') . '.csv');
+        $membersByClub = $this->fetchMembersGroupedByClub($clubIds);
+        $eventsByClub = $this->fetchEventsGroupedByClub($clubIds);
+        $participantsByClub = $this->fetchParticipantCountsByClub($clubIds);
+
+        $headers = [
+            'Nom du club',
+            'Type de club',
+            'Campus',
+            'Description',
+            'Logo',
+            'Tuteur',
+            'Email du tuteur',
+            'Validation administrateur',
+            'Validation tuteur',
+            'Validation BDE',
+            'Validation finale',
+            'Motif de refus',
+            'Nombre total de membres',
+            'Membres et rôles',
+            'Nombre de membres',
+            'Nombre total d\'événements',
+            'Événements',
+            'Nombre total de participants aux événements',
+            'Documents des événements',
+        ];
+
+        $rows = [];
+        foreach ($clubs as $club) {
+            $clubId = (int)$club['club_id'];
+            $members = $membersByClub[$clubId] ?? [];
+            $events = $eventsByClub[$clubId] ?? [];
+            $memberCounts = $this->countMembersByStatus($members);
+
+            $rows[] = [
+                'Nom du club' => $this->formatText($club['nom_club'] ?? null),
+                'Type de club' => $this->formatText($club['type_club'] ?? null),
+                'Campus' => $this->formatText($club['campus'] ?? null),
+                'Description' => $this->formatText($club['description'] ?? null),
+                'Logo' => $this->formatDocument($club['logo_club'] ?? null, 'Aucun logo'),
+                'Tuteur' => $this->formatPerson($club['tuteur_prenom'] ?? null, $club['tuteur_nom'] ?? null),
+                'Email du tuteur' => $this->formatEmail($club['tuteur_mail'] ?? null),
+                'Validation administrateur' => $this->formatValidation($club['validation_admin'] ?? null),
+                'Validation tuteur' => $this->formatValidation($club['validation_tuteur'] ?? null),
+                'Validation BDE' => $this->formatValidation($club['validation_bde'] ?? null),
+                'Validation finale' => $this->formatValidation($club['validation_finale'] ?? null),
+                'Motif de refus' => $this->formatText($club['motif_refus'] ?? null),
+                'Nombre total de membres' => (string)count($members),
+                'Membres et rôles' => $this->buildMembersSummary($members),
+                'Nombre de membres' => (string)$memberCounts['valides'],
+                'Nombre total d\'événements' => (string)count($events),
+                'Événements' => $this->buildEventsSummary($events),
+                'Nombre total de participants aux événements' => (string)($participantsByClub[$clubId] ?? 0),
+                'Documents des événements' => $this->buildEventDocumentsSummary($events),
+            ];
+        }
+
+        $this->journaliserExport('export_clubs_valides_global', null);
+        $this->envoyerExcelXlsx(
+            $rows,
+            $this->sanitizeFilename('export_clubs_valides_' . date('Y-m-d') . '.xlsx'),
+            $headers
+        );
     }
 
     // =========================================================================
     // EXPORT — MEMBRES
     // =========================================================================
-
     /**
-     * Exporte les membres validés d'un club.
-     *
-     * Un tuteur (niveau 2) ne peut exporter que les membres du club
-     * dont il est le tuteur référent. BDE et admins ont accès à tous les clubs.
+     * Exporte les clubs rattaches a chaque utilisateur, sans identifiants internes.
      */
+    public function exportUserClubs(): void
+    {
+        checkPermission(2);
+        $this->verifierRateLimit();
+
+        $rowsByUser = [];
+        $stmt = $this->db->prepare("
+            SELECT u.nom,
+                   u.prenom,
+                   u.mail,
+                   u.promo,
+                   fc.nom_club,
+                   fc.type_club,
+                   fc.campus,
+                   mc.fonction
+            FROM membres_club mc
+            INNER JOIN users u ON u.id = mc.membre_id
+            INNER JOIN fiche_club fc ON fc.club_id = mc.club_id
+                                    AND fc.validation_finale = 1
+            ORDER BY u.nom ASC, u.prenom ASC, fc.nom_club ASC
+        ");
+        $stmt->execute();
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $userKey = $this->formatEmail($row['mail'] ?? null)
+                . '|'
+                . $this->formatPerson($row['prenom'] ?? null, $row['nom'] ?? null);
+
+            if (!isset($rowsByUser[$userKey])) {
+                $rowsByUser[$userKey] = [
+                    'Utilisateur' => $this->formatPerson($row['prenom'] ?? null, $row['nom'] ?? null),
+                    'Email' => $this->formatEmail($row['mail'] ?? null),
+                    'Promo' => $this->formatPromo($row['promo'] ?? null),
+                    'clubs' => [],
+                ];
+            }
+
+            $rowsByUser[$userKey]['clubs'][] =
+                '<strong>' . htmlspecialchars($this->formatText($row['nom_club'] ?? null), ENT_QUOTES, 'UTF-8') . '</strong>'
+                . ' - Type : ' . htmlspecialchars($this->formatText($row['type_club'] ?? null), ENT_QUOTES, 'UTF-8')
+                . ' - Campus : ' . htmlspecialchars($this->formatText($row['campus'] ?? null), ENT_QUOTES, 'UTF-8')
+                . ' - Rôle : ' . htmlspecialchars($this->formatText($row['fonction'] ?? null, 'Rôle non renseigné'), ENT_QUOTES, 'UTF-8');
+        }
+
+        $headers = [
+            'Utilisateur',
+            'Email',
+            'Promo',
+            'Nombre de clubs',
+            'Clubs et rôles',
+        ];
+
+        $rows = [];
+        foreach ($rowsByUser as $userRow) {
+            $clubs = $userRow['clubs'];
+            $rows[] = [
+                'Utilisateur' => $userRow['Utilisateur'],
+                'Email' => $userRow['Email'],
+                'Promo' => $userRow['Promo'],
+                'Nombre de clubs' => (string)count($clubs),
+                'Clubs et rôles' => empty($clubs) ? 'Aucun club' : implode('<br>', $clubs),
+            ];
+        }
+
+        $this->journaliserExport('export_clubs_par_utilisateur', null);
+        $this->envoyerExcelXlsx(
+            $rows,
+            $this->sanitizeFilename('export_clubs_par_utilisateur_' . date('Y-m-d') . '.xlsx'),
+            $headers
+        );
+    }
+
+    private function fetchValidatedClubsForGlobalExport(): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT fc.*,
+                   tuteur.nom AS tuteur_nom,
+                   tuteur.prenom AS tuteur_prenom,
+                   tuteur.promo AS tuteur_promo,
+                   tuteur.mail AS tuteur_mail
+            FROM fiche_club fc
+            LEFT JOIN users tuteur ON CAST(fc.tuteur AS UNSIGNED) = tuteur.id
+            WHERE fc.validation_finale = 1
+            ORDER BY fc.nom_club ASC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function fetchMembersGroupedByClub(array $clubIds): array
+    {
+        if (empty($clubIds)) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT mc.club_id,
+                   mc.fonction,
+                   mc.soutenance,
+                   mc.valide,
+                   u.nom,
+                   u.prenom,
+                   u.promo,
+                   u.mail,
+                   u.permission
+            FROM membres_club mc
+            INNER JOIN users u ON u.id = mc.membre_id
+            INNER JOIN fiche_club fc ON fc.club_id = mc.club_id AND fc.validation_finale = 1
+            ORDER BY mc.club_id ASC, mc.fonction ASC, u.nom ASC, u.prenom ASC
+        ");
+        $stmt->execute();
+
+        $grouped = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $member) {
+            $clubId = (int)($member['club_id'] ?? 0);
+            if ($clubId > 0) {
+                $grouped[$clubId][] = $member;
+            }
+        }
+
+        return $grouped;
+    }
+
+    private function fetchEventsGroupedByClub(array $clubIds): array
+    {
+        if (empty($clubIds)) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT fe.*,
+                   responsable.nom AS responsable_nom,
+                   responsable.prenom AS responsable_prenom,
+                   responsable.mail AS responsable_mail
+            FROM fiche_event fe
+            INNER JOIN fiche_club fc ON fc.club_id = CAST(fe.club_orga AS UNSIGNED)
+                                    AND fc.validation_finale = 1
+            LEFT JOIN users responsable ON responsable.id = fe.id_responsable
+            ORDER BY CAST(fe.club_orga AS UNSIGNED) ASC, fe.date_ev DESC, fe.horaire_debut ASC
+        ");
+        $stmt->execute();
+
+        $grouped = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $event) {
+            $clubId = (int)($event['club_orga'] ?? 0);
+            if ($clubId > 0) {
+                $grouped[$clubId][] = $event;
+            }
+        }
+
+        return $grouped;
+    }
+
+    private function fetchParticipantCountsByClub(array $clubIds): array
+    {
+        if (empty($clubIds)) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT CAST(fe.club_orga AS UNSIGNED) AS club_id,
+                   COUNT(*) AS total_participants
+            FROM fiche_event fe
+            INNER JOIN fiche_club fc ON fc.club_id = CAST(fe.club_orga AS UNSIGNED)
+                                    AND fc.validation_finale = 1
+            INNER JOIN abonnements ab ON ab.event_id = fe.event_id
+            GROUP BY CAST(fe.club_orga AS UNSIGNED)
+        ");
+        $stmt->execute();
+
+        $counts = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $counts[(int)$row['club_id']] = (int)$row['total_participants'];
+        }
+
+        return $counts;
+    }
+
     public function exportClubMembers(): void
     {
         checkPermission(2);
         $this->verifierRateLimit();
+
+        if (($_GET['club_id'] ?? '') === 'all') {
+            $this->exportAllClubMembers();
+        }
 
         $clubId = $this->lireClubId();
         $club   = $this->getClubOrAbort($clubId);
@@ -163,6 +383,39 @@ class ExportController
         $this->envoyerCsv(
             $lignes,
             'membres_' . $this->slug($club['nom_club']) . '_' . date('Y-m-d') . '.csv'
+        );
+    }
+
+    private function exportAllClubMembers(): void
+    {
+        $stmt = $this->db->prepare("
+            SELECT DISTINCT
+                u.nom                                                AS 'Nom',
+                u.prenom                                             AS 'Prénom',
+                u.mail                                               AS 'Email',
+                u.promo                                              AS 'Promotion',
+                CASE u.permission
+                    WHEN 1 THEN 'Étudiant'
+                    WHEN 2 THEN 'Tuteur'
+                    WHEN 3 THEN 'BDE'
+                    WHEN 4 THEN 'Personnel administratif'
+                    WHEN 5 THEN 'Administrateur'
+                    ELSE 'Permission non renseignée'
+                END                                                  AS 'Type utilisateur'
+            FROM membres_club mc
+            JOIN users u       ON u.id       = mc.membre_id
+            JOIN fiche_club fc ON fc.club_id  = mc.club_id
+            WHERE fc.validation_finale = 1
+              AND mc.valide = 1
+            ORDER BY u.nom ASC, u.prenom ASC
+        ");
+        $stmt->execute();
+        $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->journaliserExport('export_membres_tous_clubs', null);
+        $this->envoyerCsv(
+            $lignes,
+            'utilisateurs_membres_distincts_' . date('Y-m-d') . '.csv'
         );
     }
 
@@ -534,6 +787,593 @@ class ExportController
      * @param array  $lignes     Tableau associatif ; les clés du premier élément forment l'en-tête.
      * @param string $nomFichier Nom du fichier proposé au téléchargement.
      */
+    private function envoyerExcelXlsx(array $lignes, string $nomFichier, array $headers): void
+    {
+        $body = $this->buildXlsxWorkbook($lignes, $headers);
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment; filename="' . addslashes($nomFichier) . '"');
+        header('Content-Length: ' . strlen($body));
+        header('Pragma: no-cache');
+        header('Expires: 0');
+        header('X-Content-Type-Options: nosniff');
+
+        echo $body;
+        exit;
+    }
+
+    private function buildXlsxWorkbook(array $lignes, array $headers): string
+    {
+        $rowsXml = [];
+        $hyperlinks = [];
+        $rowsXml[] = $this->buildXlsxRow($headers, 1, true, $hyperlinks);
+
+        $rowIndex = 2;
+        if (empty($lignes)) {
+            $rowsXml[] = $this->buildXlsxRow(['Aucune donnée disponible pour cet export.'], $rowIndex, false, $hyperlinks);
+        } else {
+            foreach ($lignes as $ligne) {
+                $row = [];
+                foreach ($headers as $header) {
+                    $row[] = $ligne[$header] ?? 'Non renseigné';
+                }
+                $rowsXml[] = $this->buildXlsxRow($row, $rowIndex, false, $hyperlinks);
+                $rowIndex++;
+            }
+        }
+
+        $lastColumn = $this->excelColumnName(max(1, count($headers)));
+        $lastRow = max(1, $rowIndex - 1);
+
+        $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            . 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            . '<dimension ref="A1:' . $lastColumn . $lastRow . '"/>'
+            . '<sheetViews><sheetView workbookViewId="0"/></sheetViews>'
+            . '<sheetFormatPr defaultRowHeight="18"/>'
+            . '<cols>' . $this->buildXlsxColumns(count($headers)) . '</cols>'
+            . '<sheetData>' . implode('', $rowsXml) . '</sheetData>'
+            . $this->buildXlsxHyperlinksXml($hyperlinks)
+            . '</worksheet>';
+
+        $files = [
+            '[Content_Types].xml' => $this->xlsxContentTypesXml(),
+            '_rels/.rels' => $this->xlsxRootRelsXml(),
+            'xl/workbook.xml' => $this->xlsxWorkbookXml(),
+            'xl/_rels/workbook.xml.rels' => $this->xlsxWorkbookRelsXml(),
+            'xl/styles.xml' => $this->xlsxStylesXml(),
+            'xl/worksheets/sheet1.xml' => $sheetXml,
+            'docProps/core.xml' => $this->xlsxCoreXml(),
+            'docProps/app.xml' => $this->xlsxAppXml(),
+        ];
+
+        if (!empty($hyperlinks)) {
+            $files['xl/worksheets/_rels/sheet1.xml.rels'] = $this->xlsxSheetRelsXml($hyperlinks);
+        }
+
+        return $this->buildStoredZip($files);
+    }
+
+    private function buildXlsxRow(array $values, int $rowIndex, bool $header = false, array &$hyperlinks = []): string
+    {
+        $cells = [];
+        $maxLines = 1;
+        foreach (array_values($values) as $index => $value) {
+            $column = $this->excelColumnName($index + 1);
+            $cellRef = $column . $rowIndex;
+            $isHyperlink = is_array($value) && !empty($value['hyperlink']);
+            $style = $header ? 1 : ($isHyperlink ? 3 : 2);
+            $rawText = $this->xlsxCellText($value);
+            $maxLines = max($maxLines, substr_count($rawText, "\n") + 1);
+            $text = htmlspecialchars($rawText, ENT_XML1 | ENT_COMPAT, 'UTF-8');
+
+            if ($isHyperlink) {
+                $hyperlinks[] = [
+                    'ref' => $cellRef,
+                    'url' => (string)$value['hyperlink'],
+                ];
+            }
+
+            $cells[] = '<c r="' . $cellRef . '" t="inlineStr" s="' . $style . '"><is><t xml:space="preserve">' . $text . '</t></is></c>';
+        }
+
+        $height = $header ? 22 : min(220, max(18, $maxLines * 17));
+        return '<row r="' . $rowIndex . '" ht="' . $height . '" customHeight="1">' . implode('', $cells) . '</row>';
+    }
+
+    private function buildXlsxColumns(int $count): string
+    {
+        $xml = '';
+        for ($i = 1; $i <= max(1, $count); $i++) {
+            $width = $i >= 5 ? 48 : 24;
+            $xml .= '<col min="' . $i . '" max="' . $i . '" width="' . $width . '" customWidth="1"/>';
+        }
+        return $xml;
+    }
+
+    private function buildXlsxHyperlinksXml(array $hyperlinks): string
+    {
+        if (empty($hyperlinks)) {
+            return '';
+        }
+
+        $xml = '<hyperlinks>';
+        foreach (array_values($hyperlinks) as $index => $hyperlink) {
+            $xml .= '<hyperlink ref="'
+                . htmlspecialchars($hyperlink['ref'], ENT_XML1 | ENT_COMPAT, 'UTF-8')
+                . '" r:id="rId'
+                . ($index + 1)
+                . '"/>';
+        }
+        return $xml . '</hyperlinks>';
+    }
+
+    private function xlsxCellText($value): string
+    {
+        if (is_array($value)) {
+            $value = $value['text'] ?? $value['label'] ?? $value['hyperlink'] ?? 'Non renseigné';
+        }
+
+        $text = (string)$value;
+        $text = preg_replace_callback(
+            '#<a\s+[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>#is',
+            static function (array $matches): string {
+                $label = trim(strip_tags($matches[2]));
+                $url = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
+                return ($label !== '' ? $label . ' : ' : '') . $url;
+            },
+            $text
+        ) ?? $text;
+        $text = preg_replace('#<br\s*/?>#i', "\n", $text) ?? $text;
+        $text = preg_replace('#</p>|</div>|</li>#i', "\n", $text) ?? $text;
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        $text = preg_replace("/[ \t]+\n/", "\n", $text) ?? $text;
+        $text = preg_replace("/\n{3,}/", "\n\n", $text) ?? $text;
+        $text = trim($text);
+
+        return $text === '' ? 'Non renseigné' : $text;
+    }
+
+    private function excelColumnName(int $index): string
+    {
+        $name = '';
+        while ($index > 0) {
+            $index--;
+            $name = chr(65 + ($index % 26)) . $name;
+            $index = intdiv($index, 26);
+        }
+        return $name;
+    }
+
+    private function buildStoredZip(array $files): string
+    {
+        $localParts = [];
+        $centralParts = [];
+        $offset = 0;
+
+        foreach ($files as $name => $content) {
+            $name = str_replace('\\', '/', $name);
+            $nameBytes = $name;
+            $content = (string)$content;
+            $crc = $this->unsignedCrc32($content);
+            $size = strlen($content);
+
+            $localHeader = pack('VvvvvvVVVvv', 0x04034b50, 20, 0, 0, 0, 0, $crc, $size, $size, strlen($nameBytes), 0)
+                . $nameBytes;
+            $localParts[] = $localHeader . $content;
+
+            $centralParts[] = pack('VvvvvvvVVVvvvvvVV', 0x02014b50, 20, 20, 0, 0, 0, 0, $crc, $size, $size, strlen($nameBytes), 0, 0, 0, 0, 0, $offset)
+                . $nameBytes;
+
+            $offset += strlen($localHeader) + $size;
+        }
+
+        $centralDirectory = implode('', $centralParts);
+        $centralOffset = $offset;
+        $centralSize = strlen($centralDirectory);
+        $count = count($files);
+        $end = pack('VvvvvVVv', 0x06054b50, 0, 0, $count, $count, $centralSize, $centralOffset, 0);
+
+        return implode('', $localParts) . $centralDirectory . $end;
+    }
+
+    private function unsignedCrc32(string $content): int
+    {
+        return (int)sprintf('%u', crc32($content));
+    }
+
+    private function xlsxContentTypesXml(): string
+    {
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+            . '<Default Extension="xml" ContentType="application/xml"/>'
+            . '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+            . '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+            . '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+            . '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'
+            . '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>'
+            . '</Types>';
+    }
+
+    private function xlsxRootRelsXml(): string
+    {
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+            . '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>'
+            . '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>'
+            . '</Relationships>';
+    }
+
+    private function xlsxWorkbookXml(): string
+    {
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            . 'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            . '<sheets><sheet name="Export" sheetId="1" r:id="rId1"/></sheets>'
+            . '</workbook>';
+    }
+
+    private function xlsxWorkbookRelsXml(): string
+    {
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+            . '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+            . '</Relationships>';
+    }
+
+    private function xlsxSheetRelsXml(array $hyperlinks): string
+    {
+        $xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">';
+
+        foreach (array_values($hyperlinks) as $index => $hyperlink) {
+            $xml .= '<Relationship Id="rId'
+                . ($index + 1)
+                . '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="'
+                . htmlspecialchars($hyperlink['url'], ENT_XML1 | ENT_COMPAT, 'UTF-8')
+                . '" TargetMode="External"/>';
+        }
+
+        return $xml . '</Relationships>';
+    }
+
+    private function xlsxStylesXml(): string
+    {
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><u/><color rgb="FF0563C1"/><sz val="11"/><name val="Calibri"/></font></fonts>'
+            . '<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'
+            . '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+            . '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+            . '<cellXfs count="4">'
+            . '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+            . '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment wrapText="1"/></xf>'
+            . '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"><alignment wrapText="1" vertical="top"/></xf>'
+            . '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"><alignment wrapText="1" vertical="top"/></xf>'
+            . '</cellXfs>'
+            . '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'
+            . '</styleSheet>';
+    }
+
+    private function xlsxCoreXml(): string
+    {
+        $now = gmdate('Y-m-d\TH:i:s\Z');
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '
+            . 'xmlns:dc="http://purl.org/dc/elements/1.1/" '
+            . 'xmlns:dcterms="http://purl.org/dc/terms/" '
+            . 'xmlns:dcmitype="http://purl.org/dc/dcmitype/" '
+            . 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+            . '<dc:creator>Vie Etudiante EILCO</dc:creator>'
+            . '<cp:lastModifiedBy>Vie Etudiante EILCO</cp:lastModifiedBy>'
+            . '<dcterms:created xsi:type="dcterms:W3CDTF">' . $now . '</dcterms:created>'
+            . '<dcterms:modified xsi:type="dcterms:W3CDTF">' . $now . '</dcterms:modified>'
+            . '</cp:coreProperties>';
+    }
+
+    private function xlsxAppXml(): string
+    {
+        return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" '
+            . 'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">'
+            . '<Application>Vie Etudiante EILCO</Application>'
+            . '</Properties>';
+    }
+
+    private function formatValidation($value): string
+    {
+        if ($value === null || trim((string)$value) === '') {
+            return 'Non renseigné';
+        }
+
+        return match (trim((string)$value)) {
+            '1' => 'Validé',
+            '0' => 'En attente',
+            '-1' => 'Refusé',
+            default => 'Statut inconnu',
+        };
+    }
+
+    private function formatText($value, string $fallback = 'Non renseigné'): string
+    {
+        if ($value === null) {
+            return $fallback;
+        }
+
+        $text = trim((string)$value);
+        return $text === '' ? $fallback : $this->sanitizeCsvCell($text);
+    }
+
+    private function formatDateFr($value): string
+    {
+        $text = trim((string)($value ?? ''));
+        if ($text === '' || $text === '0000-00-00') {
+            return 'Date non renseignée';
+        }
+
+        $date = DateTime::createFromFormat('!Y-m-d', substr($text, 0, 10));
+        $errors = DateTime::getLastErrors();
+        if (!$date || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            return 'Date non renseignée';
+        }
+
+        return $date->format('d/m/Y');
+    }
+
+    private function formatTimeFr($value): string
+    {
+        $text = trim((string)($value ?? ''));
+        if ($text === '') {
+            return 'Horaire non renseigné';
+        }
+
+        if (!preg_match('/^([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/', $text, $matches)) {
+            return 'Horaire non renseigné';
+        }
+
+        return $matches[1] . ':' . $matches[2];
+    }
+
+    private function formatPerson($prenom, $nom): string
+    {
+        $parts = [];
+        foreach ([$prenom, $nom] as $part) {
+            $part = trim((string)($part ?? ''));
+            if ($part !== '') {
+                $parts[] = $part;
+            }
+        }
+
+        return empty($parts) ? 'Personne non renseignée' : $this->sanitizeCsvCell(implode(' ', $parts));
+    }
+
+    private function formatEmail($value): string
+    {
+        return $this->formatText($value, 'Email non renseigné');
+    }
+
+    private function formatPromo($value): string
+    {
+        return $this->formatText($value, 'Promo non renseignée');
+    }
+
+    private function formatDocument($value, string $fallback = 'Aucun document'): string
+    {
+        return $this->formatText($value, $fallback);
+    }
+
+    private function sanitizeFilename($value): string
+    {
+        $filename = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string)$value) ?? '';
+        $filename = trim($filename, '._-');
+        return $filename !== '' ? $filename : 'export.csv';
+    }
+
+    private function sanitizeCsvCell($value): string
+    {
+        $cell = trim((string)$value);
+        $cell = preg_replace('/[\r\n\t]+/', ' ', $cell) ?? '';
+        $cell = preg_replace('/\s{2,}/', ' ', $cell) ?? '';
+
+        if ($cell === '') {
+            return 'Non renseigné';
+        }
+
+        if (preg_match('/^[=+\-@]/', $cell)) {
+            $cell = "'" . $cell;
+        }
+
+        return $cell;
+    }
+
+    private function buildMembersSummary(array $members): string
+    {
+        if (empty($members)) {
+            return 'Aucun membre';
+        }
+
+        $items = [];
+        foreach ($members as $member) {
+            $items[] = $this->formatPerson($member['prenom'] ?? null, $member['nom'] ?? null)
+                . ' - '
+                . $this->formatText($member['fonction'] ?? null, 'Rôle non renseigné');
+        }
+
+        return $this->sanitizeCsvCell(implode(' | ', $items));
+    }
+
+    private function buildEventsSummary(array $events): string
+    {
+        if (empty($events)) {
+            return 'Aucun événement';
+        }
+
+        $items = [];
+        foreach (array_values($events) as $index => $event) {
+            $items[] = '<strong>' . ($index + 1) . '. ' . htmlspecialchars($this->formatText($event['titre'] ?? null), ENT_QUOTES, 'UTF-8') . '</strong>'
+                . '<br>Date : ' . htmlspecialchars($this->formatDateFr($event['date_ev'] ?? null), ENT_QUOTES, 'UTF-8')
+                . '<br>Lieu : ' . htmlspecialchars($this->formatText($event['lieu'] ?? null), ENT_QUOTES, 'UTF-8')
+                . '<br>Responsable : ' . htmlspecialchars($this->formatPerson($event['responsable_prenom'] ?? null, $event['responsable_nom'] ?? null), ENT_QUOTES, 'UTF-8')
+                . '<br>Statut : ' . htmlspecialchars($this->getEventPeriodLabel($event['date_ev'] ?? null), ENT_QUOTES, 'UTF-8');
+        }
+
+        return implode('<br><br>', $items);
+    }
+
+    private function buildEventDocumentsSummary(array $events)
+    {
+        $links = [];
+        $documentFields = [
+            'fiche_sanitaire' => 'Fiche sanitaire',
+            'affiche' => 'Affiche',
+            'doc_organisation' => 'Document organisation',
+            'rapport_event' => 'Rapport événement',
+            'images_event' => 'Images événement',
+        ];
+
+        foreach ($events as $event) {
+            $eventTitle = $this->formatText($event['titre'] ?? null);
+            foreach ($documentFields as $field => $label) {
+                foreach ($this->extractDocumentValues($event[$field] ?? null) as $index => $documentPath) {
+                    $url = $this->buildAbsoluteResourceUrl($documentPath);
+                    if ($url === null) {
+                        continue;
+                    }
+
+                    $suffix = $index > 0 ? ' ' . ($index + 1) : '';
+                    $links[] = [
+                        'text' => $eventTitle . ' - ' . $label . $suffix,
+                        'hyperlink' => $url,
+                    ];
+                }
+            }
+        }
+
+        if (empty($links)) {
+            return 'Aucun document';
+        }
+
+        $lines = [];
+        foreach (array_values($links) as $index => $link) {
+            $lines[] = ($index + 1) . '. ' . $link['text'] . "\nLien : " . $link['hyperlink'];
+        }
+
+        return [
+            'text' => implode("\n\n", $lines),
+            'hyperlink' => $links[0]['hyperlink'],
+        ];
+    }
+
+    private function extractDocumentValues($value): array
+    {
+        $text = trim((string)($value ?? ''));
+        if ($text === '') {
+            return [];
+        }
+
+        $parts = array_map('trim', explode(',', $text));
+        return array_values(array_filter($parts, static fn(string $part): bool => $part !== ''));
+    }
+
+    private function buildAbsoluteResourceUrl(string $path): ?string
+    {
+        $path = trim($path);
+        if ($path === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        $normalized = str_replace('\\', '/', $path);
+        $normalized = preg_replace('#^(\.\./)+#', '', $normalized) ?? $normalized;
+        $normalized = ltrim($normalized, '/');
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        $segments = array_map('rawurlencode', explode('/', $normalized));
+        $encodedPath = implode('/', $segments);
+        $baseUrl = defined('BASE_URL') ? BASE_URL : Environment::getBaseUrl();
+
+        return rtrim((string)$baseUrl, '/') . '/' . $encodedPath;
+    }
+
+    private function countMembersByStatus(array $members): array
+    {
+        $counts = ['valides' => 0, 'en_attente' => 0, 'refuses' => 0];
+        foreach ($members as $member) {
+            $status = trim((string)($member['valide'] ?? ''));
+            if ($status === '1') {
+                $counts['valides']++;
+            } elseif ($status === '-1') {
+                $counts['refuses']++;
+            } else {
+                $counts['en_attente']++;
+            }
+        }
+
+        return $counts;
+    }
+
+    private function countEventsByPeriod(array $events): array
+    {
+        $counts = ['passes' => 0, 'a_venir' => 0];
+        $today = new DateTime('today');
+
+        foreach ($events as $event) {
+            $date = $this->parseDate($event['date_ev'] ?? null);
+            if (!$date) {
+                continue;
+            }
+
+            if ($date < $today) {
+                $counts['passes']++;
+            } else {
+                $counts['a_venir']++;
+            }
+        }
+
+        return $counts;
+    }
+
+    private function getEventPeriodLabel($dateValue): string
+    {
+        $date = $this->parseDate($dateValue);
+        if (!$date) {
+            return 'Date non renseignée';
+        }
+
+        return $date < new DateTime('today') ? 'Passé' : 'À venir';
+    }
+
+    private function parseDate($value): ?DateTime
+    {
+        $text = trim((string)($value ?? ''));
+        if ($text === '' || $text === '0000-00-00') {
+            return null;
+        }
+
+        $date = DateTime::createFromFormat('!Y-m-d', substr($text, 0, 10));
+        $errors = DateTime::getLastErrors();
+        if (!$date || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
+            return null;
+        }
+
+        return $date;
+    }
+
     private function envoyerCsv(array $lignes, string $nomFichier): void
     {
         // Construction du corps en m\u00e9moire avant l'envoi des en-t\u00eates

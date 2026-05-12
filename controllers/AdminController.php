@@ -318,6 +318,10 @@ class AdminController {
                 }
             }
         }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
+        }
         
         // Recuperer les 50 dernieres lignes du log d'erreur
         $error_logs = [];
@@ -999,6 +1003,10 @@ class AdminController {
                     $error_msg = "Erreur lors de l'archivage.";
                 }
             }
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
         }
         
         // Statistiques de chaque table (tables existantes dans la BD)

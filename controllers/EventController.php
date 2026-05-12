@@ -436,6 +436,10 @@ class EventController {
             }
         }
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
+        }
+
         return [
             'clubs' => $clubs,
             'error_msg' => $error_msg,
@@ -597,6 +601,10 @@ class EventController {
             }
         }
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
+        }
+
         // Liste des clubs réduite au club actuel pour la vue de modification
         $clubs = [[ 'club_id' => $event['club_orga'], 'nom_club' => $event['nom_club'] ]];
 
@@ -651,6 +659,10 @@ class EventController {
                     $error_msg = "Vous n'avez pas la permission de supprimer cet événement.";
                 }
             }
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
         }
 
         $events = $this->eventModel->getEventsByUser($user_id);
@@ -819,6 +831,10 @@ class EventController {
                     }
                 }
             }
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
         }
 
         return [

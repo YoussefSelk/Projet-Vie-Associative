@@ -215,6 +215,10 @@ class UserController {
             }
         }
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            redirect($_SERVER['REQUEST_URI']);
+        }
+
         return [
             'user' => $user,
             'error_msg' => $error_msg,

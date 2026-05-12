@@ -232,6 +232,111 @@
   color: #0066cc;
 }
 
+.event-reserved-card {
+  background: #f8fafc;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-top: 30px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.event-reserved-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.event-reserved-title {
+  color: #1e293b;
+  margin: 0;
+  font-size: 1.25rem;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.event-reserved-title i {
+  color: #64748b;
+}
+
+.event-reserved-tag {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.event-reserved-section {
+  margin-bottom: 20px;
+}
+
+.event-reserved-section h3 {
+  margin-top: 0;
+}
+
+.event-reserved-grid {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.event-reserved-item {
+  background: #fff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  flex: 1;
+  min-width: 150px;
+}
+
+.event-reserved-item small {
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.event-reserved-item p {
+  margin: 5px 0 0 0;
+  font-weight: 600;
+  color: #059669;
+}
+
+.event-reserved-subtitle {
+  font-size: 0.95rem;
+  color: #475569;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 5px;
+}
+
+.event-reserved-section--bordered {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+}
+
+.event-subscribers-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.event-subscribers-list li {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
 .event-description-full {
   color: #555;
   line-height: 1.8;
@@ -2019,23 +2124,23 @@ body.my-subscriptions-page .event-card-actions .form-unsubscribe {
 
 /* Réserve l'espace du champ montant et cache/affiche sans déplacer les éléments */
 #montantGroup {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 220px; /* réserve l'espace pour éviter les décalages */
-    transition: opacity 0.18s ease;
-    opacity: 0;
-    pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px; /* réserve l'espace pour éviter les décalages */
+  transition: opacity 0.18s ease;
+  opacity: 0;
+  pointer-events: none;
 }
 
 #montantGroup.montant-visible {
-    opacity: 1;
-    pointer-events: auto;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Ajustement responsive : réduire la largeur réservée sur petits écrans */
 @media (max-width: 600px) {
-    #montantGroup {
-        min-width: 0;
-    }
+  #montantGroup {
+    min-width: 0;
+  }
 }

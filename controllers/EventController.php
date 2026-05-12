@@ -162,14 +162,31 @@ class EventController {
                 $ev['logo_club'] = $logoPath;
                 $ev['nom_club']  = $clubName;
                 $ev['is_subscribed'] = false;
+                $ev['subscription_count'] = 0;
             }
             unset($ev);
 
+            $eventIds = array_values(array_unique(array_map(static fn($event) => (int)($event['event_id'] ?? 0), $events)));
+            $eventIds = array_values(array_filter($eventIds, static fn($id) => $id > 0));
+
+            if (!empty($eventIds)) {
+                $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+                $stmtCounts = $this->db->prepare("SELECT event_id, COUNT(*) AS count FROM abonnements WHERE event_id IN ($placeholders) GROUP BY event_id");
+                $stmtCounts->execute($eventIds);
+                $counts = [];
+                foreach ($stmtCounts->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $counts[(int)$row['event_id']] = (int)$row['count'];
+                }
+
+                foreach ($events as &$event) {
+                    $eventId = (int)($event['event_id'] ?? 0);
+                    $event['subscription_count'] = (int)($counts[$eventId] ?? 0);
+                }
+                unset($event);
+            }
+
             // Marquer les événements déjà abonnés pour l'utilisateur connecté.
             if ($currentUserId > 0) {
-                $eventIds = array_values(array_unique(array_map(static fn($event) => (int)($event['event_id'] ?? 0), $events)));
-                $eventIds = array_values(array_filter($eventIds, static fn($id) => $id > 0));
-
                 if (!empty($eventIds)) {
                     $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
                     $stmtSub = $this->db->prepare("SELECT event_id FROM abonnements WHERE id = ? AND event_id IN ($placeholders)");
@@ -216,8 +233,14 @@ class EventController {
         $event['logo_club'] = $this->resolveSafeLogoPath($clubInfo['logo_club'] ?? null);
         $event['nom_club'] = $clubInfo['nom_club'] ?? 'Club inconnu';
 
+        $subscriptionModel = new EventSubscription($this->db);
+        $subscribers = $subscriptionModel->getEventSubscribers((int)$event_id);
+        $subscriptionCount = count($subscribers);
+
         return [
-            'event' => $event
+            'event' => $event,
+            'subscribers' => $subscribers,
+            'subscription_count' => $subscriptionCount
         ];
     }
 

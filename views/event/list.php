@@ -154,6 +154,10 @@ $isAuthenticated = !empty($_SESSION['id']);
                                                 <i class="fas fa-clock"></i> <?= htmlspecialchars($event['horaire_debut']) ?>
                                             </span>
                                         <?php endif; ?>
+                                        <span class="participants">
+                                            <i class="fas fa-user-friends"></i>
+                                            <?= (int)($event['subscription_count'] ?? 0) ?> inscrit<?= ((int)($event['subscription_count'] ?? 0) !== 1) ? 's' : '' ?>
+                                        </span>
                                     </div>
                                     <?php if (!empty($event['description'])): ?>
                                         <?php

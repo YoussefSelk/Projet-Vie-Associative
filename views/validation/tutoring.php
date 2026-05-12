@@ -622,6 +622,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                 let members = [];
                 try { members = JSON.parse(this.dataset.members || '[]'); } catch(e) {}
 
+                const valBDE = club.validation_bde;
                 const valAdmin  = club.validation_admin;
                 const valTuteur = club.validation_tuteur;
                 const valFinale = club.validation_finale;
@@ -662,7 +663,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                         '</div>' +
                         '<div class="swal-detail-section">' +
                             '<div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div>' +
-                            '<div class="swal-badges-row">' +
+                            '<div class="swal-badges-row" style="display:flex;gap:10px;flex-wrap:wrap;">' +
+                                statusBadge('BDE', valBDE) +
                                 statusBadge('Admin', valAdmin) +
                                 statusBadge('Tuteur', valTuteur) +
                                 statusBadge('Finale', valFinale) +
@@ -833,8 +835,10 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                     '</div>' +
                     (ev.description ? '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-align-left"></i> Description</div><div class="swal-detail-description">' + esc(ev.description) + '</div></div>' : '') +
                     filesHtml +
-                    '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div><div class="swal-badges-row">' +
-                        valBadge('BDE', ev.validation_bde) + valBadge('Tuteur', ev.validation_tuteur) + valBadge('Admin', ev.validation_admin) +
+                    '<div class="swal-detail-section"><div class="swal-detail-label"><i class="fas fa-clipboard-check"></i> État des validations</div><div class="swal-badges-row" style="display:flex;gap:10px;flex-wrap:wrap;">' +
+                        valBadge('BDE', ev.validation_bde) + 
+                        valBadge('Tuteur', ev.validation_tuteur) + 
+                        valBadge('Admin', ev.validation_admin) +
                     '</div></div>' +
                     (ev.motif_refus ? '<div class="swal-detail-section swal-reject-box"><div class="swal-detail-label"><i class="fas fa-comment-alt"></i> Motif de rejet</div><div class="swal-detail-description">' + esc(ev.motif_refus) + '</div></div>' : '') +
                     '</div>';

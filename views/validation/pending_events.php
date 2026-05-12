@@ -98,16 +98,16 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         </select>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <label for="eventStatusFilter" style="font-weight:600; color:#334155;">Filtrer par etat de validation :</label>
+                        <label for="eventStatusFilter" style="font-weight:600; color:#334155;">Filtrer par état de validation :</label>
                         <select id="eventStatusFilter" class="form-control">
                             <option value="all">Toutes les fiches</option>
                             <option value="partial">Fiches en cours de traitement</option>
-                            <option value="validated">Fiches validees</option>
-                            <option value="rejected">Fiches refusees</option>
+                            <option value="validated">Fiches validées</option>
+                            <option value="rejected">Fiches refusées</option>
                         </select>
                     </div>
                     <button type="button" id="eventFiltersReset" class="btn btn-outline" style="height:44px;">
-                        <i class="fas fa-undo"></i> Reinitialiser
+                        <i class="fas fa-undo"></i> Réinitialiser
                     </button>
                     <div id="eventFilterCount" class="campus-badge" style="justify-self:end; min-width:92px; text-align:center; font-weight:700;">
                         <?= (int)$all_events_count ?> fiche(s)

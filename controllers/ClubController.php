@@ -75,8 +75,9 @@ class ClubController {
 
         $req_club = null;
         $update_msg = '';
-        $error_msg = '';
-        $success_msg = '';
+        $error_msg = (string)($_SESSION['flash_error'] ?? '');
+        $success_msg = (string)($_SESSION['flash_success'] ?? '');
+        unset($_SESSION['flash_error'], $_SESSION['flash_success']);
 
         // Recherche d'un club par nom (BDE/Admin uniquement)
         if (!$isTuteurOnly && $_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_POST['club'])) {
@@ -140,6 +141,7 @@ class ClubController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            $_SESSION['flash_success'] = $success_msg;
             redirect($_SERVER['REQUEST_URI']);
         }
 

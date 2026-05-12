@@ -463,7 +463,7 @@ class EventController {
 
         // 1. Vérification de sécurité : l'utilisateur doit être membre VALIDE du club organisateur
         $stmt = $this->db->prepare("
-            SELECT fe.*, fc.nom_club 
+            SELECT fe.*, fe.titre AS nom_event, fe.club_orga AS club_id, fc.nom_club
             FROM fiche_event fe
             INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
             INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
@@ -481,8 +481,9 @@ class EventController {
             redirect('?page=my-events&error=Impossible de modifier un événement déjà approuvé.');
         }
 
-        $error_msg = '';
-        $success_msg = '';
+        $error_msg = (string)($_SESSION['flash_error'] ?? '');
+        $success_msg = (string)($_SESSION['flash_success'] ?? '');
+        unset($_SESSION['flash_error'], $_SESSION['flash_success']);
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_event'])) {
             // 2. Extraction des données textuelles
@@ -604,6 +605,7 @@ class EventController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            $_SESSION['flash_success'] = $success_msg;
             redirect($_SERVER['REQUEST_URI']);
         }
 

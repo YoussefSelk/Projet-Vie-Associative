@@ -138,7 +138,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                         <label for="cardStatusFilter" style="font-weight:600; color:#334155;">Filtrer par état :</label>
                         <select id="cardStatusFilter" class="form-control">
                             <option value="">Tous les états</option>
-                            <option value="a_valider">Fiches à valider</option>
                             <option value="en_cours">Fiches en cours de traitement</option>
                             <option value="valide">Fiches validées</option>
                             <option value="refuse">Fiches refusées</option>

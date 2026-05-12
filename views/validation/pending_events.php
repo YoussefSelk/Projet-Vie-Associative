@@ -101,7 +101,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                         <label for="eventStatusFilter" style="font-weight:600; color:#334155;">Filtrer par etat de validation :</label>
                         <select id="eventStatusFilter" class="form-control">
                             <option value="all">Toutes les fiches</option>
-                            <option value="pending">Fiches a valider</option>
                             <option value="partial">Fiches en cours de traitement</option>
                             <option value="validated">Fiches validees</option>
                             <option value="rejected">Fiches refusees</option>

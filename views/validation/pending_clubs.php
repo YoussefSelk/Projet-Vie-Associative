@@ -73,7 +73,6 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                         <label for="pendingStatusFilter">Filtrer par etat de validation :</label>
                         <select id="pendingStatusFilter" class="filter-select">
                             <option value="">Toutes les fiches</option>
-                            <option value="a_valider">Fiches a valider</option>
                             <option value="en_cours">Fiches en cours de traitement</option>
                             <option value="valide">Fiches validees</option>
                             <option value="refuse">Fiches refusees</option>

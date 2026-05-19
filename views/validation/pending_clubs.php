@@ -375,10 +375,8 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-tag"></i> Type</div><div class="swal-detail-value">' + esc(club.type_club || 'N/A') + '</div></div>' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-map-marker-alt"></i> Campus</div><div class="swal-detail-value"><span class="campus-badge ' + (club.campus || 'calais').toLowerCase() + '">' + esc(club.campus || 'N/A') + '</span></div></div>' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-envelope"></i> Contact</div><div class="swal-detail-value">' + esc(contact || 'Non renseigné') + '</div></div>' +
-                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-fingerprint"></i> Club ID</div><div class="swal-detail-value">' + esc(club.club_id || 'N/A') + '</div></div>' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-user"></i> Responsable</div><div class="swal-detail-value">' + esc(responsable || club.responsable || 'Non renseigné') + '</div></div>' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-chalkboard-teacher"></i> Tuteur</div><div class="swal-detail-value">' + esc(tuteur || 'Non assigné') + '</div></div>' +
-                        '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-inbox"></i> Dépôt</div><div class="swal-detail-value">' + esc(dateDepot || 'N/A') + '</div></div>' +
                         '<div class="swal-detail-item"><div class="swal-detail-label"><i class="fas fa-layer-group"></i> Statut fiche</div><div class="swal-detail-value">' + esc(club.statut || club.status || 'En attente') + '</div></div>' +
                     '</div>' +
                     '<div class="swal-detail-section">' +

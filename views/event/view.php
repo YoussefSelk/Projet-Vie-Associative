@@ -1,16 +1,16 @@
 <?php
 /**
- * Vue detaillee d'un evenement
- * 
- * Affiche les informations completes d'un evenement :
- * - En-tete avec couleur du campus
- * - Description complete
+ * Vue détaillée d'un événement
+ *
+ * Affiche les informations complètes d'un événement :
+ * - En-tête avec couleur du campus
+ * - Description complète
  * - Club organisateur
  * - Date, lieu et nombre de places
  * - Boutons d'action (inscription, partage)
- * 
+ *
  * Variables attendues :
- * - $event : Donnees de l'evenement
+ * - $event : Données de l'événement
  * - $club : Club organisateur
  * - $is_subscribed : Si l'utilisateur est inscrit
  * 

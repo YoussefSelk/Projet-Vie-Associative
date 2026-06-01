@@ -2,37 +2,37 @@
 declare(strict_types=1);
 
 /**
- * Controleur de validation des clubs et evenements
- * 
- * Gere le workflow de validation a plusieurs niveaux :
+ * Contrôleur de validation des clubs et événements
+ *
+ * Gère le workflow de validation à plusieurs niveaux :
  * - Validation BDE (permission 3+)
  * - Validation tuteur (permission 2+)
  * - Approbation et rejet avec remarques
- * 
+ *
  * Deux flux distincts :
  * 1. pendingClubs/pendingEvents/validateClub/validateEvent : Validation BDE
- * 2. tutoring : Validation tuteur avec filtrage par clubs tutores
+ * 2. tutoring : Validation tuteur avec filtrage par clubs tutorés
  * 
  * @package Controllers
  */
 class ValidationController {
     
-    /** @var Validation Instance du modele de validation */
+    /** @var Validation Instance du modèle de validation */
     private $validationModel;
-    
-    /** @var Club Instance du modele de club */
+
+    /** @var Club Instance du modèle de club */
     private $clubModel;
-    
-    /** @var Event Instance du modele d'evenement */
+
+    /** @var Event Instance du modèle d'événement */
     private $eventModel;
-    
-    /** @var PDO Connexion a la base de donnees */
+
+    /** @var PDO Connexion à la base de données */
     private $db;
 
     /**
-     * Constructeur - initialise les dependances
-     * 
-     * @param PDO $database Connexion a la base de donnees
+     * Constructeur - initialise les dépendances
+     *
+     * @param PDO $database Connexion à la base de données
      */
     public function __construct($database) {
         $this->db = $database;
@@ -42,7 +42,7 @@ class ValidationController {
     }
 
     /**
-     * Retourne les dirigeants (president/secretaire) valides d'un club.
+     * Retourne les dirigeants (président/secrétaire) valides d'un club.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -53,7 +53,7 @@ class ValidationController {
     }
 
     /**
-     * Notifie president/secretaire du statut d'une demande.
+     * Notifie président/secrétaire du statut d'une demande.
      */
     private function notifyLeadershipRequestStatus(
         int $clubId,
@@ -100,7 +100,7 @@ class ValidationController {
     }
 
     /**
-     * Nettoie le motif de validation forcee sans le confondre avec motif_refus.
+     * Nettoie le motif de validation forcée sans le confondre avec motif_refus.
      */
     private function normalizeMotifForcage($value): ?string {
         $motif = trim((string)($value ?? ''));
@@ -116,8 +116,8 @@ class ValidationController {
     /**
      * Affiche la liste des clubs en attente de validation BDE
      * Requiert permission 3 (membre BDE)
-     * 
-     * @return array Donnees pour la vue (liste des clubs en attente)
+     *
+     * @return array Données pour la vue (liste des clubs en attente)
      */
     public function pendingClubs() {
         checkPermission(3);
@@ -130,10 +130,10 @@ class ValidationController {
     }
 
     /**
-     * Affiche la liste des evenements en attente de validation BDE
+     * Affiche la liste des événements en attente de validation BDE
      * Requiert permission 3 (membre BDE)
-     * 
-     * @return array Donnees pour la vue (liste des evenements en attente)
+     *
+     * @return array Données pour la vue (liste des événements en attente)
      */
     public function pendingEvents() {
         checkPermission(3);
@@ -146,19 +146,19 @@ class ValidationController {
     }
 
     /**
-     * Gere la validation/rejet des clubs par le BDE
+     * Gère la validation/rejet des clubs par le BDE
      * Traite les actions POST : approve, reject, delete
      * Requiert permission 3 (membre BDE)
-     * 
-     * Le BDE valide validation_bde (premiere etape du workflow)
-     * L'admin peut forcer la validation complete (validation_bde + validation_tuteur + validation_admin + validation_finale)
-     * La validation finale ne passe a 1 QUE SI validation_bde = 1 ET validation_tuteur = 1 ET validation_admin = 1
-     * 
+     *
+     * Le BDE valide validation_bde (première étape du workflow)
+     * L'admin peut forcer la validation complète (validation_bde + validation_tuteur + validation_admin + validation_finale)
+     * La validation finale ne passe à 1 QUE SI validation_bde = 1 ET validation_tuteur = 1 ET validation_admin = 1
+     *
      * Actions possibles :
      * - validate_club : Approuver ou rejeter un club (validation BDE)
-     * - delete_club : Supprimer un club rejete
-     * 
-     * @return array Donnees pour la vue (clubs en attente, clubs rejetes, messages)
+     * - delete_club : Supprimer un club rejeté
+     *
+     * @return array Données pour la vue (clubs en attente, clubs rejetés, messages)
      */
     public function validateClub() {
     checkPermission(3);
@@ -183,7 +183,7 @@ class ValidationController {
             $clubMeta = $clubMetaStmt->fetch(PDO::FETCH_ASSOC) ?: [];
             $clubName = (string)($clubMeta['nom_club'] ?? ('Club #' . (int)$club_id));
 
-            // --- CAS 1 : FORCE APPROVE (Admin uniquement - Validation immédiate compl\u00e8te) ---
+            // --- CAS 1 : FORCE APPROVE (Admin uniquement - Validation immédiate complète) ---
             if ($action === 'force_approve' && $is_admin) {
                 if ($motifForcage === null) {
                     $error_msg = "Le motif du forçage est obligatoire.";
@@ -292,18 +292,18 @@ class ValidationController {
 }
 
     /**
-     * Gere la validation/rejet des evenements par le BDE
+     * Gère la validation/rejet des événements par le BDE
      * Traite les actions POST : approve, reject, delete
      * Requiert permission 3 (membre BDE)
-     * 
+     *
      * Le BDE ne valide que validation_bde
-     * La validation finale necessite: validation_bde = 1 ET (validation_tuteur = 1 OU validation_admin = 1)
-     * 
+     * La validation finale nécessite: validation_bde = 1 ET (validation_tuteur = 1 OU validation_admin = 1)
+     *
      * Actions possibles :
-     * - validate_event : Approuver ou rejeter un evenement (validation BDE)
-     * - delete_event : Supprimer un evenement rejete
-     * 
-     * @return array Donnees pour la vue (evenements en attente, rejetes, messages)
+     * - validate_event : Approuver ou rejeter un événement (validation BDE)
+     * - delete_event : Supprimer un événement rejeté
+     *
+     * @return array Données pour la vue (événements en attente, rejetés, messages)
      */
     public function validateEvent() {
     // Vérifie que l'utilisateur a au moins le niveau BDE (3)
@@ -315,7 +315,7 @@ class ValidationController {
     $user_permission = (int)($_SESSION['permission'] ?? 0);
     $is_admin = ($user_permission >= 4); 
 
-        // Traitement de la validation ou du rejet d'un evenement
+        // Traitement de la validation ou du rejet d'un événement
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['validate_event'])) {
             $event_id = $_POST['event_id'] ?? null;
             $action = $_POST['action'] ?? null;
@@ -328,7 +328,7 @@ class ValidationController {
             $eventMetaStmt = $this->db->prepare("SELECT fe.event_id, fe.titre, fe.club_orga, fc.nom_club FROM fiche_event fe LEFT JOIN fiche_club fc ON fc.club_id = fe.club_orga WHERE fe.event_id = ?");
             $eventMetaStmt->execute([$event_id]);
             $eventMeta = $eventMetaStmt->fetch(PDO::FETCH_ASSOC) ?: [];
-            $eventTitle = (string)($eventMeta['titre'] ?? ('Evenement #' . (int)$event_id));
+            $eventTitle = (string)($eventMeta['titre'] ?? ('Événement #' . (int)$event_id));
             $eventClubId = (int)($eventMeta['club_orga'] ?? 0);
             $eventClubName = (string)($eventMeta['nom_club'] ?? 'Club inconnu');
 
@@ -512,15 +512,15 @@ class ValidationController {
 
     /**
      * Interface de validation pour les tuteurs
-     * Permet aux tuteurs de valider les clubs et evenements de leurs clubs
+     * Permet aux tuteurs de valider les clubs et événements de leurs clubs
      * Les administrateurs voient tout, les tuteurs voient seulement leurs clubs
-     * 
-     * Niveaux d'acces :
+     *
+     * Niveaux d'accès :
      * - Admin (permission 5) : Voit et valide tout
      * - Tuteur (permission 2+) : Voit et valide uniquement ses clubs
-     * - Autres : Acces refuse (erreur 403)
-     * 
-     * @return array Donnees pour la vue
+     * - Autres : Accès refusé (erreur 403)
+     *
+     * @return array Données pour la vue
      */
     public function tutoring() {
     validateSession();
@@ -681,7 +681,7 @@ class ValidationController {
                    OR fc.validation_finale IN (1, -1, 0)
             ")->fetchAll(PDO::FETCH_ASSOC);
         } elseif ($is_tutor_scope) {
-            // Tutor scope: ne charger que les fiches des clubs tutores par l'utilisateur connecte
+            // Tutor scope: ne charger que les fiches des clubs tutorés par l'utilisateur connecté
             $stmt = $this->db->prepare("
                 SELECT fc.*, u.nom as tuteur_nom, u.prenom as tuteur_prenom
                 FROM fiche_club fc

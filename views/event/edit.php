@@ -1,12 +1,12 @@
 <?php
 /**
- * Formulaire de modification d'un evenement
- * * Permet aux membres de clubs de modifier un evenement existant :
- * - Les donnees actuelles sont pre-remplies
+ * Formulaire de modification d'un événement
+ * * Permet aux membres de clubs de modifier un événement existant :
+ * - Les données actuelles sont pré-remplies
  * - Gestion du changement de type (Event vs Activité)
- * - Mise a jour des fichiers optionnelle
+ * - Mise à jour des fichiers optionnelle
  * * Variables attendues :
- * - $event : Tableau contenant les donnees de l'evenement a modifier
+ * - $event : Tableau contenant les données de l'événement à modifier
  * - $clubs : Liste des clubs dont l'utilisateur est membre
  * - $error_msg / $success_msg : Messages de feedback
  * * @package Views/Event
@@ -14,7 +14,7 @@
 $pageTitle = 'Modifier l\'événement - ' . htmlspecialchars($event['nom_event']);
 $pageCss = ['shared', 'buttons', 'forms', 'events'];
 
-// Logique pour determiner si c'est un event ou une activite au chargement
+// Logique pour déterminer si c'est un event ou une activité au chargement
 $isEvent = ($event['type_event'] === 'event');
 ?>
 <!DOCTYPE html>

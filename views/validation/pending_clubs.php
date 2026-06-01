@@ -2,10 +2,10 @@
 /**
  * Liste des clubs en attente de validation
  *
- * Interface harmonisee avec la validation des evenements :
- * - Cartes detaillees (design admin)
+ * Interface harmonisée avec la validation des événements :
+ * - Cartes détaillées (design admin)
  * - Filtres campus / statut
- * - Modales SweetAlert2 detail + actions
+ * - Modales SweetAlert2 détail + actions
  *
  * @package Views/Validation
  */
@@ -45,7 +45,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                         <div class="empty-state-advanced">
                             <div class="empty-icon"><i class="fas fa-check"></i></div>
                             <h3>Aucun club en attente</h3>
-                            <p>Tous les clubs ont ete valides.</p>
+                            <p>Tous les clubs ont été validés.</p>
                         </div>
                     </div>
                 </div>
@@ -196,7 +196,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                                     <button type="button" class="btn-view-details btn-swal-club-details"
                                         data-club='<?= htmlspecialchars(json_encode($club), ENT_QUOTES, "UTF-8") ?>'
                                         data-members='<?= htmlspecialchars(json_encode($clubMembers), ENT_QUOTES, "UTF-8") ?>'>
-                                        <i class="fas fa-eye"></i> Voir details
+                                        <i class="fas fa-eye"></i> Voir détails
                                     </button>
                                     <?php if ($statusFilter !== 'valide' && $statusFilter !== 'refuse'): ?>
                                         <button type="button" class="btn-approve btn-swal-club-approve"
@@ -208,7 +208,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                                         <button type="button" class="btn-force btn-swal-club-force"
                                             data-id="<?= $club['club_id'] ?>"
                                             data-name="<?= htmlspecialchars($club['nom_club']) ?>"
-                                            title="Valider immediatement sans attendre le tuteur">
+                                            title="Valider immédiatement sans attendre le tuteur">
                                             <i class="fas fa-bolt"></i> Forcer
                                         </button>
                                         <?php endif; ?>
@@ -486,7 +486,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'clubs'];
                     const clubName = this.dataset.name;
                     Swal.fire({
                         title: 'Forcer la validation ?',
-                        html: '<p>Le club <strong>&laquo; ' + esc(clubName) + ' &raquo;</strong> sera valide immediatement.</p><p style="color:#d97706;font-size:0.9em;"><i class="fas fa-exclamation-triangle"></i> Cette action contourne le circuit normal.</p>',
+                        html: '<p>Le club <strong>&laquo; ' + esc(clubName) + ' &raquo;</strong> sera validé immédiatement.</p><p style="color:#d97706;font-size:0.9em;"><i class="fas fa-exclamation-triangle"></i> Cette action contourne le circuit normal.</p>',
                         input: 'textarea',
                         inputLabel: 'Motif du forçage',
                         inputPlaceholder: 'Expliquez pourquoi cette validation est forcée. Ce message sera visible par l’étudiant.',

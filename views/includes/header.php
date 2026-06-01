@@ -1,48 +1,48 @@
 <?php
 /**
- * En-tete du site avec barre superieure
- * 
+ * En-tête du site avec barre supérieure
+ *
  * Affiche :
  * - Logo et lien vers l'accueil
  * - Menu utilisateur avec liens profil, dashboard, administration
  * - Badges de notification pour validation (admin/tuteur)
- * - Bouton connexion/deconnexion
- * 
- * Variables calculees :
- * - $is_membre_club : Indicateur si l'utilisateur est membre d'un club valide
- * - $nb_badge_admin : Nombre d'elements en attente de validation admin
- * - $nb_badge_tuteur : Nombre d'elements en attente de validation tuteur
- * - $current_user : Informations de l'utilisateur connecte
+ * - Bouton connexion/déconnexion
+ *
+ * Variables calculées :
+ * - $is_membre_club : Indicateur si l'utilisateur est membre d'un club validé
+ * - $nb_badge_admin : Nombre d'éléments en attente de validation admin
+ * - $nb_badge_tuteur : Nombre d'éléments en attente de validation tuteur
+ * - $current_user : Informations de l'utilisateur connecté
  * 
  * @package Views/Includes
  */
 
-// Inclusion des dependances
+// Inclusion des dépendances
 require_once("include.php");
 global $db;
 
 if(isset($_SESSION['id'])){
     $user_permission = (int)($_SESSION['permission'] ?? 0);
-    // Recuperer les clubs dont l'utilisateur est membre valide
+    // Récupérer les clubs dont l'utilisateur est membre validé
     // Un club est considéré validé si validation_finale = 1
     $req_membre_club = $db->prepare("SELECT mc.* FROM membres_club mc LEFT JOIN fiche_club fc ON fc.club_id = mc.club_id WHERE mc.membre_id = ? AND mc.valide = 1 AND fc.validation_finale = 1");
     $req_membre_club->execute([$_SESSION['id']]);
     $infos_membre_club = $req_membre_club->fetchAll();    
 
-    // Indicateur d'appartenance a un club
+    // Indicateur d'appartenance à un club
     if(empty($infos_membre_club)){
         $is_membre_club = 0;
     } else {
         $is_membre_club = 1;
     }
 
-    // Recuperer les clubs dont l'utilisateur est tuteur
+    // Récupérer les clubs dont l'utilisateur est tuteur
     $req_0 = $db->prepare("SELECT club_id, nom_club FROM fiche_club
     WHERE tuteur = ?");
     $req_0->execute([$_SESSION['id']]);
     $req_clubs=$req_0->fetchAll();
 
-    // Compteur d'evenements en attente de validation finale
+    // Compteur d'événements en attente de validation finale
     // La validation tuteur est optionnelle si BDE et Admin ont validé
     $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event WHERE validation_finale IS NULL AND validation_bde = 1 AND (validation_tuteur = 1 OR validation_admin = 1)");
     $req->execute();
@@ -56,7 +56,7 @@ if(isset($_SESSION['id'])){
     $row = $req->fetchAll();
     $nb_clubs_admin = $row[0]['total'];
 
-    // Total des elements en attente pour le badge admin
+    // Total des éléments en attente pour le badge admin
     $nb_badge_admin = $nb_events_admin + $nb_clubs_admin;
 
     // Compteur de clubs en attente de validation tuteur
@@ -71,7 +71,7 @@ if(isset($_SESSION['id'])){
     $row = $req->fetchAll();
     $nb_clubs_tuteur = $row[0]['total'];
 
-    // Compteur d'evenements en attente de validation tuteur
+    // Compteur d'événements en attente de validation tuteur
     if (($_SESSION['permission'] ?? 0) == 5) {
         $req = $db->prepare("SELECT COUNT(*) AS total FROM fiche_event f WHERE f.validation_tuteur IS NULL");
         $req->execute();
@@ -82,7 +82,7 @@ if(isset($_SESSION['id'])){
     $row = $req->fetchAll();
     $nb_events_tuteur = $row[0]['total'];
 
-    // Total des elements en attente pour le badge tuteur
+    // Total des éléments en attente pour le badge tuteur
     $nb_badge_tuteur = $nb_clubs_tuteur + $nb_events_tuteur;
 
     // Compteur de clubs en attente de validation BDE (pour le badge BDE)
@@ -97,16 +97,16 @@ if(isset($_SESSION['id'])){
     $row = $req->fetchAll();
     $nb_events_bde = $row[0]['total'];
 
-    // Total des elements en attente pour le badge BDE
+    // Total des éléments en attente pour le badge BDE
     $nb_badge_bde = $nb_clubs_bde + $nb_events_bde;
 
-    // Recuperer les informations de l'utilisateur connecte
+    // Récupérer les informations de l'utilisateur connecté
     $q = $db->prepare("SELECT * FROM users WHERE id = ?");
     $q->execute([$_SESSION['id']]);
     $current_user = $q->fetch();
 }
 else {
-    // Valeurs par defaut pour utilisateur non connecte
+    // Valeurs par défaut pour utilisateur non connecté
     $is_membre_club = 0;
     $nb_badge_admin = 0;
     $nb_badge_tuteur = 0;

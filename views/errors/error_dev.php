@@ -1,16 +1,16 @@
 <!--
-    Page d'erreur detaillee - Mode Developpement
-    
-    Affichee uniquement quand APP_DEBUG=true.
+    Page d'erreur détaillée - Mode Développement
+
+    Affichée uniquement quand APP_DEBUG=true.
     ATTENTION : Ne jamais utiliser en production !
-    
-    Affiche des informations de debug completes :
+
+    Affiche des informations de debug complètes :
     - Message d'erreur complet
     - Fichier et ligne de l'erreur
     - Stack trace interactive
     - Variables d'environnement
-    - Informations de requete
-    
+    - Informations de requête
+
     Variables attendues :
     - $errorCode : Code HTTP de l'erreur
     - $errorMessage : Message d'erreur complet

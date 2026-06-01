@@ -2,29 +2,29 @@
 declare(strict_types=1);
 /**
  * =============================================================================
- * CONTRÃ”LEUR D'AUTHENTIFICATION
+ * CONTRÔLEUR D'AUTHENTIFICATION
  * =============================================================================
  * 
- * GÃ¨re toutes les opÃ©rations d'authentification :
- * - Connexion et dÃ©connexion des utilisateurs
- * - Inscription avec vÃ©rification par email
- * - RÃ©initialisation de mot de passe
+ * Gère toutes les opérations d'authentification :
+ * - Connexion et déconnexion des utilisateurs
+ * - Inscription avec vérification par email
+ * - Réinitialisation de mot de passe
  * 
- * SÃ©curitÃ© implÃ©mentÃ©e :
- * - Limitation des tentatives de vÃ©rification (5 max par 5 minutes)
- * - Hachage bcrypt avec coÃ»t 12
- * - RÃ©gÃ©nÃ©ration d'ID de session aprÃ¨s authentification
+ * Sécurité implémentée :
+ * - Limitation des tentatives de vérification (5 max par 5 minutes)
+ * - Hachage bcrypt avec coût 12
+ * - Régénération d'ID de session après authentification
  * - Validation stricte des mots de passe
  * 
- * @author Ã‰quipe de dÃ©veloppement EILCO
+ * @author Équipe de développement EILCO
  * @version 2.0
  */
 
 class AuthController {
-    /** @var User ModÃ¨le utilisateur */
+    /** @var User Modèle utilisateur */
     private $userModel;
     
-    /** @var PDO Instance de connexion Ã  la base de donnÃ©es */
+    /** @var PDO Instance de connexion à la base de données */
     private $db;
 
     /**
@@ -107,7 +107,7 @@ class AuthController {
      */
     private function validateStrongPassword(string $password): ?string {
         if (strlen($password) < 8) {
-            return 'Le mot de passe doit contenir au moins 8 caractÃ¨res.';
+            return 'Le mot de passe doit contenir au moins 8 caractères.';
         }
         if (!preg_match('/[A-Z]/', $password)) {
             return 'Le mot de passe doit contenir au moins une lettre majuscule.';
@@ -116,7 +116,7 @@ class AuthController {
             return 'Le mot de passe doit contenir au moins un chiffre.';
         }
         if (!preg_match('/[\W_]/', $password)) {
-            return 'Le mot de passe doit contenir au moins un caractÃ¨re spÃ©cial.';
+            return 'Le mot de passe doit contenir au moins un caractère spécial.';
         }
         return null;
     }
@@ -145,44 +145,44 @@ class AuthController {
     }
 
     /**
-     * RÃ©cupÃ¨re le niveau de permission de l'utilisateur connectÃ©
+     * Récupère le niveau de permission de l'utilisateur connecté
      * 
-     * @return int Niveau de permission (0 si non connectÃ©)
+     * @return int Niveau de permission (0 si non connecté)
      */
     public static function getPermission() {
         return isset($_SESSION['permission']) ? (int)$_SESSION['permission'] : 0;
     }
 
     /**
-     * VÃ©rifie si l'utilisateur est authentifiÃ©
+     * Vérifie si l'utilisateur est authentifié
      * 
-     * @return bool True si connectÃ©
+     * @return bool True si connecté
      */
     public static function isAuthenticated() {
         return isset($_SESSION['id']) && !empty($_SESSION['id']);
     }
 
     /**
-     * GÃ¨re la connexion et la rÃ©initialisation de mot de passe
+     * Gère la connexion et la réinitialisation de mot de passe
      * 
-     * Workflow de rÃ©initialisation :
-     * - Ã‰tape 0 : Formulaire de connexion normal
-     * - Ã‰tape 1 : Demande d'email pour rÃ©initialisation
-     * - Ã‰tape 2 : VÃ©rification du code envoyÃ© par email
-     * - Ã‰tape 3 : Saisie du nouveau mot de passe
+     * Workflow de réinitialisation :
+     * - Étape 0 : Formulaire de connexion normal
+     * - Étape 1 : Demande d'email pour réinitialisation
+     * - Étape 2 : Vérification du code envoyé par email
+     * - Étape 3 : Saisie du nouveau mot de passe
      * 
-     * @return array DonnÃ©es pour la vue [error_message, reset_step, err]
+     * @return array Données pour la vue [error_message, reset_step, err]
      */
     public function login() {
         $error_message = '';
         $err = 0;
 
-        // Rediriger si dÃ©jÃ  connectÃ©
+        // Rediriger si déjà connecté
         if (isset($_SESSION['id'])) {
             redirect('/index.php');
         }
 
-        // RÃ©initialiser au formulaire de connexion lors d'une visite GET
+        // Réinitialiser au formulaire de connexion lors d'une visite GET
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $_SESSION['reset_step'] = 0;
         }
@@ -191,12 +191,12 @@ class AuthController {
             $_SESSION['reset_step'] = 0;
         }
 
-        // Gestion de la demande de rÃ©initialisation
+        // Gestion de la demande de réinitialisation
         if (isset($_POST['check-email'])) {
             $_SESSION['reset_step'] = 1;
         }
 
-        // Envoi du code de rÃ©initialisation
+        // Envoi du code de réinitialisation
         if (isset($_POST['send_reset_code']) && !empty($_POST['mail'])) {
             $mail = Security::sanitizeEmail((string)($_POST['mail'] ?? ''));
             if (!Security::validateEmail($mail)) {
@@ -227,25 +227,25 @@ class AuthController {
                     ]);
                 }
             } else {
-                $error_message = "Aucun compte trouvÃ© avec cet email.";
+                $error_message = "Aucun compte trouvé avec cet email.";
                 $_SESSION['reset_step'] = 1;
             }
             }
         }
 
-        // Limitation des tentatives de vÃ©rification
+        // Limitation des tentatives de vérification
         if (!isset($_SESSION['reset_verification_attempts'])) {
             $_SESSION['reset_verification_attempts'] = 0;
             $_SESSION['reset_verification_attempts_time'] = time();
         }
         
-        // RÃ©initialiser aprÃ¨s 5 minutes
+        // Réinitialiser après 5 minutes
         if (time() - (int)($_SESSION['reset_verification_attempts_time'] ?? time()) > 300) {
             $_SESSION['reset_verification_attempts'] = 0;
             $_SESSION['reset_verification_attempts_time'] = time();
         }
         
-        // VÃ©rification du code de rÃ©initialisation (unified logic)
+        // Vérification du code de réinitialisation (unified logic)
         if (isset($_POST['verify_reset_code']) && isset($_SESSION['reset_token_hash'])) {
             $submittedToken = trim((string)($_POST['reset_code'] ?? ''));
             $submittedHash = hash('sha256', $submittedToken);
@@ -253,24 +253,24 @@ class AuthController {
 
             if ($isExpired) {
                 unset($_SESSION['reset_token_hash'], $_SESSION['reset_token_expires_at']);
-                $error_message = "Le code a expirÃ©. Veuillez en demander un nouveau.";
+                $error_message = "Le code a expiré. Veuillez en demander un nouveau.";
                 $_SESSION['reset_step'] = 1;
             } elseif (!hash_equals((string)($_SESSION['reset_token_hash'] ?? ''), $submittedHash)) {
                 $_SESSION['reset_verification_attempts']++;
                 $_SESSION['reset_verification_attempts_time'] = time();
                 if ($_SESSION['reset_verification_attempts'] >= 5) {
-                    ErrorHandler::logSecurity("Rate limit atteint - trop de tentatives de vÃ©rification", 'WARN', [
+                    ErrorHandler::logSecurity("Rate limit atteint - trop de tentatives de vérification", 'WARN', [
                         'email' => $_SESSION['reset_mail'] ?? 'unknown'
                     ]);
-                    $error_message = "Trop de tentatives. Veuillez rÃ©essayer plus tard.";
+                    $error_message = "Trop de tentatives. Veuillez réessayer plus tard.";
                     $_SESSION['reset_step'] = 1;
                     unset($_SESSION['reset_token_hash'], $_SESSION['reset_token_expires_at']);
                 } else {
-                    ErrorHandler::logSecurity("Code de rÃ©initialisation incorrect", 'FAIL', [
+                    ErrorHandler::logSecurity("Code de réinitialisation incorrect", 'FAIL', [
                         'email' => $_SESSION['reset_mail'] ?? 'unknown',
                         'attempts' => $_SESSION['reset_verification_attempts']
                     ]);
-                    $error_message = "Code de vÃ©rification incorrect.";
+                    $error_message = "Code de vérification incorrect.";
                 }
             } else {
                 unset($_SESSION['reset_verification_attempts'], $_SESSION['reset_verification_attempts_time']);
@@ -278,7 +278,7 @@ class AuthController {
             }
         }
 
-        // Mise Ã  jour du mot de passe
+        // Mise à jour du mot de passe
         if (isset($_POST['reset_password'])) {
             $password = $_POST['password'];
             $cpassword = $_POST['cpassword'];
@@ -310,7 +310,7 @@ class AuthController {
                         'email' => $mail,
                         'ip' => $this->resolveClientIp()
                     ]);
-                    $error_message = 'Trop de tentatives de connexion. RÃ©essayez dans 15 minutes.';
+                    $error_message = 'Trop de tentatives de connexion. Réessayez dans 15 minutes.';
                     return [
                         'error_message' => $error_message,
                         'reset_step' => $_SESSION['reset_step'],
@@ -321,40 +321,40 @@ class AuthController {
                 $user = $this->userModel->authenticate($mail, $password);
 
                 if ($user) {
-                    // RÃ©gÃ©nÃ©rer l'ID de session pour prÃ©venir la fixation de session
+                    // Régénérer l'ID de session pour prévenir la fixation de session
                     session_regenerate_id(true);
                     $_SESSION['_created'] = time();
                     $_SESSION['_last_activity'] = time();
                     
-                    // Connexion rÃ©ussie : stocker les infos en session
+                    // Connexion réussie : stocker les infos en session
                     $_SESSION['id'] = $user['id'];
                     $_SESSION['nom'] = $user['nom'];
                     $_SESSION['prenom'] = $user['prenom'];
                     $_SESSION['permission'] = $user['permission'];
                     
                     // Log successful login
-                    ErrorHandler::logSecurity("Connexion rÃ©ussie", 'INFO', [
+                    ErrorHandler::logSecurity("Connexion réussie", 'INFO', [
                         'user_id' => $user['id'],
                         'email' => $mail
                     ]);
                     
-                    // RÃ©initialiser le rate limit aprÃ¨s connexion rÃ©ussie
+                    // Réinitialiser le rate limit après connexion réussie
                     Security::resetRateLimit($rateLimitKey);
                     
                     redirect('index.php');
                 } else {
                     $allowed = $this->registerLoginFailureAttempt($rateLimitKey, 5, 15);
                     // Log failed login attempt
-                    ErrorHandler::logSecurity("Ã‰chec de connexion - identifiants invalides", 'FAIL', [
+                    ErrorHandler::logSecurity("Échec de connexion - identifiants invalides", 'FAIL', [
                         'email' => $mail,
                         'ip' => $this->resolveClientIp()
                     ]);
                     $error_message = $allowed
                         ? 'Identifiants invalides'
-                        : 'Trop de tentatives de connexion. RÃ©essayez dans 15 minutes.';
+                        : 'Trop de tentatives de connexion. Réessayez dans 15 minutes.';
                 }
             } else {
-                $error_message = 'DonnÃ©es manquantes';
+                $error_message = 'Données manquantes';
             }
         }
 
@@ -366,7 +366,7 @@ class AuthController {
     }
 
     /**
-     * DÃ©connecte l'utilisateur
+     * Déconnecte l'utilisateur
      * Nettoie la session et supprime le cookie de session
      */
     public function logout() {
@@ -382,7 +382,7 @@ class AuthController {
             );
         }
         
-        // DÃ©truire la session
+        // Détruire la session
         session_destroy();
         
         // Rediriger vers la page de connexion
@@ -391,49 +391,49 @@ class AuthController {
     }
 
     /**
-     * GÃ¨re l'inscription des nouveaux utilisateurs
+     * Gère l'inscription des nouveaux utilisateurs
      * 
      * Workflow d'inscription :
-     * - Ã‰tape 0 : Formulaire d'inscription
-     * - Ã‰tape 1 : VÃ©rification du code envoyÃ© par email
+     * - Étape 0 : Formulaire d'inscription
+     * - Étape 1 : Vérification du code envoyé par email
      * 
-     * Validations effectuÃ©es :
+     * Validations effectuées :
      * - Tous les champs requis remplis
      * - Email valide et non existant
-     * - Mot de passe : 8+ caractÃ¨res, 1+ caractÃ¨re spÃ©cial
+     * - Mot de passe : 8+ caractères, 1+ caractère spécial
      * - Confirmation du mot de passe
      * 
-     * @return array DonnÃ©es pour la vue [error_message, success_message, reset_step]
+     * @return array Données pour la vue [error_message, success_message, reset_step]
      */
     public function register() {
         $error_message = '';
         $success_message = '';
         $reset_step = 0;
 
-        // Rediriger si dÃ©jÃ  connectÃ©
+        // Rediriger si déjà connecté
         if (isset($_SESSION['id'])) {
             redirect('/index.php');
         }
 
-        // Initialiser l'Ã©tape dans la session
+        // Initialiser l'étape dans la session
         if (!isset($_SESSION['reset_step'])) {
             $_SESSION['reset_step'] = 0;
         }
 
         $reset_step = $_SESSION['reset_step'];
 
-        // Suivi des tentatives de vÃ©rification
+        // Suivi des tentatives de vérification
         if (!isset($_SESSION['verification_attempts'])) {
             $_SESSION['verification_attempts'] = 0;
             $_SESSION['verification_attempts_time'] = time();
         }
 
-        // RÃ©initialiser aprÃ¨s 5 minutes
+        // Réinitialiser après 5 minutes
         if (time() - $_SESSION['verification_attempts_time'] > 300) {
             $_SESSION['verification_attempts'] = 0;
         }
 
-        // Ã‰tape 1 : Envoi du code de vÃ©rification
+        // Étape 1 : Envoi du code de vérification
         if (isset($_POST['send_code'])) {
             $nom = $_POST['nom'] ?? '';
             $prenom = $_POST['prenom'] ?? '';
@@ -449,13 +449,13 @@ class AuthController {
             if (empty($nom) || empty($prenom) || empty($mail) || empty($password) || empty($cpassword)) {
                 $error_message = 'Tous les champs sont requis';
             } elseif (empty($promo)) {
-                $error_message = 'Veuillez sÃ©lectionner votre statut';
+                $error_message = 'Veuillez sélectionner votre statut';
             } elseif (!in_array($promo, $allowedPromos, true)) {
                 $error_message = 'Statut invalide';
             } elseif ($promo === 'etu' && empty($niveau)) {
-                $error_message = 'Veuillez sÃ©lectionner votre promotion';
+                $error_message = 'Veuillez sélectionner votre promotion';
             } elseif ($niveau === 'ING2' && empty($ing2_type)) {
-                $error_message = 'Veuillez sÃ©lectionner FISE ou FISEA';
+                $error_message = 'Veuillez sélectionner FISE ou FISEA';
             } elseif (($passwordError = $this->validateStrongPassword($password)) !== null) {
                 $error_message = $passwordError;
             } elseif ($password !== $cpassword) {
@@ -466,7 +466,7 @@ class AuthController {
                 // Verifier si l'utilisateur existe deja
                 $existing_user = $this->userModel->getUserByEmail($mail);
                 if ($existing_user) {
-                    $error_message = 'Un compte avec cet email existe dÃ©jÃ ';
+                    $error_message = 'Un compte avec cet email existe déjà';
                 } else {
                     // Generer un code robuste et ne stocker que son hash en session
                     $code = $this->generateRegistrationVerificationCode();
@@ -518,13 +518,13 @@ class AuthController {
             $verification_code = $_POST['verification_code'] ?? '';
 
             if (empty($verification_code)) {
-                $error_message = 'Veuillez entrer le code de vÃ©rification';
+                $error_message = 'Veuillez entrer le code de vérification';
             } elseif (!isset($_SESSION['code_verification_hash'], $_SESSION['code_verification_expires_at'])) {
-                $error_message = 'Le code de vÃ©rification a expirÃ©. Veuillez recommencer.';
+                $error_message = 'Le code de vérification a expiré. Veuillez recommencer.';
                 $_SESSION['reset_step'] = 0;
                 $reset_step = 0;
             } elseif (time() > (int)($_SESSION['code_verification_expires_at'] ?? 0)) {
-                $error_message = 'Le code de vÃ©rification a expirÃ©. Veuillez recommencer.';
+                $error_message = 'Le code de vérification a expiré. Veuillez recommencer.';
                 $_SESSION['reset_step'] = 0;
                 $reset_step = 0;
                 unset($_SESSION['code_verification_hash'], $_SESSION['code_verification_expires_at']);
@@ -533,12 +533,12 @@ class AuthController {
                 $_SESSION['verification_attempts_time'] = time();
 
                 if ($_SESSION['verification_attempts'] >= 5) {
-                    $error_message = 'Trop de tentatives. Veuillez rÃ©essayer plus tard.';
+                    $error_message = 'Trop de tentatives. Veuillez réessayer plus tard.';
                     $_SESSION['reset_step'] = 0;
                     $reset_step = 0;
                     unset($_SESSION['code_verification_hash'], $_SESSION['code_verification_expires_at']);
                 } else {
-                    $error_message = 'Code de vÃ©rification incorrect.';
+                    $error_message = 'Code de vérification incorrect.';
                 }
             } else {
                 // Code correct : creer l'utilisateur
@@ -567,7 +567,7 @@ class AuthController {
                 );
 
                 if ($result) {
-                    $success_message = 'Inscription rÃ©ussie! Vous pouvez maintenant vous connecter.';
+                    $success_message = 'Inscription réussie! Vous pouvez maintenant vous connecter.';
                     // Nettoyer la session
                       unset($_SESSION['code_verification_hash'], $_SESSION['code_verification_expires_at'], $_SESSION['nom'], $_SESSION['prenom'], 
                           $_SESSION['mail'], $_SESSION['password'], $_SESSION['promo'], 
@@ -575,7 +575,7 @@ class AuthController {
                     $_SESSION['reset_step'] = 0;
                     $reset_step = 0;
                 } else {
-                    $error_message = 'Une erreur est survenue lors de la crÃ©ation du compte';
+                    $error_message = 'Une erreur est survenue lors de la création du compte';
                 }
             }
         }

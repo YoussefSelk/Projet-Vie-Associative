@@ -22,7 +22,7 @@ class Database {
     /** @var string Nom d'utilisateur */
     private $user;
 
-    /** @var int Port de la base de donnees */
+    /** @var int Port de la base de données */
     private $port;
 
     /** @var string Charset de connexion */
@@ -65,14 +65,14 @@ class Database {
             $this->db = new PDO($dsn, $this->user, $this->pass, $options);
             
         } catch (PDOException $e) {
-            // Journaliser le detail technique uniquement dans les logs.
+            // Journaliser le détail technique uniquement dans les logs.
             ErrorHandler::logError("Erreur de connexion BDD: " . $e->getMessage(), 'CRITICAL', [
                 'host' => $this->host,
                 'port' => $this->port,
                 'database' => $this->db_name
             ]);
 
-            // Ne jamais exposer le message PDO au navigateur, meme hors production.
+            // Ne jamais exposer le message PDO au navigateur, même hors production.
             ErrorHandler::renderHttpError(500, "Échec de la connexion à la base de données. Veuillez contacter l'administrateur.");
         }
         return $this->db;

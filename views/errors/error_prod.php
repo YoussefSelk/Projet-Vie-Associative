@@ -1,17 +1,17 @@
 <!--
-    Page d'erreur generique - Mode Production
-    
-    Affichee en production pour toute erreur non geree.
-    Ne revele aucune information technique sensible.
-    
+    Page d'erreur générique - Mode Production
+
+    Affichée en production pour toute erreur non gérée.
+    Ne révèle aucune information technique sensible.
+
     Variables attendues :
     - $errorCode : Code HTTP de l'erreur (500, 503, etc.)
-    - $errorRef : Reference unique pour le support technique
-    
+    - $errorRef : Référence unique pour le support technique
+
     Design moderne avec animations CSS :
-    - Grille animee en arriere-plan
+    - Grille animée en arrière-plan
     - Code d'erreur avec effet gradient
-    - Reference pour contacter le support
+    - Référence pour contacter le support
     
     @package Views/Errors
 -->

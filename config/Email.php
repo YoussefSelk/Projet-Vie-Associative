@@ -10,7 +10,7 @@ if (!class_exists(PHPMailer::class)) {
 }
 
 /**
- * Echappe une chaine pour l'injection HTML dans les templates e-mail.
+ * Échappe une chaîne pour l'injection HTML dans les templates e-mail.
  */
 function emailEscape(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -119,7 +119,7 @@ function shouldUseEmailFallback(string $errorInfo): bool {
 }
 
 /**
- * Tente un envoi sur un transport SMTP donne.
+ * Tente un envoi sur un transport SMTP donné.
  *
  * @return array{success:bool,error:string}
  */
@@ -197,7 +197,7 @@ function sendEmailWithTransport(
 }
 
 /**
- * Normalise le sujet et bloque l'injection d'entetes SMTP.
+ * Normalise le sujet et bloque l'injection d'en-têtes SMTP.
  */
 function emailNormalizeSubject(string $subject): string {
     $clean = preg_replace('/[\r\n]+/', ' ', trim($subject));
@@ -378,7 +378,7 @@ function buildRegistrationVerificationEmail(string $firstName, string $code): ar
 }
 
 /**
- * Template pour la reinitialisation de mot de passe.
+ * Template pour la réinitialisation de mot de passe.
  *
  * @return array{html:string,text:string}
  */
@@ -547,8 +547,8 @@ function buildEventReminderEmail(
 }
 
 /**
- * Template de notification de statut d'une demande (club/evenement)
- * pour les membres de bureau (president/secretaire).
+ * Template de notification de statut d'une demande (club/événement)
+ * pour les membres de bureau (président/secrétaire).
  *
  * @return array{html:string,text:string}
  */
@@ -682,7 +682,7 @@ function sendEmail($to, $subject, $message) {
         ]);
     }
 
-    // Ne jamais propager d'information technique sensible a l'interface.
+    // Ne jamais propager d'information technique sensible à l'interface.
     return false;
 }
 

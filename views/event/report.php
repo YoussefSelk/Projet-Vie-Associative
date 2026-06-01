@@ -1,7 +1,7 @@
 <?php
 /**
- * Depot de rapport d'evenement
- * * Permet aux organisateurs de deposer un bilan avec PDF et photo (Max 1, 500Ko).
+ * Dépôt de rapport d'événement
+ * * Permet aux organisateurs de déposer un bilan avec PDF et photo (Max 1, 500Ko).
  * * @package Views/Event
  */
 $pageTitle = 'Déposer un rapport - EILCO';

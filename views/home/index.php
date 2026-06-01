@@ -4,19 +4,19 @@
  * 
  * Vitrine de l'application avec plusieurs sections :
  * - Hero banner avec accroche principale
- * - Presentation des clubs par campus
- * - Evenements a venir
- * - Calendrier general
- * - Appel a l'action (inscription/connexion)
- * 
- * Animations CSS pour une experience moderne :
+ * - Présentation des clubs par campus
+ * - Événements à venir
+ * - Calendrier général
+ * - Appel à l'action (inscription/connexion)
+ *
+ * Animations CSS pour une expérience moderne :
  * - Fade in up/down au scroll
  * - Hover effects sur les cartes
  * - Transitions fluides
- * 
+ *
  * Variables attendues :
  * - $clubs : Liste des clubs par campus
- * - $events : Evenements recents
+ * - $events : Événements récents
  * 
  * @package Views/Home
  */

@@ -4,13 +4,13 @@
  * 
  * Affiche les informations du profil :
  * - Avatar et nom complet
- * - Role et campus
+ * - Rôle et campus
  * - Email et date d'inscription
  * - Clubs dont l'utilisateur est membre
  * - Bouton de modification du profil
- * 
+ *
  * Variables attendues :
- * - $user : Donnees de l'utilisateur
+ * - $user : Données de l'utilisateur
  * - $clubs : Clubs de l'utilisateur
  * - $error_msg / $success_msg : Messages de feedback
  * 

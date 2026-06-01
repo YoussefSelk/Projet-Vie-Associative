@@ -1,18 +1,18 @@
 <?php
 /**
- * Outils base de donnees - Administration
- * 
- * Interface de maintenance de la base de donnees :
+ * Outils base de données - Administration
+ *
+ * Interface de maintenance de la base de données :
  * - Statistiques des tables (taille, lignes)
  * - Optimisation des tables
- * - Nettoyage des donnees orphelines
- * - Export/Import de donnees
+ * - Nettoyage des données orphelines
+ * - Export/Import de données
  * 
  * Variables attendues :
  * - $tables : Liste des tables avec statistiques
  * - $db_size : Taille totale de la base
  * 
- * ATTENTION : Operations potentiellement destructives
+ * ATTENTION : Opérations potentiellement destructives
  * 
  * Permissions : Admin (niveau 5) requis
  * 

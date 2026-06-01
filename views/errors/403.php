@@ -1,11 +1,11 @@
 <!--
-    Page d'erreur 403 - Acces Refuse
-    
-    Affichee lorsqu'un utilisateur tente d'acceder a une ressource
-    sans les permissions necessaires.
-    
+    Page d'erreur 403 - Accès Refusé
+
+    Affichée lorsqu'un utilisateur tente d'accéder à une ressource
+    sans les permissions nécessaires.
+
     Design moderne avec animations CSS :
-    - Icone bouclier animee
+    - Icône bouclier animée
     - Effet de fond gradient
     - Boutons de navigation (retour/accueil)
     

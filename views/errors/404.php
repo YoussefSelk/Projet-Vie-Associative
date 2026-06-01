@@ -1,12 +1,12 @@
 <!--
-    Page d'erreur 404 - Page Non Trouvee
-    
-    Affichee lorsqu'un utilisateur tente d'acceder a une page
-    qui n'existe pas ou a ete supprimee.
-    
+    Page d'erreur 404 - Page Non Trouvée
+
+    Affichée lorsqu'un utilisateur tente d'accéder à une page
+    qui n'existe pas ou a été supprimée.
+
     Design moderne avec animations CSS :
-    - Chiffres 404 animes avec effet glitch
-    - Formes geometriques flottantes
+    - Chiffres 404 animés avec effet glitch
+    - Formes géométriques flottantes
     - Barre de recherche interactive
     
     @package Views/Errors

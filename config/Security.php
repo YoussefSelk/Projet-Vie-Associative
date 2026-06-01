@@ -98,7 +98,7 @@ class Security {
     }
 
     /**
-     * Detecte si la connexion utilise HTTPS
+     * Détecte si la connexion utilise HTTPS
      * Supporte les proxies inverses (load balancers, CloudFlare, etc.)
      * 
      * @return bool True si connexion HTTPS
@@ -138,7 +138,7 @@ class Security {
     /**
      * Force l'utilisation de HTTPS en production
      * Redirige automatiquement vers HTTPS et active HSTS
-     * Supporte les environnements derriere un proxy/load balancer
+     * Supporte les environnements derrière un proxy/load balancer
      * 
      * @return void
      */
@@ -243,7 +243,7 @@ class Security {
     }
 
     /**
-     * Recupere l'IP client en tenant compte des proxies courants.
+     * Récupère l'IP client en tenant compte des proxies courants.
      */
     public static function getClientIp(): string {
         $headers = [
@@ -269,7 +269,7 @@ class Security {
     }
 
     /**
-     * Verifie si la cle est deja verrouillee sans incrementer le compteur.
+     * Vérifie si la clé est déjà verrouillée sans incrémenter le compteur.
      */
     public static function isRateLimited($key, $maxAttempts = 5, $decayMinutes = 5): bool {
         $sessionKey = 'rate_limit_' . $key;
@@ -289,7 +289,7 @@ class Security {
     }
 
     /**
-     * Enregistre une tentative et retourne si l'action reste autorisee.
+     * Enregistre une tentative et retourne si l'action reste autorisée.
      */
     public static function hitRateLimit($key, $maxAttempts = 5, $decayMinutes = 5): bool {
         $sessionKey = 'rate_limit_' . $key;

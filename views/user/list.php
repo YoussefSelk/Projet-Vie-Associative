@@ -3,14 +3,14 @@
  * Liste des utilisateurs - Interface BDE/Tuteur
  * 
  * Affiche la liste des utilisateurs filtrables :
- * - Filtrage par campus, role, recherche
+ * - Filtrage par campus, rôle, recherche
  * - Modification des permissions (selon niveau)
  * - Actions sur les utilisateurs
- * 
+ *
  * Permissions :
  * - BDE : Visualisation uniquement
- * - Tuteur : Modification limitee
- * - Admin : Controle complet
+ * - Tuteur : Modification limitée
+ * - Admin : Contrôle complet
  * 
  * Variables attendues :
  * - $users : Liste des utilisateurs

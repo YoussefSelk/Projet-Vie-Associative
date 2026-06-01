@@ -1,18 +1,18 @@
 <?php
 /**
- * Formulaire de creation d'un nouveau club
- * 
- * Permet a un etudiant de proposer la creation d'un club :
+ * Formulaire de création d'un nouveau club
+ *
+ * Permet à un étudiant de proposer la création d'un club :
  * - Informations de base (nom, type, description)
  * - Localisation (campus)
  * - Membres fondateurs avec autocomplétion
  * - Upload du logo (optionnel)
- * 
- * Le club cree sera en attente de validation par le BDE puis un tuteur.
- * 
+ *
+ * Le club créé sera en attente de validation par le BDE puis un tuteur.
+ *
  * Variables attendues :
- * - $error_msg : Message d'erreur eventuel
- * - $success_msg : Message de succes eventuel
+ * - $error_msg : Message d'erreur éventuel
+ * - $success_msg : Message de succès éventuel
  * - $tutors : Liste des tuteurs disponibles
  * - $users : Liste des utilisateurs pour l'autocomplétion
  * 

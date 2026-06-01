@@ -1,14 +1,14 @@
 <?php
 /**
- * Liste des evenements de l'utilisateur
- * 
- * Affiche les evenements des clubs dont l'utilisateur est membre :
- * - Evenements passes et a venir
- * - Actions specifiques (modifier, deposer rapport)
- * - Etat vide si aucun evenement
- * 
+ * Liste des événements de l'utilisateur
+ *
+ * Affiche les événements des clubs dont l'utilisateur est membre :
+ * - Événements passés et à venir
+ * - Actions spécifiques (modifier, déposer rapport)
+ * - État vide si aucun événement
+ *
  * Variables attendues :
- * - $events : Liste des evenements des clubs de l'utilisateur
+ * - $events : Liste des événements des clubs de l'utilisateur
  * 
  * @package Views/Event
  */
@@ -304,7 +304,7 @@ $pageCss = ['shared', 'buttons', 'search', 'pagination', 'events'];
             return;
         }
 
-        // Si un backdrop SweetAlert2 reste bloque sans popup visible, on le nettoie.
+        // Si un backdrop SweetAlert2 reste bloqué sans popup visible, on le nettoie.
         document.querySelectorAll('.swal2-container').forEach((container) => {
             container.remove();
         });

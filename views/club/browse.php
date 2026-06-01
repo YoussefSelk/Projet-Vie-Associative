@@ -93,7 +93,7 @@ $pageCss = ['shared', 'buttons', 'pagination', 'clubs'];
                         </div>
 
                         <div class="filter-item filter-item-results">
-                            <label class="filter-action-label" aria-hidden="true">Resultats</label>
+                            <label class="filter-action-label" aria-hidden="true">Résultats</label>
                             <span id="browseCount" class="browse-count">
                                 <?= count($clubs) ?> résultat<?= count($clubs) > 1 ? 's' : '' ?>
                             </span>

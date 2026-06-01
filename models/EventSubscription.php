@@ -22,7 +22,7 @@ class EventSubscription {
     /** @var PDO Instance de connexion à la base de données */
     private $db;
 
-    /** @var bool Evite de verifier les colonnes de rappel a chaque appel */
+    /** @var bool Évite de vérifier les colonnes de rappel à chaque appel */
     private bool $reminderColumnsEnsured = false;
 
     /**
@@ -34,7 +34,7 @@ class EventSubscription {
     }
 
     /**
-     * Garantit la presence des colonnes de suivi d'envoi des rappels.
+     * Garantit la présence des colonnes de suivi d'envoi des rappels.
      */
     private function ensureReminderColumns(): void {
         if ($this->reminderColumnsEnsured) {
@@ -62,7 +62,7 @@ class EventSubscription {
     }
 
     /**
-     * Verifie et retourne un nom de colonne de rappel autorise.
+     * Vérifie et retourne un nom de colonne de rappel autorisé.
      */
     private function normalizeReminderColumn(string $column): string {
         $allowed = ['reminder_48h_sent_at', 'reminder_24h_sent_at'];
@@ -172,11 +172,11 @@ class EventSubscription {
     }
 
     /**
-     * Retourne les inscriptions a notifier dans une fenetre temporelle.
+     * Retourne les inscriptions à notifier dans une fenêtre temporelle.
      *
-     * @param int $hoursBefore Nombre d'heures avant debut evenement (24 ou 48)
+     * @param int $hoursBefore Nombre d'heures avant début événement (24 ou 48)
      * @param string $reminderColumn Colonne de suivi d'envoi
-     * @param int $windowMinutes Taille de la fenetre de recherche
+     * @param int $windowMinutes Taille de la fenêtre de recherche
      * @return array<int, array<string, mixed>>
      */
     public function getDueEventReminders(int $hoursBefore, string $reminderColumn, int $windowMinutes = 60): array {
@@ -222,7 +222,7 @@ class EventSubscription {
     }
 
     /**
-     * Marque un rappel comme envoye pour eviter les doublons.
+     * Marque un rappel comme envoyé pour éviter les doublons.
      */
     public function markReminderSent(int $userId, int $eventId, string $reminderColumn): bool {
         $this->ensureReminderColumns();

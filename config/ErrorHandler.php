@@ -49,7 +49,7 @@ class ErrorHandler
         }
         
         // Toujours journaliser toutes les erreurs.
-        // Pour les requetes web, ne jamais afficher les details techniques a l'utilisateur.
+        // Pour les requêtes web, ne jamais afficher les détails techniques à l'utilisateur.
         error_reporting(E_ALL);
         $isCli = (php_sapi_name() === 'cli');
         $allowCliDebugDisplay = $isCli && Environment::isDebug();

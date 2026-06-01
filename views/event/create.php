@@ -1,12 +1,12 @@
 <?php
 /**
- * Formulaire de creation d'un evenement
- * * Permet aux membres de clubs de proposer des evenements :
- * - Selection du club organisateur
- * - Details (titre, description, lieu)
+ * Formulaire de création d'un événement
+ * * Permet aux membres de clubs de proposer des événements :
+ * - Sélection du club organisateur
+ * - Détails (titre, description, lieu)
  * - Date et horaires
  * - Nombre de places (optionnel)
- * * L'evenement sera soumis a validation BDE puis tuteur.
+ * * L'événement sera soumis à validation BDE puis tuteur.
  * * Variables attendues :
  * - $clubs : Liste des clubs dont l'utilisateur est membre
  * - $error_msg / $success_msg : Messages de feedback

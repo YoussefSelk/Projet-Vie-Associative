@@ -2,15 +2,15 @@
 /**
  * Fichier de configuration des routes
  * 
- * Ce fichier contient toutes les routes de l'application organisees par categorie.
- * Chaque route associe un parametre 'page' a une action de controleur et une vue.
- * 
+ * Ce fichier contient toutes les routes de l'application organisées par catégorie.
+ * Chaque route associe un paramètre 'page' à une action de contrôleur et une vue.
+ *
  * Structure d'une route :
- * - 'permission' : niveau de permission minimum requis (null = public, 0-5 = niveau specifique)
- * - 'auth'       : necessite une authentification (true/false)
- * - 'controller' : nom de la classe controleur
- * - 'method'     : methode du controleur a appeler
- * - 'view'       : chemin vers le fichier vue (relatif a VIEWS_PATH)
+ * - 'permission' : niveau de permission minimum requis (null = public, 0-5 = niveau spécifique)
+ * - 'auth'       : nécessite une authentification (true/false)
+ * - 'controller' : nom de la classe contrôleur
+ * - 'method'     : méthode du contrôleur à appeler
+ * - 'view'       : chemin vers le fichier vue (relatif à VIEWS_PATH)
  * 
  * @package Routes
  */
@@ -84,7 +84,7 @@ return [
     ],
     
     // ==========================================
-    // ROUTES UTILISATEUR (Protegees)
+    // ROUTES UTILISATEUR (Protégées)
     // ==========================================
     
     'profile' => [
@@ -120,7 +120,7 @@ return [
     ],
     
     // ==========================================
-    // ROUTES EVENEMENTS
+    // ROUTES ÉVÉNEMENTS
     // ==========================================
     
     'event-list' => [
@@ -139,7 +139,7 @@ return [
         'view' => '/event/view.php'
     ],
 
-    // Alias de compatibilite pour les anciens liens externes ou favoris navigateur.
+    // Alias de compatibilité pour les anciens liens externes ou favoris navigateur.
     'event-details' => [
         'permission' => null,
         'auth' => false,
@@ -181,7 +181,7 @@ return [
     ],
     
     // ==========================================
-    // ROUTES INSCRIPTIONS (Protegees)
+    // ROUTES INSCRIPTIONS (Protégées)
     // ==========================================
     
     'subscribe' => [

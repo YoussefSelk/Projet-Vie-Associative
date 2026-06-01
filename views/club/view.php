@@ -1,15 +1,15 @@
 <?php
 /**
- * Vue de detail d'un club
- * * Affiche les informations completes d'un club :
- * - En-tete avec logo, nom, type et campus
+ * Vue de détail d'un club
+ * * Affiche les informations complètes d'un club :
+ * - En-tête avec logo, nom, type et campus
  * - Description du club
  * - Liste des membres
- * - Actions (rejoindre, quitter, gerer)
- * * Variables attendues du controleur :
- * - $club : Donnees du club
- * - $error_msg : Message d'erreur eventuel
- * - $success_msg : Message de succes eventuel
+ * - Actions (rejoindre, quitter, gérer)
+ * * Variables attendues du contrôleur :
+ * - $club : Données du club
+ * - $error_msg : Message d'erreur éventuel
+ * - $success_msg : Message de succès éventuel
  * - $is_member : Indicateur si l'utilisateur est membre
  * - $members : Liste des membres du club
  * * @package Views/Club
@@ -57,7 +57,7 @@ $can_view_soutenance = ($user_permission >= 2);
                 </div>
             <?php elseif ($club): ?>
                 <?php 
-                // Definition des icones par type de club
+                // Définition des icônes par type de club
                 $clubIcons = [
                     'sport' => 'fa-running',
                     'musique' => 'fa-music',
@@ -78,7 +78,7 @@ $can_view_soutenance = ($user_permission >= 2);
                     'default' => 'fa-users'
                 ];
                 
-                // Selection de l'icone correspondant au type
+                // Sélection de l'icône correspondant au type
                 $clubType = strtolower($club['type_club'] ?? '');
                 $clubIcon = $clubIcons['default'];
                 foreach ($clubIcons as $key => $icon) {

@@ -1,15 +1,15 @@
 <?php
 /**
- * Liste publique des evenements valides
- * 
- * Affiche tous les evenements approuves :
+ * Liste publique des événements validés
+ *
+ * Affiche tous les événements approuvés :
  * - Barre de recherche avec filtrage dynamique
  * - Affichage en grille de cartes
- * - Tri par date (plus recents d'abord)
+ * - Tri par date (plus récents d'abord)
  * - Couleurs par campus
- * 
+ *
  * Variables attendues :
- * - $events : Liste des evenements valides
+ * - $events : Liste des événements validés
  * 
  * @package Views/Event
  */

@@ -160,7 +160,7 @@ class ExportController
     // EXPORT — MEMBRES
     // =========================================================================
     /**
-     * Exporte les clubs rattaches a chaque utilisateur, sans identifiants internes.
+     * Exporte les clubs rattachés à chaque utilisateur, sans identifiants internes.
      */
     public function exportUserClubs(): void
     {
@@ -1376,12 +1376,12 @@ class ExportController
 
     private function envoyerCsv(array $lignes, string $nomFichier): void
     {
-        // Construction du corps en m\u00e9moire avant l'envoi des en-t\u00eates
-        // (indispensable pour calculer Content-Length avec pr\u00e9cision)
+        // Construction du corps en mémoire avant l'envoi des en-têtes
+        // (indispensable pour calculer Content-Length avec précision)
         $tmp = fopen('php://temp', 'r+b');
 
         if (empty($lignes)) {
-            fputcsv($tmp, ['Aucune donn\u00e9e disponible pour cet export.'], self::DELIMITEUR, self::GUILLEMET, self::ECHAPPEMENT);
+            fputcsv($tmp, ['Aucune donnée disponible pour cet export.'], self::DELIMITEUR, self::GUILLEMET, self::ECHAPPEMENT);
         } else {
             fputcsv($tmp, array_keys($lignes[0]), self::DELIMITEUR, self::GUILLEMET, self::ECHAPPEMENT);
 
@@ -1404,17 +1404,17 @@ class ExportController
         // Corps final : BOM UTF-16 LE + contenu converti
         $corps = self::BOM . mb_convert_encoding($csv, 'UTF-16LE', 'UTF-8');
 
-        // Vider tous les tampons de sortie avant d'envoyer les en-t\u00eates
+        // Vider tous les tampons de sortie avant d'envoyer les en-têtes
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
 
         header('Content-Type: text/csv; charset=UTF-16LE');
         header('Content-Disposition: attachment; filename="' . addslashes($nomFichier) . '"');
-        // Content-Length pr\u00e9cis \u2014 \u00e9vite le transfert fragment\u00e9 (chunked) et active
-        // les barres de progression c\u00f4t\u00e9 navigateur / gestionnaire de t\u00e9l\u00e9chargement
+        // Content-Length précis — évite le transfert fragmenté (chunked) et active
+        // les barres de progression côté navigateur / gestionnaire de téléchargement
         header('Content-Length: ' . strlen($corps));
-        // private : emp\u00eache la mise en cache par les proxys partag\u00e9s
+        // private : empêche la mise en cache par les proxys partagés
         header('Cache-Control: private, no-cache, no-store, must-revalidate');
         header('Pragma: no-cache');
         header('Expires: 0');

@@ -1,9 +1,9 @@
 <?php
 /**
- * Liste des inscriptions aux evenements
- * 
- * Permet a l'utilisateur de gerer ses inscriptions :
- * - Affichage des evenements auxquels il est inscrit
+ * Liste des inscriptions aux événements
+ *
+ * Permet à l'utilisateur de gérer ses inscriptions :
+ * - Affichage des événements auxquels il est inscrit
  * - Recherche dans ses inscriptions
  * - Annulation d'inscription
  * - Tri par date

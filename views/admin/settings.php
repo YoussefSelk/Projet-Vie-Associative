@@ -1,15 +1,15 @@
 <?php
 /**
- * Page des parametres administrateur
- * 
+ * Page des paramètres administrateur
+ *
  * Interface de configuration globale de l'application :
- * - Parametres de securite (CSRF, sessions)
+ * - Paramètres de sécurité (CSRF, sessions)
  * - Configuration email (SMTP)
- * - Parametres de l'application
+ * - Paramètres de l'application
  * - Outils de maintenance
- * 
- * Chaque section est une carte avec formulaire independant.
- * Les modifications sont appliquees immediatement.
+ *
+ * Chaque section est une carte avec formulaire indépendant.
+ * Les modifications sont appliquées immédiatement.
  * 
  * Permissions : Admin (niveau 5) requis
  * 

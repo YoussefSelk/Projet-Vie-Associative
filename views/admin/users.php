@@ -2,16 +2,16 @@
 /**
  * Gestion des utilisateurs - Administration
  * 
- * Liste complete des utilisateurs avec :
- * - Filtres par role et campus
+ * Liste complète des utilisateurs avec :
+ * - Filtres par rôle et campus
  * - Recherche par nom/email
  * - Modification des permissions
  * - Suppression d'utilisateurs
- * - Statistiques par role
- * 
+ * - Statistiques par rôle
+ *
  * Variables attendues :
  * - $users : Liste des utilisateurs
- * - $stats : Statistiques par role
+ * - $stats : Statistiques par rôle
  * - $campuses : Liste des campus disponibles
  * 
  * Permissions : Admin (niveau 5) requis

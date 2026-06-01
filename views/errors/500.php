@@ -1,12 +1,12 @@
 <!--
     Page d'erreur 500 - Erreur Serveur Interne
     
-    Affichee lorsqu'une erreur inattendue survient sur le serveur.
-    Utilisee en mode production pour masquer les details techniques.
-    
+    Affichée lorsqu'une erreur inattendue survient sur le serveur.
+    Utilisée en mode production pour masquer les détails techniques.
+
     Design moderne avec animations CSS :
     - Engrenages tournants symbolisant un dysfonctionnement
-    - Lignes de circuits animees
+    - Lignes de circuits animées
     - Code d'erreur unique pour le support technique
     
     @package Views/Errors

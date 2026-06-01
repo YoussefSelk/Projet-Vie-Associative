@@ -56,14 +56,14 @@ class EventController {
             $creatorStmt = $this->db->prepare("SELECT nom, prenom FROM users WHERE id = ?");
             $creatorStmt->execute([$_SESSION['id'] ?? 0]);
             $creator = $creatorStmt->fetch(PDO::FETCH_ASSOC);
-            $creatorName = $creator ? trim(($creator['prenom'] ?? '') . ' ' . ($creator['nom'] ?? '')) : 'Un etudiant';
+            $creatorName = $creator ? trim(($creator['prenom'] ?? '') . ' ' . ($creator['nom'] ?? '')) : 'Un étudiant';
 
             $actionUrl = null;
             if (defined('BASE_URL') && is_string(BASE_URL) && BASE_URL !== '') {
                 $actionUrl = rtrim(BASE_URL, '/') . '/?page=tutoring';
             }
 
-            $subject = 'Nouvelle demande de validation - evenement';
+            $subject = 'Nouvelle demande de validation - événement';
             $message = buildTutorValidationNotificationEmail(
                 trim(($tutor['prenom'] ?? '') . ' ' . ($tutor['nom'] ?? '')),
                 $creatorName,

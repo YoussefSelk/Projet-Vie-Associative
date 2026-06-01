@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Envoi des rappels d'evenements (J-48 et J-24).
+ * Envoi des rappels d'événements (J-48 et J-24).
  *
  * Usage:
  *   php scripts/send_event_reminders.php
@@ -95,14 +95,14 @@ try {
 
             $message = buildEventReminderEmail(
                 $fullName,
-                (string)($row['titre'] ?? 'Evenement'),
+                (string)($row['titre'] ?? 'Événement'),
                 $eventDateTimeLabel,
-                (string)($row['campus'] ?? 'Non precise'),
-                (string)($row['lieu'] ?? 'Non precise'),
+                (string)($row['campus'] ?? 'Non précisé'),
+                (string)($row['lieu'] ?? 'Non précisé'),
                 $hours
             );
 
-            $subject = '[Rappel J-' . $hours . 'h] ' . (string)($row['titre'] ?? 'Evenement');
+            $subject = '[Rappel J-' . $hours . 'h] ' . (string)($row['titre'] ?? 'Événement');
             $sent = sendEmail($email, $subject, $message);
 
             if ($sent) {

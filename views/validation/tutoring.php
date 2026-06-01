@@ -1,20 +1,20 @@
 ﻿<?php
 /**
  * Espace administrateur - Tableau de bord
- * 
- * Interface dediee aux administrateurs pour superviser tous les clubs et evenements :
+ *
+ * Interface dédiée aux administrateurs pour superviser tous les clubs et événements :
  * - Clubs en attente de validation finale
- * - Evenements a approuver
+ * - Événements à approuver
  * - Liste de tous les clubs
- * - Rapports d'evenements a consulter
- * 
- * Un administrateur voit tous les elements du systeme
+ * - Rapports d'événements à consulter
+ *
+ * Un administrateur voit tous les éléments du système
  * sans restriction.
- * 
+ *
  * Variables attendues :
- * - $pending_clubs : Clubs a valider
- * - $pending_events : Evenements a valider
- * - $all_clubs : Tous les clubs du systeme
+ * - $pending_clubs : Clubs à valider
+ * - $pending_events : Événements à valider
+ * - $all_clubs : Tous les clubs du système
  * 
  * Permissions : Administrateur (niveau 5)
  * 

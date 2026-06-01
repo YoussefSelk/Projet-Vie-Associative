@@ -1,16 +1,16 @@
 <?php
 /**
- * Journal d'audit securite - Administration
- * 
+ * Journal d'audit sécurité - Administration
+ *
  * Affiche l'historique des actions sensibles :
- * - Connexions/deconnexions
+ * - Connexions/déconnexions
  * - Modifications de permissions
- * - Suppressions de donnees
- * - Tentatives d'acces non autorise
- * 
+ * - Suppressions de données
+ * - Tentatives d'accès non autorisé
+ *
  * Variables attendues :
- * - $logs : Liste des entrees du journal
- * - $stats : Statistiques des evenements
+ * - $logs : Liste des entrées du journal
+ * - $stats : Statistiques des événements
  * 
  * Permissions : Admin (niveau 5) requis
  * 

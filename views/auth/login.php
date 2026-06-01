@@ -1,16 +1,16 @@
 <?php
 /**
- * Page de connexion et reinitialisation du mot de passe
- * 
- * Gere plusieurs etapes :
+ * Page de connexion et réinitialisation du mot de passe
+ *
+ * Gère plusieurs étapes :
  * - reset_step 0 : Formulaire de connexion standard
- * - reset_step 1 : Demande d'email pour reinitialisation
- * - reset_step 2 : Saisie du code de verification
+ * - reset_step 1 : Demande d'email pour réinitialisation
+ * - reset_step 2 : Saisie du code de vérification
  * - reset_step 3 : Nouveau mot de passe
- * 
- * Variables attendues du controleur :
- * - $reset_step : Etape actuelle du processus (0-3)
- * - $error_message : Message d'erreur eventuel
+ *
+ * Variables attendues du contrôleur :
+ * - $reset_step : Étape actuelle du processus (0-3)
+ * - $error_message : Message d'erreur éventuel
  * 
  * @package Views/Auth
  */
@@ -29,7 +29,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
 
     <main>
         <div class="page-container">
-            <!-- Carte d'authentification avec en-tete dynamique selon l'etape -->
+            <!-- Carte d'authentification avec en-tête dynamique selon l'étape -->
             <div class="auth-card">
                 <div class="auth-header">
                     <i class="fas fa-user-circle"></i>
@@ -54,7 +54,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                         <div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars(strip_tags((string)$error_message)) ?></div>
                     <?php endif; ?>
                     
-                    <!-- Etape 0 : Formulaire de connexion -->
+                    <!-- Étape 0 : Formulaire de connexion -->
                     <?php if($reset_step == 0): ?>
                         <form method="POST" class="auth-form">
                             <?= Security::csrfField() ?>
@@ -79,7 +79,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                             <p>Pas encore inscrit ? <a href="?page=register">Créer un compte</a></p>
                         </div>
                     
-                    <!-- Etape 1 : Demande d'email pour reinitialisation -->
+                    <!-- Étape 1 : Demande d'email pour réinitialisation -->
                     <?php elseif($reset_step == 1): ?>
                         <form method="POST" class="auth-form">
                             <?= Security::csrfField() ?>
@@ -92,7 +92,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'auth'];
                             </button>
                         </form>
                     
-                    <!-- Etape 2 : Verification du code -->
+                    <!-- Étape 2 : Vérification du code -->
                     <?php elseif($reset_step == 2): ?>
                         <form method="POST" class="auth-form">
                             <?= Security::csrfField() ?>

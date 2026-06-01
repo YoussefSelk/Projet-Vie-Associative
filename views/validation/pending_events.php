@@ -1,18 +1,18 @@
 ﻿<?php
 /**
- * Liste des evenements en attente de validation (BDE)
- * 
- * Interface avancee pour le BDE afin de valider les evenements :
- * - Dashboard de stats (en attente, approuves, rejetes)
+ * Liste des événements en attente de validation (BDE)
+ *
+ * Interface avancée pour le BDE afin de valider les événements :
+ * - Dashboard de stats (en attente, approuvés, rejetés)
  * - Recherche & filtrage par statut/campus
- * - Cartes detaillees avec infos completes
- * - Modal de details avec description, budget, fichiers
+ * - Cartes détaillées avec infos complètes
+ * - Modal de détails avec description, budget, fichiers
  * - Modal de rejet avec champ motif obligatoire
- * - Section evenements rejetes avec suppression
- * 
+ * - Section événements rejetés avec suppression
+ *
  * Variables attendues :
- * - $events : Liste des evenements en attente
- * - $rejected_events : Liste des evenements rejetes
+ * - $events : Liste des événements en attente
+ * - $rejected_events : Liste des événements rejetés
  * - $error_msg / $success_msg : Messages de feedback
  * 
  * @package Views/Validation

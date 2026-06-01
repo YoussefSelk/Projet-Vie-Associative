@@ -76,7 +76,7 @@ $securityConfig = Environment::getSecurityConfig();
 // CONFIGURATION DES SESSIONS PHP
 // =============================================================================
 // Note: Ces paramètres doivent être définis AVANT session_start()
-// Utilise Security::isHttps() pour detecter HTTPS meme derriere un proxy
+// Utilise Security::isHttps() pour détecter HTTPS même derrière un proxy
 $isSecure = $securityConfig['cookie_secure'] || 
             Security::isHttps() || 
             Environment::isProduction();

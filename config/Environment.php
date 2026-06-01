@@ -93,7 +93,7 @@ class Environment {
         if (file_exists($envFile)) {
             self::parseEnvFile($envFile);
         } elseif (file_exists($fallbackEnvFile)) {
-            // Compatibilite: certains environnements de production deploient uniquement .env.prod
+            // Compatibilité: certains environnements de production déploient uniquement .env.prod
             self::parseEnvFile($fallbackEnvFile);
         } else {
             // En développement sans .env, utiliser les valeurs par défaut
@@ -141,7 +141,7 @@ class Environment {
     private static function loadDefaults(): void
     {
         $defaults = [
-            // Par defaut, privilegier un mode sur pour eviter toute fuite d'information.
+            // Par défaut, privilégier un mode sûr pour éviter toute fuite d'information.
             'APP_ENV' => 'production',
             'APP_DEBUG' => 'false',
             'APP_TIMEZONE' => 'Europe/Paris',

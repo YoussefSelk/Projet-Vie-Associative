@@ -67,7 +67,7 @@ class EventController {
             $message = buildTutorValidationNotificationEmail(
                 trim(($tutor['prenom'] ?? '') . ' ' . ($tutor['nom'] ?? '')),
                 $creatorName,
-                'evenement',
+                'événement',
                 $eventName,
                 $actionUrl
             );

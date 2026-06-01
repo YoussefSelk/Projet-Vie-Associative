@@ -213,7 +213,7 @@ class AuthController {
                 $_SESSION['reset_verification_attempts'] = 0;
                 $_SESSION['reset_verification_attempts_time'] = time();
                 $resetEmail = buildPasswordResetEmail($user['prenom'] ?? null, $resetToken);
-                $emailSent = sendEmail($mail, 'Code de reinitialisation', $resetEmail);
+                $emailSent = sendEmail($mail, 'Code de réinitialisation', $resetEmail);
 
                 if ($emailSent) {
                     $_SESSION['reset_step'] = 2;
@@ -481,7 +481,7 @@ class AuthController {
                     $_SESSION['password'] = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
                     
                     // Envoyer l'email avec le code
-                    $subject = 'Code de verification - Inscription EILCO';
+                    $subject = 'Code de vérification - Inscription EILCO';
                     $verificationEmail = buildRegistrationVerificationEmail($prenom, (string)$code);
                     $emailSent = sendEmail($mail, $subject, $verificationEmail);
 

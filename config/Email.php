@@ -561,7 +561,7 @@ function buildLeadershipRequestStatusEmail(
     ?string $reason = null,
     ?string $actionUrl = null
 ): array {
-    $normalizedType = strtolower(trim($requestType)) === 'club' ? 'club' : 'evenement';
+    $normalizedType = strtolower(trim($requestType)) === 'club' ? 'club' : 'événement';
     $accent = '#1d4ed8';
     if (stripos($statusLabel, 'rejet') !== false) {
         $accent = '#b91c1c';
@@ -571,7 +571,7 @@ function buildLeadershipRequestStatusEmail(
 
     $metaLines = [
         'Club: ' . $clubName,
-        ucfirst($normalizedType) . ': ' . $itemName,
+        ($normalizedType === 'club' ? 'Club' : 'Événement') . ': ' . $itemName,
         'Statut: ' . $statusLabel,
     ];
 

@@ -1,11 +1,19 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
     # Keep RewriteBase unset so rules work in both root and subdirectory deployments.
-    
+
+    # Canonical host: force non-www so every page and asset is served from a
+    # single origin (https://vieassociative.eilco-ulco.fr). Avoids the CSP
+    # cross-origin breakage when assets were referenced via the www. host.
+    # REQUEST_URI is the original client path (the internal /www rewrite does not
+    # change it), so this rebuilds a clean external URL without a /www segment.
+    RewriteCond %{HTTP_HOST} ^www\.vieassociative\.eilco-ulco\.fr$ [NC]
+    RewriteRule ^ https://vieassociative.eilco-ulco.fr%{REQUEST_URI} [L,R=301]
+
     # Force HTTPS in production (uncomment when SSL is configured)
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-    
+
     # Prevent direct access to sensitive directories
     RewriteRule ^(config|models|controllers|views|routes|logs|vendor|tests|Docs)/ - [F,L]
     

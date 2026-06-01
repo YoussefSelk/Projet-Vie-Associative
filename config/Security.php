@@ -29,6 +29,36 @@ class Security {
         }
         return $query !== null && $query !== '' ? $path . '?' . $query : $path;
     }
+
+    /**
+     * Construit le suffixe de redirection en évitant de dupliquer le chemin de base.
+     */
+    private static function buildRedirectSuffix(string $requestUri, string $basePath): string {
+        $path = parse_url($requestUri, PHP_URL_PATH) ?? '/';
+        $query = parse_url($requestUri, PHP_URL_QUERY);
+
+        if (!is_string($path) || $path === '') {
+            $path = '/';
+        }
+
+        $basePath = '/' . trim($basePath, '/');
+        if ($basePath === '/') {
+            $basePath = '';
+        }
+
+        if ($basePath !== '') {
+            if ($path === $basePath) {
+                $path = '/';
+            } elseif (str_starts_with($path, $basePath . '/')) {
+                $path = substr($path, strlen($basePath));
+                if ($path === false || $path === '') {
+                    $path = '/';
+                }
+            }
+        }
+
+        return $query !== null && $query !== '' ? $path . '?' . $query : $path;
+    }
     
     /**
      * Définit les en-têtes de sécurité HTTP
@@ -114,16 +144,18 @@ class Security {
      */
     public static function enforceHttps() {
         if (Environment::isProduction()) {
+            // Only ensure HTTPS is used; preserve the original host so both
+            // vieassociative.eilco-ulco.fr and www.vieassociative.eilco-ulco.fr work.
             if (!self::isHttps()) {
-                $baseUrl = Environment::getBaseUrl();
                 $requestUri = self::normalizeRequestUri((string)($_SERVER['REQUEST_URI'] ?? '/'));
-                $redirectUrl = rtrim($baseUrl, '/') . $requestUri;
-                $redirectUrl = preg_replace('/^http:\/\//i', 'https://', $redirectUrl);
+                $host = (string) ($_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+                $host = preg_replace('/:\d+$/', '', $host);
+                $redirectUrl = 'https://' . $host . $requestUri;
                 header('Location: ' . $redirectUrl, true, 301);
                 exit;
             }
-            
-            // En-tête HSTS (1 an de validité)
+
+            // HSTS header is still useful when HTTPS is present
             header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
         }
     }

@@ -102,7 +102,7 @@ $can_view_soutenance = ($user_permission >= 2);
                     <div class="club-header" style="background: linear-gradient(135deg, <?= $campusColor ?> 0%, <?= $campusColor ?>cc 100%); padding: 30px; color: white; text-align: center;">
                         <div class="club-icon-large" style="width: 100px; height: 100px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); color: <?= $campusColor ?>; font-size: 2.5rem; overflow: hidden;">
                             <?php if (!empty($club['logo']) && file_exists(ROOT_PATH . '/uploads/logos/' . $club['logo'])): ?>
-                                <img src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/uploads/logos/<?= htmlspecialchars($club['logo']) ?>" alt="Logo <?= htmlspecialchars($club['nom_club']) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="<?= defined('ASSET_BASE') ? ASSET_BASE : '' ?>/uploads/logos/<?= htmlspecialchars($club['logo']) ?>" alt="Logo <?= htmlspecialchars($club['nom_club']) ?>" style="width: 100%; height: 100%; object-fit: cover;">
                             <?php else: ?>
                                 <i class="fas <?= $clubIcon ?>"></i>
                             <?php endif; ?>

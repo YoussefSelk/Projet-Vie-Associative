@@ -46,6 +46,13 @@ date_default_timezone_set(Environment::getTimezone());
 // URL de base fiable (priorité APP_URL, fallback auto-détection durcie)
 define('BASE_URL', Environment::getBaseUrl());
 
+// Base sans host/schéma pour les ressources statiques (CSS/JS/images).
+// On ne garde que le composant chemin de APP_URL : les assets sont ainsi
+// TOUJOURS chargés sur la même origine que la page, donc jamais bloqués par la
+// CSP, quel que soit le host visité (www / non-www) ou la config Apache.
+// Les balises SEO (canonical, og:image, JSON-LD) continuent d'utiliser BASE_URL.
+define('ASSET_BASE', rtrim((string) (parse_url(BASE_URL, PHP_URL_PATH) ?? ''), '/'));
+
 // =============================================================================
 // GESTIONNAIRE D'ERREURS
 // =============================================================================

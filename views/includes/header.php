@@ -147,7 +147,7 @@ else {
     <div class="header-container">
         <!-- Logo Section -->
         <a href="?page=home" class="header-logo">
-            <img src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/images/EILCO-LOGO-2022.png" alt="EILCO" class="logo-img">
+            <img src="<?= defined('ASSET_BASE') ? ASSET_BASE : '' ?>/images/EILCO-LOGO-2022.png" alt="EILCO" class="logo-img">
         </a>
         
         <!-- Title Section -->

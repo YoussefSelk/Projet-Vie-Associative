@@ -182,7 +182,7 @@ $pageCss = ['shared', 'buttons', 'pagination', 'clubs'];
                             flex-shrink: 0;
                         ">
                             <?php if (!empty($c['logo']) && file_exists(ROOT_PATH . '/uploads/logos/' . $c['logo'])): ?>
-                                <img src="<?= defined('BASE_URL') ? BASE_URL : '' ?>/uploads/logos/<?= htmlspecialchars($c['logo']) ?>"
+                                <img src="<?= defined('ASSET_BASE') ? ASSET_BASE : '' ?>/uploads/logos/<?= htmlspecialchars($c['logo']) ?>"
                                      alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                             <?php else: ?>
                                 <i class="fas <?= $typeData['icon'] ?>" style="color:#fff;font-size:1.4rem;"></i>

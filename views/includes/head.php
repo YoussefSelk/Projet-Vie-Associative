@@ -22,6 +22,11 @@
 // Use BASE_URL from bootstrap or fallback to hardened environment helper
 $baseUrl = defined('BASE_URL') ? BASE_URL : Environment::getBaseUrl();
 
+// Host-less base for static assets (CSS/JS/images): always same-origin, so the
+// CSP can never block them regardless of www/non-www. SEO/meta tags below keep
+// the absolute $baseUrl (external crawlers need absolute URLs).
+$assetBase = defined('ASSET_BASE') ? ASSET_BASE : rtrim((string) (parse_url($baseUrl, PHP_URL_PATH) ?? ''), '/');
+
 // Current page URL for canonical
 $currentUrl = $baseUrl . ($_SERVER['REQUEST_URI'] ?? '/');
 
@@ -80,8 +85,8 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
     <meta name="mobile-web-app-capable" content="yes">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="<?= $baseUrl ?>/images/favicon.ico">
-    <link rel="apple-touch-icon" href="<?= $baseUrl ?>/images/apple-touch-icon.png">
+    <link rel="icon" type="image/x-icon" href="<?= $assetBase ?>/images/favicon.ico">
+    <link rel="apple-touch-icon" href="<?= $assetBase ?>/images/apple-touch-icon.png">
     
     <!-- ========================================
          PERFORMANCE OPTIMIZATIONS
@@ -96,8 +101,8 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="<?= $baseUrl ?>/css/core/base.css" as="style">
-    <link rel="preload" href="<?= $baseUrl ?>/assets/lib/fontawesome/css/all.min.css" as="style">
+    <link rel="preload" href="<?= $assetBase ?>/css/core/base.css" as="style">
+    <link rel="preload" href="<?= $assetBase ?>/assets/lib/fontawesome/css/all.min.css" as="style">
     
     <!-- ========================================
          CSS STYLESHEETS (Optimized Loading)
@@ -106,13 +111,13 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
          ======================================== -->
     
     <!-- 1. CORE - Always required -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/core/variables.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/core/base.css">
+    <link rel="stylesheet" href="<?= $assetBase ?>/css/core/variables.css">
+    <link rel="stylesheet" href="<?= $assetBase ?>/css/core/base.css">
     
     <!-- 2. LAYOUT - Always required (header, nav, footer on every page) -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/layout/header.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/layout/navbar.css">
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/layout/footer.css">
+    <link rel="stylesheet" href="<?= $assetBase ?>/css/layout/header.css">
+    <link rel="stylesheet" href="<?= $assetBase ?>/css/layout/navbar.css">
+    <link rel="stylesheet" href="<?= $assetBase ?>/css/layout/footer.css">
     
     <!-- 3. PAGE-SPECIFIC CSS (defined via $pageCss array) -->
     <?php 
@@ -146,19 +151,19 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
         foreach ($pageCss as $css):
             $path = $cssMap[$css] ?? "pages/$css";
     ?>
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/<?= htmlspecialchars($path) ?>.css">
+    <link rel="stylesheet" href="<?= $assetBase ?>/css/<?= htmlspecialchars($path) ?>.css">
     <?php 
         endforeach;
     endif; 
     ?>
     
     <!-- 5. RESPONSIVE - Media queries (must be last) -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/css/responsive.css">
+    <link rel="stylesheet" href="<?= $assetBase ?>/css/responsive.css">
     
     <!-- ========================================
          ICON LIBRARY (FontAwesome Local)
          ======================================== -->
-    <link rel="stylesheet" href="<?= $baseUrl ?>/assets/lib/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="<?= $assetBase ?>/assets/lib/fontawesome/css/all.min.css">
     
     <!-- ========================================
          JAVASCRIPT
@@ -169,7 +174,7 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
             crossorigin="anonymous"></script>
     
     <!-- SweetAlert2 Helper Functions -->
-    <script src="<?= $baseUrl ?>/assets/js/sweetalert-helpers.js"></script>
+    <script src="<?= $assetBase ?>/assets/js/sweetalert-helpers.js"></script>
     
     <!-- Chart.js for admin dashboards (deferred) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
@@ -177,10 +182,10 @@ $pageKeywords = $pageKeywords ?? 'EILCO, vie étudiante, clubs, événements, BD
             crossorigin="anonymous" defer></script>
     
     <!-- Search component (deferred) -->
-    <script src="<?= $baseUrl ?>/assets/js/search.js" defer></script>
+    <script src="<?= $assetBase ?>/assets/js/search.js" defer></script>
     
     <!-- Pagination component (deferred) -->
-    <script src="<?= $baseUrl ?>/assets/js/pagination.js" defer></script>
+    <script src="<?= $assetBase ?>/assets/js/pagination.js" defer></script>
     
     <!-- ========================================
          BROWSER COMPATIBILITY POLYFILLS

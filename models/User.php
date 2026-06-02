@@ -138,9 +138,19 @@ class User {
         $finalPermission = $permission;
         if ($finalPermission === null) {
             $normalizedPromo = strtolower(trim((string)$promo));
-            $studentPromos = ['cp1', 'cp2', 'ing1', 'ing2', 'ing3', 'etu'];
+            // Préfixes étudiants. On teste par préfixe car la promo ING2 encode la
+            // spécialité ("ing2fise" / "ing2fisea") — il ne faut pas la confondre
+            // avec un statut non étudiant.
+            $studentPrefixes = ['cp1', 'cp2', 'ing1', 'ing2', 'ing3', 'etu'];
+            $isStudent = false;
+            foreach ($studentPrefixes as $prefix) {
+                if (str_starts_with($normalizedPromo, $prefix)) {
+                    $isStudent = true;
+                    break;
+                }
+            }
             $finalPermission = match (true) {
-                in_array($normalizedPromo, $studentPromos, true) => 1,
+                $isStudent => 1,
                 // Un "futur tuteur" doit être validé par un admin avant d'obtenir la permission 2.
                 $normalizedPromo === 'tuteur' => 1,
                 $normalizedPromo === 'bde' => 3,

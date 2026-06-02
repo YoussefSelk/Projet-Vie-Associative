@@ -271,9 +271,13 @@ $pageCss = ['shared', 'buttons', 'events'];
                             <?php endif; ?>
 
                             <?php
-                            // Motif de validation forcée : visible uniquement par les membres du club,
-                            // le tuteur du club et l'administration ($est_autorise). Voir retour client (juin 2026).
-                            if (!empty(trim((string)($event['motif_forcage'] ?? ''))) && $est_autorise): ?>
+                            // Motif de validation forcée : visible UNIQUEMENT par les membres du club,
+                            // le tuteur du club et l'administration (perm >= 4). Le BDE en est EXCLU,
+                            // conformément au retour client (juin 2026) — cohérent avec la fiche club.
+                            $peut_voir_forcage = $est_membre_du_club
+                                || ($user_permission === 2 && $user_id_session === $id_tuteur_responsable)
+                                || $user_permission >= 4;
+                            if (!empty(trim((string)($event['motif_forcage'] ?? ''))) && $peut_voir_forcage): ?>
                                 <div class="event-reserved-section mb-20">
                                     <div class="event-reserved-card" style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e;">
                                         <h4 class="event-reserved-subtitle" style="color: #d97706;">

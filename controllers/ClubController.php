@@ -178,28 +178,17 @@ class ClubController {
         
         // Get all users for member selection (exclude current user who will be added automatically)
         $currentUserId = (int)($_SESSION['id'] ?? 0);
-        try {
-            $stmtUsers = $this->db->prepare("
-                SELECT id, nom, prenom, mail, promo, ing2_type
-                FROM users
-                WHERE id != ?
-                ORDER BY nom ASC, prenom ASC
-            ");
-            $stmtUsers->execute([$currentUserId]);
-        } catch (\PDOException $e) {
-            // Repli si la colonne ing2_type n'existe pas encore en base
-            $stmtUsers = $this->db->prepare("
-                SELECT id, nom, prenom, mail, promo
-                FROM users
-                WHERE id != ?
-                ORDER BY nom ASC, prenom ASC
-            ");
-            $stmtUsers->execute([$currentUserId]);
-        }
+        $stmtUsers = $this->db->prepare("
+            SELECT id, nom, prenom, mail, promo
+            FROM users
+            WHERE id != ?
+            ORDER BY nom ASC, prenom ASC
+        ");
+        $stmtUsers->execute([$currentUserId]);
         $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
 
         // Calcul centralisé de l'éligibilité soutenance (seuls les ING2 FISE — retour
-        // client juin 2026). On s'appuie sur la même règle que la validation backend.
+        // client juin 2026). La spécialité est lue depuis `promo` (ING2FISE/ING2FISEA).
         $userModel = new User($this->db);
         foreach ($users as &$u) {
             $u['eligible_soutenance'] = $userModel->isEligibleForSoutenance($u);
@@ -209,13 +198,8 @@ class ClubController {
         // Éligibilité du créateur à la soutenance
         $creatorEligibleSoutenance = false;
         if ($currentUserId > 0) {
-            try {
-                $stmtCreator = $this->db->prepare("SELECT promo, ing2_type FROM users WHERE id = ?");
-                $stmtCreator->execute([$currentUserId]);
-            } catch (\PDOException $e) {
-                $stmtCreator = $this->db->prepare("SELECT promo FROM users WHERE id = ?");
-                $stmtCreator->execute([$currentUserId]);
-            }
+            $stmtCreator = $this->db->prepare("SELECT promo FROM users WHERE id = ?");
+            $stmtCreator->execute([$currentUserId]);
             $creatorRow = $stmtCreator->fetch(PDO::FETCH_ASSOC);
             if ($creatorRow) {
                 $creatorEligibleSoutenance = $userModel->isEligibleForSoutenance($creatorRow);
@@ -782,14 +766,8 @@ class ClubController {
         }
 
         $placeholders = implode(',', array_fill(0, count($userIds), '?'));
-        try {
-            $stmt = $this->db->prepare("SELECT id, nom, prenom, promo, ing2_type FROM users WHERE id IN ($placeholders)");
-            $stmt->execute($userIds);
-        } catch (\PDOException $e) {
-            // Repli si la colonne ing2_type n'existe pas encore en base
-            $stmt = $this->db->prepare("SELECT id, nom, prenom, promo FROM users WHERE id IN ($placeholders)");
-            $stmt->execute($userIds);
-        }
+        $stmt = $this->db->prepare("SELECT id, nom, prenom, promo FROM users WHERE id IN ($placeholders)");
+        $stmt->execute($userIds);
 
         $userModel = new User($this->db);
         $ineligible = [];

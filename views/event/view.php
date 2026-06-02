@@ -124,15 +124,24 @@ $pageCss = ['shared', 'buttons', 'events'];
                         <?php
                         // Affiche (communication) : visible par TOUS les rôles, y compris les
                         // personnes non connectées. Voir retour client (juin 2026).
+                        // L'affiche peut être une image (JPG/PNG) ou un PDF.
                         if (!empty($event['affiche'])):
                             $afficheUrl = htmlspecialchars((string)$event['affiche'], ENT_QUOTES, 'UTF-8');
+                            $afficheExt = strtolower(pathinfo((string)$event['affiche'], PATHINFO_EXTENSION));
+                            $afficheIsImage = in_array($afficheExt, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true);
                         ?>
                         <div class="event-section">
                             <h3><i class="fas fa-image"></i> Affiche</h3>
-                            <a href="<?= $afficheUrl ?>" target="_blank" rel="noopener">
-                                <img src="<?= $afficheUrl ?>" alt="Affiche de l'événement"
-                                     style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0;" loading="lazy">
-                            </a>
+                            <?php if ($afficheIsImage): ?>
+                                <a href="<?= $afficheUrl ?>" target="_blank" rel="noopener">
+                                    <img src="<?= $afficheUrl ?>" alt="Affiche de l'événement"
+                                         style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0;" loading="lazy">
+                                </a>
+                            <?php else: ?>
+                                <a href="<?= $afficheUrl ?>" class="btn btn-sm" style="background: #f59e0b; color: white;" target="_blank" rel="noopener">
+                                    <i class="fas fa-file-pdf"></i> Voir l'affiche
+                                </a>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
 

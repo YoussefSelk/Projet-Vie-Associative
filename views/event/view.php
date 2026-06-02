@@ -120,8 +120,23 @@ $pageCss = ['shared', 'buttons', 'events'];
                             <p><?= htmlspecialchars($event['places_max']) ?> places</p>
                         </div>
                         <?php endif; ?>
-                        
-                        <?php 
+
+                        <?php
+                        // Affiche (communication) : visible par TOUS les rôles, y compris les
+                        // personnes non connectées. Voir retour client (juin 2026).
+                        if (!empty($event['affiche'])):
+                            $afficheUrl = htmlspecialchars((string)$event['affiche'], ENT_QUOTES, 'UTF-8');
+                        ?>
+                        <div class="event-section">
+                            <h3><i class="fas fa-image"></i> Affiche</h3>
+                            <a href="<?= $afficheUrl ?>" target="_blank" rel="noopener">
+                                <img src="<?= $afficheUrl ?>" alt="Affiche de l'événement"
+                                     style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0;" loading="lazy">
+                            </a>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php
                             // On récupère les informations nécessaires
                             $user_id_session = (int)($_SESSION['id'] ?? 0);
                             $user_permission = (int)($_SESSION['permission'] ?? 0);
@@ -246,7 +261,10 @@ $pageCss = ['shared', 'buttons', 'events'];
                                 </div>
                             <?php endif; ?>
 
-                            <?php if (!empty(trim((string)($event['motif_forcage'] ?? ''))) && isset($_SESSION['id'])): ?>
+                            <?php
+                            // Motif de validation forcée : visible uniquement par les membres du club,
+                            // le tuteur du club et l'administration ($est_autorise). Voir retour client (juin 2026).
+                            if (!empty(trim((string)($event['motif_forcage'] ?? ''))) && $est_autorise): ?>
                                 <div class="event-reserved-section mb-20">
                                     <div class="event-reserved-card" style="background: #fffbeb; border: 1px solid #fde68a; color: #92400e;">
                                         <h4 class="event-reserved-subtitle" style="color: #d97706;">

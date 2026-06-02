@@ -693,7 +693,7 @@ class EventController {
         if (!is_dir($dest_path)) mkdir($dest_path, 0775, true);
 
         $uploaded_paths = [];
-        $max_size = 512000; // 500 Ko
+        $max_size = 2 * 1024 * 1024; // 2 Mo
         $allowed_exts = ['jpg', 'jpeg', 'png', 'webp'];
         $allowed_image_mimes = ['image/jpeg', 'image/png', 'image/webp'];
         $finfo_img = new \finfo(FILEINFO_MIME_TYPE);
@@ -739,10 +739,12 @@ class EventController {
      */
     public function eventReport() {
         validateSession();
-        
-        $error_msg = '';
-        $success_msg = '';
-        
+
+        // Messages flash (affichés après redirection PRG)
+        $error_msg = (string)($_SESSION['flash_error'] ?? '');
+        $success_msg = (string)($_SESSION['flash_success'] ?? '');
+        unset($_SESSION['flash_error'], $_SESSION['flash_success']);
+
         // Récupérer les événements éligibles
         $stmt = $this->db->prepare("
             SELECT fe.*, fc.nom_club 
@@ -838,6 +840,7 @@ class EventController {
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
+            $_SESSION['flash_success'] = $success_msg;
             redirect($_SERVER['REQUEST_URI']);
         }
 

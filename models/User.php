@@ -131,7 +131,7 @@ class User {
      * @param int|null $permission Niveau de permission (null = déduit du statut/promo)
      * @return bool Succès de la création
      */
-    public function createUser($nom, $prenom, $mail, $password, $promo = 'etu', $isHashed = false, $permission = null) {
+    public function createUser($nom, $prenom, $mail, $password, $promo = 'etu', $isHashed = false, $permission = null, $ing2_type = null) {
         // Si le mot de passe n'est pas déjà haché, le hacher
         $finalPassword = $isHashed ? $password : password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
 
@@ -150,7 +150,46 @@ class User {
             };
         }
 
-        $stmt = $this->db->prepare("INSERT INTO users (nom, prenom, mail, password, promo, permission) VALUES (?, ?, ?, ?, ?, ?)");
-        return $stmt->execute([$nom, $prenom, $mail, $finalPassword, $promo, (int)$finalPermission]);
+        // Le type ING2 (FISE/FISEA) n'a de sens que pour la promo ING2.
+        $normalizedType = strtoupper(trim((string)$ing2_type));
+        $ing2TypeValue = (strtolower(trim((string)$promo)) === 'ing2' && in_array($normalizedType, ['FISE', 'FISEA'], true))
+            ? $normalizedType
+            : null;
+
+        // Tentative d'insertion avec la colonne ing2_type (ajoutée par migration).
+        // Repli automatique si la colonne n'existe pas encore en base.
+        try {
+            $stmt = $this->db->prepare("INSERT INTO users (nom, prenom, mail, password, promo, permission, ing2_type) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            return $stmt->execute([$nom, $prenom, $mail, $finalPassword, $promo, (int)$finalPermission, $ing2TypeValue]);
+        } catch (\PDOException $e) {
+            $stmt = $this->db->prepare("INSERT INTO users (nom, prenom, mail, password, promo, permission) VALUES (?, ?, ?, ?, ?, ?)");
+            return $stmt->execute([$nom, $prenom, $mail, $finalPassword, $promo, (int)$finalPermission]);
+        }
+    }
+
+    /**
+     * Détermine si un utilisateur est autorisé à passer une soutenance.
+     * Règle métier (retour client juin 2026) : seuls les ING2 FISE y sont éligibles.
+     *
+     * - promo doit être "ING2" (insensible à la casse) ;
+     * - si le type ING2 est connu, il doit être "FISE" (les FISEA sont exclus) ;
+     * - pour les comptes ING2 historiques sans type renseigné, on accorde le bénéfice
+     *   du doute afin de ne pas bloquer les étudiants existants (à backfiller).
+     *
+     * @param array $user Données utilisateur (doit contenir au moins 'promo')
+     * @return bool
+     */
+    public function isEligibleForSoutenance(array $user): bool {
+        $promo = strtolower(trim((string)($user['promo'] ?? '')));
+        if ($promo !== 'ing2') {
+            return false;
+        }
+        if (array_key_exists('ing2_type', $user)) {
+            $type = strtoupper(trim((string)($user['ing2_type'] ?? '')));
+            if ($type === 'FISEA') {
+                return false;
+            }
+        }
+        return true;
     }
 }

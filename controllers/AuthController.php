@@ -563,7 +563,9 @@ class AuthController {
                     $_SESSION['mail'],
                     $_SESSION['password'],
                     $promo_value,
-                    true // Le mot de passe est deja hache
+                    true, // Le mot de passe est deja hache
+                    null, // permission deduite de la promo
+                    $_SESSION['ing2_type'] ?? null // FISE / FISEA (pertinent uniquement pour ING2)
                 );
 
                 if ($result) {

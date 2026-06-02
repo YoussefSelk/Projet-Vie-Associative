@@ -242,13 +242,19 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                         <!-- Données utilisateurs pour JS -->
                         <script>
                             var usersData = <?= json_encode(array_map(function($u) {
+                                // Éligible soutenance = ING2 et type != FISEA (FISE ou type inconnu/legacy)
+                                $promo = strtolower(trim((string)($u['promo'] ?? '')));
+                                $type = strtoupper(trim((string)($u['ing2_type'] ?? '')));
+                                $eligible = ($promo === 'ing2' && $type !== 'FISEA');
                                 return [
                                     'id' => $u['id'],
                                     'name' => $u['prenom'] . ' ' . $u['nom'],
                                     'email' => $u['mail'],
-                                    'promo' => $u['promo'] ?? ''
+                                    'promo' => $u['promo'] ?? '',
+                                    'eligible_soutenance' => $eligible
                                 ];
                             }, $users ?? []), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+                            var CREATOR_ELIGIBLE_SOUTENANCE = <?= !empty($creatorEligibleSoutenance) ? 'true' : 'false' ?>;
                         </script>
 
                         <!-- Actions du formulaire -->
@@ -325,6 +331,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
         // Rôles uniques : un seul membre autorisé par rôle dans le club
         // ─────────────────────────────────────────────────────────────
         var MAX_SOUTENANCE_MEMBERS = 5;
+        var MIN_SOUTENANCE_MEMBERS = 3;
 
         /** Liste des rôles qui ne peuvent être attribués qu'une seule fois */
         var UNIQUE_ROLES = ['Président', 'Vice-Président', 'Trésorier', 'Secrétaire', "Charge d'événement / communication"];
@@ -434,7 +441,22 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
 
         var creatorSoutenanceCheckbox = document.getElementById('creatorSoutenance');
         if (creatorSoutenanceCheckbox) {
+            // Seuls les ING2 FISE peuvent passer la soutenance (retour client juin 2026)
+            if (!CREATOR_ELIGIBLE_SOUTENANCE) {
+                creatorSoutenanceCheckbox.checked = false;
+                creatorSoutenanceCheckbox.disabled = true;
+                var creatorSoutCont = document.getElementById('creatorSoutenanceContainer');
+                if (creatorSoutCont) {
+                    creatorSoutCont.setAttribute('title', 'Réservé aux étudiants ING2 FISE');
+                    creatorSoutCont.style.opacity = '0.5';
+                }
+            }
             creatorSoutenanceCheckbox.addEventListener('change', function() {
+                if (this.checked && !CREATOR_ELIGIBLE_SOUTENANCE) {
+                    this.checked = false;
+                    alert('Seuls les étudiants ING2 FISE peuvent passer la soutenance.');
+                    return;
+                }
                 if (getTotalSoutenanceCount() > MAX_SOUTENANCE_MEMBERS) {
                     this.checked = false;
                     alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
@@ -525,9 +547,9 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
             }
 
             var total = getTotalSoutenanceCount();
-            msg.innerHTML = '<i class="fas fa-graduation-cap"></i> Soutenance : ' + total + ' / ' + MAX_SOUTENANCE_MEMBERS;
+            msg.innerHTML = '<i class="fas fa-graduation-cap"></i> Soutenance : ' + total + ' (autorisé : ' + MIN_SOUTENANCE_MEMBERS + ' à ' + MAX_SOUTENANCE_MEMBERS + ')';
 
-            if (total >= MAX_SOUTENANCE_MEMBERS) {
+            if (total >= MAX_SOUTENANCE_MEMBERS || (total > 0 && total < MIN_SOUTENANCE_MEMBERS)) {
                 notif.style.background = '#fef2f2';
                 notif.style.borderColor = '#fca5a5';
                 msg.style.color = '#991b1b';
@@ -618,6 +640,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
 
                 // On lit si la case est cochée (autorisée uniquement pour rôles principaux)
                 var isSoutenance = (PRINCIPAL_ROLES.indexOf(role) !== -1) && document.getElementById('newMemberSoutenance').checked;
+                // Seuls les ING2 FISE peuvent passer la soutenance (retour client juin 2026)
+                if (isSoutenance && selectedUser.eligible_soutenance === false) {
+                    alert('Seuls les étudiants ING2 FISE peuvent passer la soutenance. ' + (selectedUser.name || 'Ce membre') + ' n\'est pas éligible.');
+                    return;
+                }
                 if (isSoutenance && getTotalSoutenanceCount() >= MAX_SOUTENANCE_MEMBERS) {
                     alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
                     return;
@@ -802,11 +829,19 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                 return false;
             }
 
-            if (getTotalSoutenanceCount() > MAX_SOUTENANCE_MEMBERS) {
+            var totalSoutenance = getTotalSoutenanceCount();
+            if (totalSoutenance > MAX_SOUTENANCE_MEMBERS) {
                 e.preventDefault();
                 alert('Quota dépassé : maximum ' + MAX_SOUTENANCE_MEMBERS + ' membres en soutenance par club.');
                 var soutenanceNotif = document.getElementById('soutenanceQuotaNotif');
                 if (soutenanceNotif) soutenanceNotif.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+            if (totalSoutenance > 0 && totalSoutenance < MIN_SOUTENANCE_MEMBERS) {
+                e.preventDefault();
+                alert('Le nombre de membres passant la soutenance doit être compris entre ' + MIN_SOUTENANCE_MEMBERS + ' et ' + MAX_SOUTENANCE_MEMBERS + '.');
+                var soutenanceNotifMin = document.getElementById('soutenanceQuotaNotif');
+                if (soutenanceNotifMin) soutenanceNotifMin.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return false;
             }
         });

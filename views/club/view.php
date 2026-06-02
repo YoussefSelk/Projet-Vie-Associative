@@ -21,6 +21,21 @@ $pageCss = ['shared', 'buttons', 'tables', 'clubs'];
 $user_permission = isset($_SESSION['permission']) ? (int)$_SESSION['permission'] : 0;
 $can_view_soutenance = ($user_permission >= 2);
 // ----------------------------------------------------------------------------------------
+
+// --- Qui peut voir le motif de validation forcée : membres du club, tuteur du club, admin ---
+$current_user_id = (int)($_SESSION['id'] ?? 0);
+$is_club_member = false;
+if ($current_user_id > 0 && !empty($members)) {
+    foreach ($members as $__m) {
+        if ((int)($__m['membre_id'] ?? 0) === $current_user_id) {
+            $is_club_member = true;
+            break;
+        }
+    }
+}
+$is_club_tutor = ($current_user_id > 0 && isset($club['tuteur']) && (int)$club['tuteur'] === $current_user_id);
+$can_view_forcage = ($user_permission >= 4 || $is_club_tutor || $is_club_member);
+// ----------------------------------------------------------------------------------------
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -223,7 +238,8 @@ $can_view_soutenance = ($user_permission >= 2);
                         </div>
                         <?php endif; ?>
 
-                        <?php if (!empty(trim((string)($club['motif_forcage'] ?? ''))) && isset($_SESSION['id'])): ?>
+                        <?php // Motif de validation forcée : réservé aux membres du club, tuteur du club et admin (retour client juin 2026) ?>
+                        <?php if (!empty(trim((string)($club['motif_forcage'] ?? ''))) && $can_view_forcage): ?>
                         <div class="club-section" style="margin-bottom: 30px;">
                             <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; color: #d97706;"><i class="fas fa-bolt"></i> Motif de validation forcée</h3>
                             <div style="background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 8px; color: #92400e;">

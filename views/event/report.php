@@ -31,6 +31,16 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                     
                     <?php if(!empty($success_msg)): ?>
                         <div class="alert alert-success"><i class="fas fa-check-circle"></i> <?= htmlspecialchars(strip_tags((string)$success_msg)) ?></div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Rapport déposé',
+                                    text: <?= json_encode(strip_tags((string)$success_msg), JSON_UNESCAPED_UNICODE) ?>,
+                                    confirmButtonText: 'OK'
+                                });
+                            });
+                        </script>
                     <?php endif; ?>
 
                     <?php if (empty($events)): ?>
@@ -74,11 +84,11 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                 <div class="upload-zone" onclick="document.getElementById('eventPhotos').click()">
                                     <i class="fas fa-image"></i>
                                     <p>Ajouter une photo (1 max)</p>
-                                    <small>JPG, PNG, WEBP • <strong>Max 500 Ko</strong></small>
+                                    <small>JPG, PNG, WEBP • <strong>Max 2 Mo</strong></small>
                                     <input type="file" name="event_photos[]" id="eventPhotos" accept="image/jpeg,image/png,image/webp" style="display: none;">
                                 </div>
                                 <div id="sizeErrorMessage" class="size-error">
-                                    <i class="fas fa-exclamation-triangle"></i> Certaines images sont trop lourdes (> 500 Ko) et ont été retirées.
+                                    <i class="fas fa-exclamation-triangle"></i> Certaines images sont trop lourdes (> 2 Mo) et ont été retirées.
                                 </div>
 
                                 <div id="imagePreview"></div>
@@ -108,7 +118,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
             // Tableau pour stocker physiquement les fichiers cumulés
             let allFiles = []; 
             const MAX_FILES = 1;
-            const MAX_SIZE = 512000; // 500 Ko
+            const MAX_SIZE = 2 * 1024 * 1024; // 2 Mo
 
             fileInput.addEventListener('change', function() {
                 errorMsg.style.display = 'none';
@@ -120,7 +130,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                         return; // On ignore les fichiers en trop
                     }
 
-                    // 2. Vérifier la taille (500 Ko)
+                    // 2. Vérifier la taille (2 Mo)
                     if (file.size > MAX_SIZE) {
                         errorMsg.style.display = 'block';
                         return;

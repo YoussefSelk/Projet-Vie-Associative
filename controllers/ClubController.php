@@ -178,14 +178,41 @@ class ClubController {
         
         // Get all users for member selection (exclude current user who will be added automatically)
         $currentUserId = (int)($_SESSION['id'] ?? 0);
-        $stmtUsers = $this->db->prepare("
-            SELECT id, nom, prenom, mail, promo 
-            FROM users 
-            WHERE id != ?
-            ORDER BY nom ASC, prenom ASC
-        ");
-        $stmtUsers->execute([$currentUserId]);
+        try {
+            $stmtUsers = $this->db->prepare("
+                SELECT id, nom, prenom, mail, promo, ing2_type
+                FROM users
+                WHERE id != ?
+                ORDER BY nom ASC, prenom ASC
+            ");
+            $stmtUsers->execute([$currentUserId]);
+        } catch (\PDOException $e) {
+            // Repli si la colonne ing2_type n'existe pas encore en base
+            $stmtUsers = $this->db->prepare("
+                SELECT id, nom, prenom, mail, promo
+                FROM users
+                WHERE id != ?
+                ORDER BY nom ASC, prenom ASC
+            ");
+            $stmtUsers->execute([$currentUserId]);
+        }
         $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
+
+        // Éligibilité du créateur à la soutenance (seuls les ING2 FISE — retour client juin 2026)
+        $creatorEligibleSoutenance = false;
+        if ($currentUserId > 0) {
+            try {
+                $stmtCreator = $this->db->prepare("SELECT promo, ing2_type FROM users WHERE id = ?");
+                $stmtCreator->execute([$currentUserId]);
+            } catch (\PDOException $e) {
+                $stmtCreator = $this->db->prepare("SELECT promo FROM users WHERE id = ?");
+                $stmtCreator->execute([$currentUserId]);
+            }
+            $creatorRow = $stmtCreator->fetch(PDO::FETCH_ASSOC);
+            if ($creatorRow) {
+                $creatorEligibleSoutenance = (new User($this->db))->isEligibleForSoutenance($creatorRow);
+            }
+        }
 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['create_club'])) {
             $nom_club = trim($_POST['nom_club'] ?? '');
@@ -282,6 +309,29 @@ class ClubController {
                 $error_msg = "La création d'un club nécessite au moins 3 personnes (vous + 2 autres membres fondateurs).";
             }
 
+            // --- Vérification soutenance : entre 3 et 5 membres (retour client juin 2026) ---
+            $minSoutenanceMembers = 3;
+            if (empty($error_msg) && $soutenanceCount > 0 && $soutenanceCount < $minSoutenanceMembers) {
+                $error_msg = "Le nombre de membres passant la soutenance doit être compris entre {$minSoutenanceMembers} et {$maxSoutenanceMembers}.";
+            }
+
+            // --- Vérification éligibilité soutenance : seuls les ING2 FISE (retour client juin 2026) ---
+            if (empty($error_msg)) {
+                $soutenanceUserIds = [];
+                if ($creator_soutenance === 1 && $creatorId) {
+                    $soutenanceUserIds[] = (int)$creatorId;
+                }
+                foreach ($normalizedMembers as $m) {
+                    if ((int)$m['soutenance'] === 1) {
+                        $soutenanceUserIds[] = (int)$m['user_id'];
+                    }
+                }
+                $ineligible = $this->getIneligibleSoutenanceNames($soutenanceUserIds);
+                if (!empty($ineligible)) {
+                    $error_msg = "Seuls les étudiants ING2 FISE peuvent passer la soutenance. Membre(s) non éligible(s) : " . implode(', ', $ineligible) . ".";
+                }
+            }
+
             // Vérifier que les IDs existent réellement en base
             if (empty($error_msg) && !empty($uniqueMemberIds)) {
                 $placeholders = implode(',', array_fill(0, count($uniqueMemberIds), '?'));
@@ -356,7 +406,8 @@ class ClubController {
             'error_msg' => $error_msg,
             'success_msg' => $success_msg,
             'tutors' => $tutors,
-            'users' => $users
+            'users' => $users,
+            'creatorEligibleSoutenance' => $creatorEligibleSoutenance
         ];
     }
 
@@ -560,6 +611,26 @@ class ClubController {
                         }
                     }
 
+                    // --- Vérification soutenance : entre 3 et 5 membres (retour client juin 2026) ---
+                    $minSoutenanceMembers = 3;
+                    if (empty($error_msg) && $soutenanceCount > 0 && $soutenanceCount < $minSoutenanceMembers) {
+                        $error_msg = "Le nombre de membres passant la soutenance doit être compris entre {$minSoutenanceMembers} et {$maxSoutenanceMembers}.";
+                    }
+
+                    // --- Vérification éligibilité soutenance : seuls les ING2 FISE (retour client juin 2026) ---
+                    if (empty($error_msg)) {
+                        $soutenanceUserIds = [];
+                        foreach ($normalizedMembers as $m) {
+                            if ((int)$m['soutenance'] === 1) {
+                                $soutenanceUserIds[] = (int)$m['user_id'];
+                            }
+                        }
+                        $ineligible = $this->getIneligibleSoutenanceNames($soutenanceUserIds);
+                        if (!empty($ineligible)) {
+                            $error_msg = "Seuls les étudiants ING2 FISE peuvent passer la soutenance. Membre(s) non éligible(s) : " . implode(', ', $ineligible) . ".";
+                        }
+                    }
+
                     if (empty($error_msg)) {
                         if (!$nom_club || !$type_club || !$description || !$campus) {
                             $error_msg = "Tous les champs sont obligatoires.";
@@ -686,9 +757,44 @@ class ClubController {
     }
     
     /**
+     * Retourne les noms des utilisateurs NON éligibles à la soutenance parmi la
+     * liste fournie. Règle métier (retour client juin 2026) : seuls les ING2 FISE
+     * peuvent passer la soutenance.
+     *
+     * @param array $userIds Identifiants des utilisateurs marqués "soutenance"
+     * @return string[] Noms complets des utilisateurs non éligibles
+     */
+    private function getIneligibleSoutenanceNames(array $userIds): array {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
+        if (empty($userIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        try {
+            $stmt = $this->db->prepare("SELECT id, nom, prenom, promo, ing2_type FROM users WHERE id IN ($placeholders)");
+            $stmt->execute($userIds);
+        } catch (\PDOException $e) {
+            // Repli si la colonne ing2_type n'existe pas encore en base
+            $stmt = $this->db->prepare("SELECT id, nom, prenom, promo FROM users WHERE id IN ($placeholders)");
+            $stmt->execute($userIds);
+        }
+
+        $userModel = new User($this->db);
+        $ineligible = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            if (!$userModel->isEligibleForSoutenance($row)) {
+                $fullName = trim(((string)($row['prenom'] ?? '')) . ' ' . ((string)($row['nom'] ?? '')));
+                $ineligible[] = $fullName !== '' ? $fullName : ('Utilisateur #' . (int)$row['id']);
+            }
+        }
+        return $ineligible;
+    }
+
+    /**
      * Envoie une notification par email au tuteur
      * Informé lors de la création d'un nouveau club ou événement
-     * 
+     *
      * @param int $tuteur_id Identifiant du tuteur
      * @param string $item_name Nom du club ou événement
      * @param string $type Type d'élément ('club' ou 'event')

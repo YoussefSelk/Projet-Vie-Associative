@@ -557,6 +557,15 @@ class AuthController {
                 $promo_value = ($sessionPromo === 'etu' && $sessionNiveau !== '')
                     ? $sessionNiveau
                     : $sessionPromo;
+
+                // Pour un ING2, la spécialité est encodée DANS la promo (format historique
+                // de la base : "ING2FISE" / "ING2FISEA"). On conserve ce format pour rester
+                // cohérent avec les données existantes et la règle d'éligibilité soutenance.
+                $sessionIng2Type = strtoupper(trim((string)($_SESSION['ing2_type'] ?? '')));
+                if (strtoupper($promo_value) === 'ING2' && in_array($sessionIng2Type, ['FISE', 'FISEA'], true)) {
+                    $promo_value = 'ING2' . $sessionIng2Type;
+                }
+
                 $result = $this->userModel->createUser(
                     $_SESSION['nom'],
                     $_SESSION['prenom'],

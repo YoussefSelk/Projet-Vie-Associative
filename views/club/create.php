@@ -242,16 +242,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                         <!-- Données utilisateurs pour JS -->
                         <script>
                             var usersData = <?= json_encode(array_map(function($u) {
-                                // Éligible soutenance = ING2 et type != FISEA (FISE ou type inconnu/legacy)
-                                $promo = strtolower(trim((string)($u['promo'] ?? '')));
-                                $type = strtoupper(trim((string)($u['ing2_type'] ?? '')));
-                                $eligible = ($promo === 'ing2' && $type !== 'FISEA');
+                                // L'éligibilité soutenance (ING2 FISE) est calculée côté contrôleur.
                                 return [
                                     'id' => $u['id'],
                                     'name' => $u['prenom'] . ' ' . $u['nom'],
                                     'email' => $u['mail'],
                                     'promo' => $u['promo'] ?? '',
-                                    'eligible_soutenance' => $eligible
+                                    'eligible_soutenance' => !empty($u['eligible_soutenance'])
                                 ];
                             }, $users ?? []), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
                             var CREATOR_ELIGIBLE_SOUTENANCE = <?= !empty($creatorEligibleSoutenance) ? 'true' : 'false' ?>;

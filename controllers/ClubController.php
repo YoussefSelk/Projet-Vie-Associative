@@ -198,7 +198,15 @@ class ClubController {
         }
         $users = $stmtUsers->fetchAll(PDO::FETCH_ASSOC);
 
-        // Éligibilité du créateur à la soutenance (seuls les ING2 FISE — retour client juin 2026)
+        // Calcul centralisé de l'éligibilité soutenance (seuls les ING2 FISE — retour
+        // client juin 2026). On s'appuie sur la même règle que la validation backend.
+        $userModel = new User($this->db);
+        foreach ($users as &$u) {
+            $u['eligible_soutenance'] = $userModel->isEligibleForSoutenance($u);
+        }
+        unset($u);
+
+        // Éligibilité du créateur à la soutenance
         $creatorEligibleSoutenance = false;
         if ($currentUserId > 0) {
             try {
@@ -210,7 +218,7 @@ class ClubController {
             }
             $creatorRow = $stmtCreator->fetch(PDO::FETCH_ASSOC);
             if ($creatorRow) {
-                $creatorEligibleSoutenance = (new User($this->db))->isEligibleForSoutenance($creatorRow);
+                $creatorEligibleSoutenance = $userModel->isEligibleForSoutenance($creatorRow);
             }
         }
 

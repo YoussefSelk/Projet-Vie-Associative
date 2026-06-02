@@ -180,16 +180,35 @@ class User {
      * @return bool
      */
     public function isEligibleForSoutenance(array $user): bool {
-        $promo = strtolower(trim((string)($user['promo'] ?? '')));
-        if ($promo !== 'ing2') {
+        // En base, la promotion encode déjà la spécialité : "ING2FISE" / "ING2FISEA"
+        // (et la colonne ing2_type est, historiquement, vide). On parse donc la promo,
+        // avec un repli sur ing2_type si jamais elle est renseignée.
+        $promo = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string)($user['promo'] ?? '')));
+
+        // L'utilisateur doit être un ING2.
+        if (strpos($promo, 'ING2') !== 0) {
             return false;
         }
-        if (array_key_exists('ing2_type', $user)) {
+
+        // Détection FISE / FISEA. ATTENTION : "ING2FISEA" contient "FISE", il faut
+        // donc tester "FISEA" en premier.
+        $type = '';
+        if (strpos($promo, 'FISEA') !== false) {
+            $type = 'FISEA';
+        } elseif (strpos($promo, 'FISE') !== false) {
+            $type = 'FISE';
+        } elseif (array_key_exists('ing2_type', $user)) {
             $type = strtoupper(trim((string)($user['ing2_type'] ?? '')));
-            if ($type === 'FISEA') {
-                return false;
-            }
         }
+
+        if ($type === 'FISE') {
+            return true;   // ING2 FISE : éligible
+        }
+        if ($type === 'FISEA') {
+            return false;  // ING2 FISEA : exclu
+        }
+
+        // ING2 sans spécialité identifiable (donnée historique) : bénéfice du doute.
         return true;
     }
 }

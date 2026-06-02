@@ -107,21 +107,25 @@ class ExportController
             'Validation tuteur',
             'Validation BDE',
             'Validation finale',
-            'Nombre de membres',
-            'Membres et rôles',
+            'Membres',
+            'Rôles',
+            'Soutenance',
             'Nombre total d\'événements',
             'Événements',
             'Nombre total de participants aux événements',
             'Documents des événements',
         ];
 
+        // Retour client (juin 2026) : une LIGNE PAR MEMBRE (colonnes Membres / Rôles /
+        // Soutenance séparées), au lieu d'un bloc « Membres et rôles » par club.
+        // Les informations du club ne sont affichées que sur la première ligne du club.
         $rows = [];
         foreach ($clubs as $club) {
             $clubId = (int)$club['club_id'];
             $members = $membersByClub[$clubId] ?? [];
             $events = $eventsByClub[$clubId] ?? [];
 
-            $rows[] = [
+            $clubLevel = [
                 'Nom du club' => $this->formatText($club['nom_club'] ?? null),
                 'Type de club' => $this->formatText($club['type_club'] ?? null),
                 'Campus' => $this->formatText($club['campus'] ?? null),
@@ -132,13 +136,32 @@ class ExportController
                 'Validation tuteur' => $this->formatValidation($club['validation_tuteur'] ?? null),
                 'Validation BDE' => $this->formatValidation($club['validation_bde'] ?? null),
                 'Validation finale' => $this->formatValidation($club['validation_finale'] ?? null),
-                'Nombre de membres' => (string)count($members),
-                'Membres et rôles' => $this->buildMembersSummary($members),
                 'Nombre total d\'événements' => (string)count($events),
                 'Événements' => $this->buildEventsSummary($events),
                 'Nombre total de participants aux événements' => (string)($participantsByClub[$clubId] ?? 0),
                 'Documents des événements' => $this->buildEventDocumentsSummary($events),
             ];
+            // Cellules vides pour les lignes suivantes du même club (effet « fusionné »).
+            $emptyClubLevel = array_map(static fn() => '', $clubLevel);
+
+            if (empty($members)) {
+                $rows[] = $clubLevel + [
+                    'Membres' => 'Aucun membre',
+                    'Rôles' => '',
+                    'Soutenance' => '',
+                ];
+                continue;
+            }
+
+            $first = true;
+            foreach ($members as $member) {
+                $rows[] = ($first ? $clubLevel : $emptyClubLevel) + [
+                    'Membres' => $this->formatPerson($member['prenom'] ?? null, $member['nom'] ?? null),
+                    'Rôles' => $this->formatText($member['fonction'] ?? null, 'Membre'),
+                    'Soutenance' => ((int)($member['soutenance'] ?? 0) === 1) ? 'Oui' : 'Non',
+                ];
+                $first = false;
+            }
         }
 
         $this->journaliserExport('export_clubs_valides_global', null);

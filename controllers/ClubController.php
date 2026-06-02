@@ -389,7 +389,10 @@ class ClubController {
                                          ->execute([$club_id, $member['user_id'], $member['role'], $member['soutenance']]);
                             }
                             
-                            if ($tuteur_id) $this->notifyTutor($tuteur_id, $nom_club, 'club');
+                            // Notifier les valideurs (BDE + Tuteur + Admin) de la création (retour client juin 2026)
+                            $creatorName = trim((string)($_SESSION['prenom'] ?? '') . ' ' . (string)($_SESSION['nom'] ?? ''));
+                            if ($creatorName === '') { $creatorName = 'Un étudiant'; }
+                            notifyValidatorsNewSubmission($this->db, 'club', $nom_club, $creatorName, $tuteur_id);
                             redirect('index.php?page=club-view&id=' . $club_id . '&created=1');
                         } else {
                             $error_msg = "Erreur lors de la création du club.";

@@ -423,7 +423,11 @@ class EventController {
                     ];
 
                     if ($this->eventModel->createEvent($data)) {
-                        $this->notifyTutorForEvent((int)$club_id, $nom_event);
+                        // Notifier les valideurs (BDE + Tuteur + Admin) de la création (retour client juin 2026)
+                        $creatorName = trim((string)($_SESSION['prenom'] ?? '') . ' ' . (string)($_SESSION['nom'] ?? ''));
+                        if ($creatorName === '') { $creatorName = 'Un étudiant'; }
+                        $eventTutorId = !empty($clubInfo['tuteur']) ? (int)$clubInfo['tuteur'] : null;
+                        notifyValidatorsNewSubmission($this->db, 'evenement', $nom_event, $creatorName, $eventTutorId);
                         if ($type_event === 'activity') {
                             $success_msg = "L'activité a été créée avec succès. Elle est en attente de validation.";
                         } else {
@@ -816,7 +820,20 @@ class EventController {
                         }
                         
                         $success_msg = "Le rapport" . ($images_list ? " et les photos" : "") . " ont été déposés avec succès.";
-                        
+
+                        // Notifier les valideurs (BDE + Tuteur + Admin) du dépôt du rapport (retour client juin 2026)
+                        try {
+                            $stmtTuteur = $this->db->prepare("SELECT fc.tuteur FROM fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id WHERE fe.event_id = ?");
+                            $stmtTuteur->execute([$event_id]);
+                            $reportTutorId = $stmtTuteur->fetchColumn();
+                            $reportTutorId = !empty($reportTutorId) ? (int)$reportTutorId : null;
+                            $depositorName = trim((string)($_SESSION['prenom'] ?? '') . ' ' . (string)($_SESSION['nom'] ?? ''));
+                            if ($depositorName === '') { $depositorName = 'Un étudiant'; }
+                            notifyValidatorsReportDeposited($this->db, (string)$event_title, (string)$club_name, $depositorName, $reportTutorId);
+                        } catch (\Throwable $eNotif) {
+                            // Une erreur de notification ne doit pas bloquer le dépôt du rapport.
+                        }
+
                         // Rafraîchir la liste (Logique identique à l'initiale)
                         $stmt = $this->db->prepare("
                             SELECT fe.*, fc.nom_club 

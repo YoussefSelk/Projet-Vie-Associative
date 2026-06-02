@@ -686,6 +686,172 @@ function sendEmail($to, $subject, $message) {
     return false;
 }
 
+/**
+ * Construit une URL absolue vers une page de la plateforme (si BASE_URL connue).
+ */
+function buildPlatformUrl(string $page): ?string {
+    if (defined('BASE_URL') && is_string(BASE_URL) && BASE_URL !== '') {
+        return rtrim(BASE_URL, '/') . '/?page=' . $page;
+    }
+    return null;
+}
+
+/**
+ * Récupère les valideurs à notifier : BDE (permission 3), administrateurs
+ * (permission >= 4) et, si fourni, le tuteur du club.
+ *
+ * @return array<int, array<string,mixed>> Indexé par id utilisateur
+ */
+function getValidatorRecipients(PDO $db, ?int $tutorId = null): array {
+    $recipients = [];
+    try {
+        $stmt = $db->query("SELECT id, nom, prenom, mail, permission FROM users WHERE permission >= 3 AND mail IS NOT NULL AND mail <> ''");
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $recipients[(int)$row['id']] = $row;
+        }
+    } catch (\PDOException $e) {
+        // En cas d'erreur DB, on continue avec ce qu'on a (tuteur éventuel).
+    }
+
+    if ($tutorId) {
+        try {
+            $stmt = $db->prepare("SELECT id, nom, prenom, mail, permission FROM users WHERE id = ? AND mail IS NOT NULL AND mail <> ''");
+            $stmt->execute([$tutorId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $recipients[(int)$row['id']] = $row;
+            }
+        } catch (\PDOException $e) {
+            // ignore
+        }
+    }
+
+    return $recipients;
+}
+
+/**
+ * Notifie les valideurs (BDE + Tuteur + Admin) qu'un étudiant vient de créer
+ * un club ou un événement nécessitant leur validation. (Retour client juin 2026)
+ */
+function notifyValidatorsNewSubmission(PDO $db, string $type, string $itemName, string $creatorName, ?int $tutorId = null): void {
+    $typeLabel = (strtolower(trim($type)) === 'club') ? 'club' : 'événement';
+    $bdeAdminPage = ($typeLabel === 'club') ? 'pending-clubs' : 'pending-events';
+
+    foreach (getValidatorRecipients($db, $tutorId) as $recipient) {
+        $email = trim((string)($recipient['mail'] ?? ''));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            continue;
+        }
+
+        $fullName = trim((string)($recipient['prenom'] ?? '') . ' ' . (string)($recipient['nom'] ?? ''));
+        if ($fullName === '') {
+            $fullName = 'Valideur';
+        }
+        $perm = (int)($recipient['permission'] ?? 0);
+
+        if ($perm >= 4) {
+            $message = buildAdminValidationNotificationEmail($fullName, $creatorName, $typeLabel, $itemName, buildPlatformUrl($bdeAdminPage));
+        } elseif ($perm === 3) {
+            $message = buildBdeValidationNotificationEmail($fullName, $creatorName, $typeLabel, $itemName, buildPlatformUrl($bdeAdminPage));
+        } else {
+            $message = buildTutorValidationNotificationEmail($fullName, $creatorName, $typeLabel, $itemName, buildPlatformUrl('tutoring'));
+        }
+
+        $subject = 'Nouveau ' . $typeLabel . ' à valider : ' . $itemName;
+        sendEmail($email, $subject, $message);
+    }
+}
+
+/**
+ * Notifie les valideurs qu'un rapport d'événement vient d'être déposé.
+ * (Retour client juin 2026)
+ */
+function notifyValidatorsReportDeposited(PDO $db, string $eventTitle, string $clubName, string $depositorName, ?int $tutorId = null): void {
+    $actionUrl = buildPlatformUrl('admin-event-reports');
+
+    foreach (getValidatorRecipients($db, $tutorId) as $recipient) {
+        $email = trim((string)($recipient['mail'] ?? ''));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            continue;
+        }
+
+        $fullName = trim((string)($recipient['prenom'] ?? '') . ' ' . (string)($recipient['nom'] ?? ''));
+        if ($fullName === '') {
+            $fullName = 'Valideur';
+        }
+
+        $message = renderProfessionalEmailTemplate([
+            'title' => 'Nouveau rapport d\'événement déposé',
+            'preheader' => 'Un rapport d\'événement vient d\'être déposé sur la plateforme.',
+            'intro' => 'Bonjour ' . $fullName . ',',
+            'body_lines' => [
+                $depositorName . ' a déposé le rapport de l\'événement « ' . $eventTitle . ' ».',
+                'Vous pouvez le consulter depuis la plateforme.',
+            ],
+            'meta_lines' => [
+                'Club: ' . $clubName,
+                'Événement: ' . $eventTitle,
+            ],
+            'accent' => '#0f766e',
+        ] + ($actionUrl ? ['button_label' => 'Consulter les rapports', 'button_url' => $actionUrl] : []));
+
+        sendEmail($email, 'Rapport déposé : ' . $eventTitle, $message);
+    }
+}
+
+/**
+ * Notifie les AUTRES valideurs qu'un valideur a refusé un club/événement,
+ * en précisant le motif. (Retour client juin 2026)
+ *
+ * @param int|null $excludeUserId Identifiant du valideur ayant rejeté (à ne pas notifier)
+ */
+function notifyValidatorsRefusal(PDO $db, string $type, string $itemName, string $refuserRole, ?string $reason, ?int $tutorId = null, ?int $excludeUserId = null): void {
+    $typeLabel = (strtolower(trim($type)) === 'club') ? 'club' : 'événement';
+    $reason = trim((string)$reason);
+
+    foreach (getValidatorRecipients($db, $tutorId) as $userId => $recipient) {
+        if ($excludeUserId !== null && (int)$userId === $excludeUserId) {
+            continue;
+        }
+        $email = trim((string)($recipient['mail'] ?? ''));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            continue;
+        }
+
+        $fullName = trim((string)($recipient['prenom'] ?? '') . ' ' . (string)($recipient['nom'] ?? ''));
+        if ($fullName === '') {
+            $fullName = 'Valideur';
+        }
+
+        $perm = (int)($recipient['permission'] ?? 0);
+        $actionUrl = ($perm >= 3)
+            ? buildPlatformUrl($typeLabel === 'club' ? 'pending-clubs' : 'pending-events')
+            : buildPlatformUrl('tutoring');
+
+        $metaLines = [
+            ucfirst($typeLabel) . ': ' . $itemName,
+            'Refusé par: ' . $refuserRole,
+        ];
+        if ($reason !== '') {
+            $metaLines[] = 'Motif du refus: ' . $reason;
+        }
+
+        $message = renderProfessionalEmailTemplate([
+            'title' => 'Un ' . $typeLabel . ' a été refusé',
+            'preheader' => 'Un autre valideur a refusé une demande.',
+            'intro' => 'Bonjour ' . $fullName . ',',
+            'body_lines' => [
+                'Le ' . $typeLabel . ' « ' . $itemName . ' » a été refusé par ' . $refuserRole . '.',
+                'Cette information vous est transmise afin que tous les valideurs aient connaissance du refus et de son motif.',
+            ],
+            'meta_lines' => $metaLines,
+            'accent' => '#b91c1c',
+        ] + ($actionUrl ? ['button_label' => 'Voir les validations', 'button_url' => $actionUrl] : []));
+
+        sendEmail($email, 'Refus d\'un ' . $typeLabel . ' : ' . $itemName, $message);
+    }
+}
+
 // Alias for backward compatibility
 function envoyerMail($to, $subject, $message) {
     return sendEmail($to, $subject, $message);

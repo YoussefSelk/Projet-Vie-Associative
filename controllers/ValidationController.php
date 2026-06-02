@@ -53,6 +53,54 @@ class ValidationController {
     }
 
     /**
+     * Retourne l'identifiant du tuteur d'un club (ou null).
+     */
+    private function getClubTutorId(int $clubId): ?int {
+        try {
+            $stmt = $this->db->prepare("SELECT tuteur FROM fiche_club WHERE club_id = ?");
+            $stmt->execute([$clubId]);
+            $tuteur = $stmt->fetchColumn();
+            return !empty($tuteur) ? (int)$tuteur : null;
+        } catch (\PDOException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Retourne le nom d'un club (ou un libellé de repli).
+     */
+    private function getClubName(int $clubId): string {
+        try {
+            $stmt = $this->db->prepare("SELECT nom_club FROM fiche_club WHERE club_id = ?");
+            $stmt->execute([$clubId]);
+            $name = $stmt->fetchColumn();
+            return $name !== false && $name !== null && $name !== '' ? (string)$name : ('Club #' . $clubId);
+        } catch (\PDOException $e) {
+            return 'Club #' . $clubId;
+        }
+    }
+
+    /**
+     * Retourne [titre, club_orga] d'un événement.
+     *
+     * @return array{0:string,1:int}
+     */
+    private function getEventInfo(int $eventId): array {
+        try {
+            $stmt = $this->db->prepare("SELECT titre, club_orga FROM fiche_event WHERE event_id = ?");
+            $stmt->execute([$eventId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $title = (string)($row['titre'] ?? '');
+                return [$title !== '' ? $title : ('Événement #' . $eventId), (int)($row['club_orga'] ?? 0)];
+            }
+        } catch (\PDOException $e) {
+            // ignore
+        }
+        return ['Événement #' . $eventId, 0];
+    }
+
+    /**
      * Notifie président/secrétaire du statut d'une demande.
      */
     private function notifyLeadershipRequestStatus(
@@ -240,6 +288,8 @@ class ValidationController {
                 if ($stmt->execute([$remarques, $club_id])) {
                     $success_msg = "Club rejeté.";
                     $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'rejetée', $remarques);
+                    // BUG 4 : prévenir les autres valideurs du refus et de son motif
+                    notifyValidatorsRefusal($this->db, 'club', $clubName, $is_admin ? 'Administration' : 'BDE', $remarques, $this->getClubTutorId((int)$club_id), (int)($_SESSION['id'] ?? 0));
                 } else {
                     $error_msg = "Erreur lors du rejet.";
                 }
@@ -396,6 +446,8 @@ class ValidationController {
                     if ($eventClubId > 0) {
                         $this->notifyLeadershipRequestStatus($eventClubId, $eventClubName, 'evenement', $eventTitle, 'rejetée', $remarques);
                     }
+                    // BUG 4 : prévenir les autres valideurs du refus et de son motif
+                    notifyValidatorsRefusal($this->db, 'evenement', $eventTitle, $is_admin ? 'Administration' : 'BDE', $remarques, $this->getClubTutorId($eventClubId), (int)($_SESSION['id'] ?? 0));
                 } else {
                     $error_msg = "Erreur lors du rejet.";
                 }
@@ -575,6 +627,7 @@ class ValidationController {
                     } elseif ($action === 'reject') {
                         $this->db->prepare("UPDATE fiche_club SET validation_admin = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ?")->execute([$motif, $club_id]);
                         $success_msg = "Club rejeté par l'administrateur.";
+                        notifyValidatorsRefusal($this->db, 'club', $this->getClubName((int)$club_id), 'Administration', $motif, $this->getClubTutorId((int)$club_id), (int)$user_id);
                     }
                 } elseif ($is_tutor) {
                     if ($action === 'approve') {
@@ -594,6 +647,7 @@ class ValidationController {
                         $this->db->prepare("UPDATE fiche_club SET validation_tuteur = 0, validation_finale = -1, motif_refus = ? WHERE club_id = ? AND tuteur = ?")
                                  ->execute([$motif, $club_id, $user_id]);
                         $success_msg = "Club rejeté par le tuteur.";
+                        notifyValidatorsRefusal($this->db, 'club', $this->getClubName((int)$club_id), 'Tuteur', $motif, $this->getClubTutorId((int)$club_id), (int)$user_id);
                     }
                 }
             }
@@ -618,6 +672,8 @@ class ValidationController {
                     $motifRefus = $motif !== '' ? $motif : 'Refusé par l\'administration.';
                     $this->db->prepare("UPDATE fiche_event SET validation_admin = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?")->execute([$motifRefus, $event_id]);
                     $success_msg = "Refus administrateur enregistré.";
+                    [$evTitle, $evClubId] = $this->getEventInfo((int)$event_id);
+                    notifyValidatorsRefusal($this->db, 'evenement', $evTitle, 'Administration', $motifRefus, $this->getClubTutorId($evClubId), (int)$user_id);
                 } else {
                     $this->db->prepare("UPDATE fiche_event SET validation_admin = 1 WHERE event_id = ?")->execute([$event_id]);
                     $success_msg = "Avis administrateur enregistré.";
@@ -628,6 +684,8 @@ class ValidationController {
                     $motifRefus = $motif !== '' ? $motif : 'Refusé par le BDE.';
                     $this->db->prepare("UPDATE fiche_event SET validation_bde = 0, validation_finale = 0, motif_refus = ? WHERE event_id = ?")->execute([$motifRefus, $event_id]);
                     $success_msg = "Refus BDE enregistré.";
+                    [$evTitle, $evClubId] = $this->getEventInfo((int)$event_id);
+                    notifyValidatorsRefusal($this->db, 'evenement', $evTitle, 'BDE', $motifRefus, $this->getClubTutorId($evClubId), (int)$user_id);
                 } else {
                     $this->db->prepare("UPDATE fiche_event SET validation_bde = 1 WHERE event_id = ?")->execute([$event_id]);
                     $success_msg = "Avis BDE enregistré.";
@@ -639,6 +697,8 @@ class ValidationController {
                     $this->db->prepare("UPDATE fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id SET fe.validation_tuteur = 0, fe.validation_finale = 0, fe.motif_refus = ? WHERE fe.event_id = ? AND fc.tuteur = ?")
                              ->execute([$motifRefus, $event_id, $user_id]);
                     $success_msg = "Refus tuteur enregistré.";
+                    [$evTitle, $evClubId] = $this->getEventInfo((int)$event_id);
+                    notifyValidatorsRefusal($this->db, 'evenement', $evTitle, 'Tuteur', $motifRefus, $this->getClubTutorId($evClubId), (int)$user_id);
                 } else {
                     $this->db->prepare("UPDATE fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id SET fe.validation_tuteur = 1 WHERE fe.event_id = ? AND fc.tuteur = ?")
                              ->execute([$event_id, $user_id]);

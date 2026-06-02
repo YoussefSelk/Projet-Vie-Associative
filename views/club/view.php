@@ -238,6 +238,16 @@ $can_view_forcage = ($user_permission >= 4 || $is_club_tutor || $is_club_member)
                         </div>
                         <?php endif; ?>
 
+                        <?php // Commentaire laissé par un valideur (tuteur/admin) lors de la validation (retour client juin 2026) ?>
+                        <?php if (!empty(trim((string)($club['commentaire_validation'] ?? ''))) && $can_view_forcage): ?>
+                        <div class="club-section" style="margin-bottom: 30px;">
+                            <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; color: #1d4ed8;"><i class="fas fa-comment-dots"></i> Commentaire des valideurs</h3>
+                            <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 8px; color: #1e3a8a;">
+                                <p class="club-remarks" style="margin: 0; font-style: italic;"><?= nl2br(htmlspecialchars((string)$club['commentaire_validation'], ENT_QUOTES, 'UTF-8')) ?></p>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <?php // Motif de validation forcée : réservé aux membres du club, tuteur du club et admin (retour client juin 2026) ?>
                         <?php if (!empty(trim((string)($club['motif_forcage'] ?? ''))) && $can_view_forcage): ?>
                         <div class="club-section" style="margin-bottom: 30px;">

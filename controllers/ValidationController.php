@@ -67,6 +67,36 @@ class ValidationController {
     }
 
     /**
+     * Enregistre un commentaire de validation (tuteur/admin) sur un club ou un
+     * événement. Sans effet si la colonne commentaire_validation n'existe pas encore.
+     * (Retour client juin 2026)
+     *
+     * @param string $type 'club' ou 'evenement'
+     */
+    private function storeValidationComment(string $type, int $id, string $comment): void {
+        $comment = trim($comment);
+        if ($comment === '' || $id <= 0) {
+            return;
+        }
+        if (function_exists('mb_substr')) {
+            $comment = mb_substr($comment, 0, 1000, 'UTF-8');
+        } else {
+            $comment = substr($comment, 0, 1000);
+        }
+
+        $isClub = (strtolower(trim($type)) === 'club');
+        $table = $isClub ? 'fiche_club' : 'fiche_event';
+        $idCol = $isClub ? 'club_id' : 'event_id';
+
+        try {
+            $stmt = $this->db->prepare("UPDATE {$table} SET commentaire_validation = ? WHERE {$idCol} = ?");
+            $stmt->execute([$comment, $id]);
+        } catch (\PDOException $e) {
+            // Colonne absente : on ignore (le commentaire sera tout de même transmis par email).
+        }
+    }
+
+    /**
      * Retourne le nom d'un club (ou un libellé de repli).
      */
     private function getClubName(int $clubId): string {
@@ -256,6 +286,9 @@ class ValidationController {
                 }
                 
                 if ($stmt->execute([$club_id])) {
+                    // Commentaire de validation optionnel (retour client juin 2026)
+                    $this->storeValidationComment('club', (int)$club_id, $remarques);
+
                     // Vérifier si les 3 signatures sont complètes
                     $check = $this->db->prepare("SELECT validation_bde, validation_tuteur, validation_admin FROM fiche_club WHERE club_id = ?");
                     $check->execute([$club_id]);
@@ -265,7 +298,7 @@ class ValidationController {
                         // BDE OK + Tuteur OK + Admin OK = Validation finale
                         $this->db->prepare("UPDATE fiche_club SET validation_finale = 1, motif_refus = NULL WHERE club_id = ?")->execute([$club_id]);
                         $success_msg = "Club approuvé définitivement. Toutes les signatures sont complètes, le club est maintenant actif.";
-                        $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'validée');
+                        $this->notifyLeadershipRequestStatus((int)$club_id, $clubName, 'club', $clubName, 'validée', $remarques !== '' ? $remarques : null);
                     } else {
                         if ($is_admin) {
                             $success_msg = "Approbation admin enregistrée. En attente des autres signatures requises.";
@@ -410,6 +443,9 @@ class ValidationController {
                 }
 
                 if ($stmt && $stmt->execute([$event_id])) {
+                    // Commentaire de validation optionnel (retour client juin 2026)
+                    $this->storeValidationComment('evenement', (int)$event_id, $remarques);
+
                     // 2. On vérifie les conditions pour la validation finale
                     $check = $this->db->prepare("SELECT validation_tuteur, validation_admin, validation_bde FROM fiche_event WHERE event_id = ?");
                     $check->execute([$event_id]);
@@ -424,7 +460,7 @@ class ValidationController {
                         $this->db->prepare("UPDATE fiche_event SET validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
                         $success_msg = "Événement validé définitivement (Circuit de signatures complet).";
                         if ($eventClubId > 0) {
-                            $this->notifyLeadershipRequestStatus($eventClubId, $eventClubName, 'evenement', $eventTitle, 'validée');
+                            $this->notifyLeadershipRequestStatus($eventClubId, $eventClubName, 'evenement', $eventTitle, 'validée', $remarques !== '' ? $remarques : null);
                         }
                     } else {
                         $success_msg = "Votre approbation a été enregistrée. En attente des autres signatures requises.";
@@ -601,6 +637,7 @@ class ValidationController {
             $club_id = $_POST['club_id'] ?? null;
             $action = $_POST['action'] ?? null;
             $motif = trim($_POST['motif'] ?? '');
+            $commentaire = trim($_POST['commentaire'] ?? '');
             $motifForcage = $this->normalizeMotifForcage($_POST['motif_forcage'] ?? null);
 
             if ($club_id && $action) {
@@ -614,6 +651,10 @@ class ValidationController {
                         }
                     } elseif ($action === 'approve') {
                         $this->db->prepare("UPDATE fiche_club SET validation_admin = 1 WHERE club_id = ?")->execute([$club_id]);
+                        $this->storeValidationComment('club', (int)$club_id, $commentaire);
+                        if ($commentaire !== '') {
+                            $this->notifyLeadershipRequestStatus((int)$club_id, $this->getClubName((int)$club_id), 'club', $this->getClubName((int)$club_id), 'commentée par l\'administration', $commentaire);
+                        }
                         // Vérification croisée : BDE + Tuteur + Admin = validation finale
                         $check = $this->db->prepare("SELECT validation_bde, validation_tuteur FROM fiche_club WHERE club_id = ?");
                         $check->execute([$club_id]);
@@ -633,6 +674,10 @@ class ValidationController {
                     if ($action === 'approve') {
                         $this->db->prepare("UPDATE fiche_club SET validation_tuteur = 1 WHERE club_id = ? AND tuteur = ?")
                                  ->execute([$club_id, $user_id]);
+                        $this->storeValidationComment('club', (int)$club_id, $commentaire);
+                        if ($commentaire !== '') {
+                            $this->notifyLeadershipRequestStatus((int)$club_id, $this->getClubName((int)$club_id), 'club', $this->getClubName((int)$club_id), 'commentée par le tuteur', $commentaire);
+                        }
                         // Vérification croisée : BDE + Tuteur + Admin = validation finale
                         $check = $this->db->prepare("SELECT validation_bde, validation_admin FROM fiche_club WHERE club_id = ?");
                         $check->execute([$club_id]);
@@ -657,6 +702,7 @@ class ValidationController {
         $event_id = $_POST['event_id'] ?? null;
         $action = $_POST['action'] ?? null;
         $motif = trim($_POST['motif'] ?? '');
+        $commentaire = trim($_POST['commentaire'] ?? '');
         $motifForcage = $this->normalizeMotifForcage($_POST['motif_forcage'] ?? null);
 
         if ($event_id && $action) {
@@ -676,9 +722,10 @@ class ValidationController {
                     notifyValidatorsRefusal($this->db, 'evenement', $evTitle, 'Administration', $motifRefus, $this->getClubTutorId($evClubId), (int)$user_id);
                 } else {
                     $this->db->prepare("UPDATE fiche_event SET validation_admin = 1 WHERE event_id = ?")->execute([$event_id]);
+                    $this->storeValidationComment('evenement', (int)$event_id, $commentaire);
                     $success_msg = "Avis administrateur enregistré.";
                 }
-            } 
+            }
             elseif (isset($_POST['validate_event_bde']) && $is_bde) {
                 if ($action === 'reject') {
                     $motifRefus = $motif !== '' ? $motif : 'Refusé par le BDE.';
@@ -688,9 +735,10 @@ class ValidationController {
                     notifyValidatorsRefusal($this->db, 'evenement', $evTitle, 'BDE', $motifRefus, $this->getClubTutorId($evClubId), (int)$user_id);
                 } else {
                     $this->db->prepare("UPDATE fiche_event SET validation_bde = 1 WHERE event_id = ?")->execute([$event_id]);
+                    $this->storeValidationComment('evenement', (int)$event_id, $commentaire);
                     $success_msg = "Avis BDE enregistré.";
                 }
-            } 
+            }
             elseif (isset($_POST['validate_event_tutor']) && $is_tutor) {
                 if ($action === 'reject') {
                     $motifRefus = $motif !== '' ? $motif : 'Refusé par le tuteur.';
@@ -702,6 +750,7 @@ class ValidationController {
                 } else {
                     $this->db->prepare("UPDATE fiche_event fe INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id SET fe.validation_tuteur = 1 WHERE fe.event_id = ? AND fc.tuteur = ?")
                              ->execute([$event_id, $user_id]);
+                    $this->storeValidationComment('evenement', (int)$event_id, $commentaire);
                     $success_msg = "Avis tuteur enregistré.";
                 }
             }

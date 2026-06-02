@@ -691,17 +691,22 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
             btn.addEventListener('click', function() {
                 const clubId   = this.dataset.id;
                 const clubName = this.dataset.name;
-                SwalHelper.confirm(
-                    'Approuver ce club ?',
-                    'Le club "' + clubName + '" sera validé.',
-                    'Oui, approuver',
-                    'Annuler'
-                ).then(result => {
+                Swal.fire({
+                    title: 'Approuver ce club ?',
+                    text: 'Le club "' + clubName + '" sera validé. Vous pouvez ajouter un commentaire (optionnel).',
+                    input: 'textarea',
+                    inputPlaceholder: 'Commentaire pour le club (optionnel)…',
+                    inputAttributes: { maxlength: '1000', 'aria-label': 'Commentaire de validation' },
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, approuver',
+                    cancelButtonText: 'Annuler'
+                }).then(result => {
                     if (result.isConfirmed) {
                         const fd = new FormData();
                         fd.append('csrf_token', csrfToken);
                         fd.append('club_id', clubId);
                         fd.append('action', 'approve');
+                        fd.append('commentaire', (result.value || '').trim());
                         fd.append('validate_club_admin', '1');
                         submitAction(fd);
                     }
@@ -875,17 +880,22 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'search', 'pagination', 'val
                 const eventId       = this.dataset.id;
                 const eventName     = this.dataset.name;
                 const validateField = this.dataset.validateField;
-                SwalHelper.confirm(
-                    'Approuver cet événement ?',
-                    'L\'événement "' + eventName + '" sera validé.',
-                    'Oui, approuver',
-                    'Annuler'
-                ).then(result => {
+                Swal.fire({
+                    title: 'Approuver cet événement ?',
+                    text: 'L\'événement "' + eventName + '" sera validé. Vous pouvez ajouter un commentaire, par exemple pour alerter sur les règles de sécurité (optionnel).',
+                    input: 'textarea',
+                    inputPlaceholder: 'Commentaire pour le club (optionnel)…',
+                    inputAttributes: { maxlength: '1000', 'aria-label': 'Commentaire de validation' },
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, approuver',
+                    cancelButtonText: 'Annuler'
+                }).then(result => {
                     if (result.isConfirmed) {
                         const fd = new FormData();
                         fd.append('csrf_token', csrfToken);
                         fd.append('event_id', eventId);
                         fd.append('action', 'approve');
+                        fd.append('commentaire', (result.value || '').trim());
                         fd.append(validateField, '1');
                         submitAction(fd);
                     }

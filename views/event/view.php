@@ -275,6 +275,20 @@ $pageCss = ['shared', 'buttons', 'events'];
                                 </div>
                             <?php endif; ?>
 
+                            <?php
+                            // Commentaire laissé par un valideur (tuteur/admin) lors de la validation.
+                            // Visible par les membres du club, le tuteur et l'administration. Voir retour client (juin 2026).
+                            if (!empty(trim((string)($event['commentaire_validation'] ?? ''))) && $est_autorise): ?>
+                                <div class="event-reserved-section mb-20">
+                                    <div class="event-reserved-card" style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a;">
+                                        <h4 class="event-reserved-subtitle" style="color: #1d4ed8;">
+                                            <i class="fas fa-comment-dots"></i> Commentaire des valideurs
+                                        </h4>
+                                        <p style="margin: 0; font-style: italic;"><?= nl2br(htmlspecialchars((string)$event['commentaire_validation'], ENT_QUOTES, 'UTF-8')) ?></p>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
                         <div class="event-actions">
                             <a href="?page=event-list" class="btn btn-outline">
                                 <i class="fas fa-calendar-alt"></i> Voir tous les événements

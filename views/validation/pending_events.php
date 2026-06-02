@@ -259,6 +259,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                                             <?= Security::csrfField() ?>
                                             <input type="hidden" name="event_id" value="<?= $event['event_id'] ?>">
                                             <input type="hidden" name="action" value="approve">
+                                            <input type="hidden" name="remarques" value="">
                                             <input type="hidden" name="validate_event" value="1">
                                             <button type="submit" class="btn-approve">
                                                 <i class="fas fa-check"></i> Approuver
@@ -354,6 +355,7 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
         <?= Security::csrfField() ?>
         <input type="hidden" name="event_id" id="swalApproveEventId" value="">
         <input type="hidden" name="action" value="approve">
+        <input type="hidden" name="remarques" id="swalApproveRemarques" value="">
         <input type="hidden" name="validate_event" value="1">
     </form>
     <form method="POST" id="swalRejectForm" class="hidden-form">
@@ -655,8 +657,22 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                     return;
                 }
                 if (result.isConfirmed) {
-                    document.getElementById('swalApproveEventId').value = ev.event_id;
-                    document.getElementById('swalApproveForm').submit();
+                    Swal.fire({
+                        title: 'Commentaire (optionnel)',
+                        text: 'Vous pouvez ajouter un commentaire, par exemple pour alerter sur les règles de sécurité.',
+                        input: 'textarea',
+                        inputPlaceholder: 'Commentaire pour le club (optionnel)…',
+                        inputAttributes: { maxlength: 1000, 'aria-label': 'Commentaire de validation' },
+                        showCancelButton: true,
+                        confirmButtonText: 'Valider',
+                        cancelButtonText: 'Annuler'
+                    }).then(function(r) {
+                        if (r.isConfirmed) {
+                            document.getElementById('swalApproveEventId').value = ev.event_id;
+                            document.getElementById('swalApproveRemarques').value = (r.value || '').trim();
+                            document.getElementById('swalApproveForm').submit();
+                        }
+                    });
                 } else if (result.isDenied) {
                     openRejectSwal(ev);
                 }
@@ -739,13 +755,21 @@ $pageCss = ['shared', 'buttons', 'forms', 'tables', 'validation', 'events', 'sea
                 var evTitle = titleEl ? titleEl.textContent.trim() : 'cet événement';
                 evTitle = esc(evTitle);
 
-                SwalHelper.confirm(
-                    'Approuver « ' + evTitle + ' » ?',
-                    'L\'événement « ' + evTitle + ' » sera validé.',
-                    'Oui, approuver',
-                    'Annuler'
-                ).then(function(result) {
-                    if (result.isConfirmed) form.submit();
+                Swal.fire({
+                    title: 'Approuver « ' + evTitle + ' » ?',
+                    text: 'L\'événement sera validé. Vous pouvez ajouter un commentaire, par exemple pour alerter sur les règles de sécurité (optionnel).',
+                    input: 'textarea',
+                    inputPlaceholder: 'Commentaire pour le club (optionnel)…',
+                    inputAttributes: { maxlength: 1000, 'aria-label': 'Commentaire de validation' },
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, approuver',
+                    cancelButtonText: 'Annuler'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        var remInput = form.querySelector('input[name="remarques"]');
+                        if (remInput) remInput.value = (result.value || '').trim();
+                        form.submit();
+                    }
                 });
             });
         });

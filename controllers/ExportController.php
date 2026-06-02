@@ -381,26 +381,24 @@ class ExportController
 
     private function exportAllClubMembers(): void
     {
+        // Retour client (juin 2026) : le rôle affiché doit être le rôle DANS LE CLUB
+        // (membres_club.fonction) et non le rôle/permission du site. Une ligne par
+        // adhésion (un membre présent dans plusieurs clubs apparaît plusieurs fois).
         $stmt = $this->db->prepare("
-            SELECT DISTINCT
+            SELECT
                 u.nom                                                AS 'Nom',
                 u.prenom                                             AS 'Prénom',
                 u.mail                                               AS 'Email',
                 u.promo                                              AS 'Promotion',
-                CASE u.permission
-                    WHEN 1 THEN 'Étudiant'
-                    WHEN 2 THEN 'Tuteur'
-                    WHEN 3 THEN 'BDE'
-                    WHEN 4 THEN 'Personnel administratif'
-                    WHEN 5 THEN 'Administrateur'
-                    ELSE 'Permission non renseignée'
-                END                                                  AS 'Type utilisateur'
+                fc.campus                                            AS 'Site',
+                fc.nom_club                                          AS 'Club',
+                COALESCE(NULLIF(TRIM(mc.fonction), ''), 'Membre')    AS 'Rôle dans le club'
             FROM membres_club mc
             JOIN users u       ON u.id       = mc.membre_id
             JOIN fiche_club fc ON fc.club_id  = mc.club_id
             WHERE fc.validation_finale = 1
               AND mc.valide = 1
-            ORDER BY u.nom ASC, u.prenom ASC
+            ORDER BY u.nom ASC, u.prenom ASC, fc.nom_club ASC
         ");
         $stmt->execute();
         $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -408,7 +406,7 @@ class ExportController
         $this->journaliserExport('export_membres_tous_clubs', null);
         $this->envoyerCsv(
             $lignes,
-            'utilisateurs_membres_distincts_' . date('Y-m-d') . '.csv'
+            'membres_tous_clubs_' . date('Y-m-d') . '.csv'
         );
     }
 
@@ -422,6 +420,15 @@ class ExportController
     {
         checkPermission(2);
         $this->verifierRateLimit();
+
+        // Retour client (juin 2026) : l'extraction des soutenances doit être une
+        // liste GLOBALE (tous clubs) et non club par club. Le mode par club reste
+        // disponible si un identifiant explicite est transmis.
+        $clubIdParam = $_GET['club_id'] ?? '';
+        if ($clubIdParam === '' || $clubIdParam === 'all') {
+            $this->exportAllSoutenanceMembers();
+            return;
+        }
 
         $clubId = $this->lireClubId();
         $club   = $this->getClubOrAbort($clubId);
@@ -454,6 +461,51 @@ class ExportController
         $this->envoyerCsv(
             $lignes,
             'soutenance_' . $this->slug($club['nom_club']) . '_' . date('Y-m-d') . '.csv'
+        );
+    }
+
+    /**
+     * Exporte la liste GLOBALE des membres marqués « soutenance », tous clubs
+     * confondus. (Retour client juin 2026)
+     *
+     * Colonnes : Nom, Prénom, Site, Club, Rôle dans le club.
+     * Le rôle est le rôle DANS LE CLUB (membres_club.fonction), pas le rôle du site.
+     *
+     * Portée : permission >= 3 (BDE/admin) voit tous les clubs ; un tuteur (niveau 2)
+     * ne voit que les clubs dont il est le tuteur référent.
+     */
+    private function exportAllSoutenanceMembers(): void
+    {
+        $params = [];
+        $scopeCondition = '';
+        if ((int)($_SESSION['permission'] ?? 0) < 3) {
+            $scopeCondition = ' AND fc.tuteur = :tuteur ';
+            $params[':tuteur'] = (string)($_SESSION['id'] ?? '');
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT
+                u.nom                                                AS 'Nom',
+                u.prenom                                             AS 'Prénom',
+                fc.campus                                            AS 'Site',
+                fc.nom_club                                          AS 'Club',
+                COALESCE(NULLIF(TRIM(mc.fonction), ''), 'Membre')    AS 'Rôle dans le club'
+            FROM membres_club mc
+            JOIN users u       ON u.id      = mc.membre_id
+            JOIN fiche_club fc ON fc.club_id = mc.club_id
+            WHERE fc.validation_finale = 1
+              AND mc.valide     = 1
+              AND mc.soutenance = 1
+              {$scopeCondition}
+            ORDER BY u.nom ASC, u.prenom ASC, fc.nom_club ASC
+        ");
+        $stmt->execute($params);
+        $lignes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->journaliserExport('export_soutenance_global', null);
+        $this->envoyerCsv(
+            $lignes,
+            'soutenances_global_' . date('Y-m-d') . '.csv'
         );
     }
 

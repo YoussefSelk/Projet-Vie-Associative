@@ -188,43 +188,23 @@ $pageCss   = ['shared', 'buttons', 'forms', 'export'];
                             <i class="fas fa-graduation-cap"></i>
                         </div>
                         <div>
-                            <h3 class="export-card-title">Membres avec soutenance</h3>
-                            <p class="export-card-desc">Uniquement les membres marqués « soutenance » dans un club.</p>
+                            <h3 class="export-card-title">Membres avec soutenance (liste globale)</h3>
+                            <p class="export-card-desc">Tous les membres marqués « soutenance », tous clubs confondus, sur une seule liste.</p>
                         </div>
                     </div>
 
                     <div class="export-columns-preview">
                         <span class="export-col-badge">Nom</span>
                         <span class="export-col-badge">Prénom</span>
-                        <span class="export-col-badge">Email</span>
-                        <span class="export-col-badge">Promotion / Spécialité</span>
-                        <span class="export-col-badge">Rôle</span>
-                        <span class="export-col-badge">Tuteur du club</span>
+                        <span class="export-col-badge">Site</span>
+                        <span class="export-col-badge">Club</span>
+                        <span class="export-col-badge">Rôle dans le club</span>
                     </div>
 
-                    <div class="export-form-group">
-                        <label for="club-soutenance-select">
-                            <i class="fas fa-building"></i> Sélectionner un club
-                        </label>
-                        <select id="club-soutenance-select">
-                            <option value="">— Choisir un club —</option>
-                            <?php foreach ($clubs as $club): ?>
-                                <option value="<?= (int)$club['club_id'] ?>">
-                                    [<?= htmlspecialchars($club['campus']) ?>] <?= htmlspecialchars($club['nom_club']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <button class="btn-export"
-                            onclick="triggerExportWithSelect(
-                                'club-soutenance-select',
-                                'Membres soutenance',
-                                'index.php?page=export-soutenance-members&club_id='
-                            )">
+                    <a class="btn-export" href="index.php?page=export-soutenance-members&club_id=all">
                         <i class="fas fa-download"></i>
-                        Exporter soutenance
-                    </button>
+                        Exporter les soutenances (global)
+                    </a>
                 </div>
 
             </div><!-- /.export-grid -->

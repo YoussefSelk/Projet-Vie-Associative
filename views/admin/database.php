@@ -142,6 +142,20 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
                     </form>
                 </div>
                 
+                <!-- Purge annuelle -->
+                <div class="action-card" style="border: 1px solid #fecaca; background: #fff5f5;">
+                    <h4 style="color:#b91c1c;"><i class="fas fa-trash"></i> Purger (réinitialisation annuelle)</h4>
+                    <p><strong>Action irréversible.</strong> Supprime <strong>toutes les photos et données associatives</strong> : clubs, événements, rapports, photos souvenirs, affiches, documents et inscriptions. Les comptes utilisateurs sont conservés. À utiliser une fois par an. Créez une sauvegarde au préalable.</p>
+                    <form method="POST" class="form-purge-yearly">
+                        <input type="hidden" name="csrf_token" value="<?php echo Security::generateCsrfToken(); ?>">
+                        <input type="hidden" name="purge_yearly_data" value="1">
+                        <input type="hidden" name="purge_confirmation" class="purge-confirmation-input" value="">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Purger
+                        </button>
+                    </form>
+                </div>
+
                 <!-- Backup Reminder -->
                 <div class="action-card">
                     <h4><i class="fas fa-download"></i> Exporter les données</h4>
@@ -198,6 +212,40 @@ $pageCss = ['shared', 'buttons', 'tables', 'admin'];
             ).then((result) => {
                 if (result.isConfirmed) {
                     archiveForm.submit();
+                }
+            });
+        });
+    }
+
+    // Purge annuelle confirmation (saisie obligatoire du mot PURGER)
+    const purgeForm = document.querySelector('.form-purge-yearly');
+    if (purgeForm) {
+        purgeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            Swal.fire({
+                title: 'Purge annuelle',
+                html: '<p style="text-align:left;">Cette action <strong>supprime définitivement</strong> tous les clubs, événements, rapports, photos, affiches, documents et inscriptions.</p>'
+                    + '<p style="text-align:left;color:#b91c1c;"><i class="fas fa-exclamation-triangle"></i> Les comptes utilisateurs sont conservés, mais le reste est <strong>irréversible</strong>.</p>'
+                    + '<p style="text-align:left;">Pour confirmer, saisissez <strong>PURGER</strong> ci-dessous :</p>',
+                input: 'text',
+                inputPlaceholder: 'PURGER',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-trash"></i> Confirmer la purge',
+                cancelButtonText: 'Annuler',
+                confirmButtonColor: '#b91c1c',
+                cancelButtonColor: '#6c757d',
+                inputValidator: (value) => {
+                    if ((value || '').trim().toUpperCase() !== 'PURGER') {
+                        return 'Veuillez saisir exactement PURGER pour confirmer.';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const input = purgeForm.querySelector('.purge-confirmation-input');
+                    if (input) input.value = (result.value || '').trim();
+                    purgeForm.submit();
                 }
             });
         });

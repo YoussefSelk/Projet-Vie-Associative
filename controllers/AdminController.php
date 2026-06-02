@@ -1003,6 +1003,49 @@ class AdminController {
                     $error_msg = "Erreur lors de l'archivage.";
                 }
             }
+
+            // Purge annuelle : efface toutes les photos et données associatives
+            // (clubs, événements, rapports, inscriptions). Les comptes utilisateurs
+            // sont conservés. (Retour client juin 2026)
+            if (isset($_POST['purge_yearly_data'])) {
+                $confirmation = strtoupper(trim($_POST['purge_confirmation'] ?? ''));
+                if ($confirmation !== 'PURGER') {
+                    $error_msg = "Purge annulée : vous devez saisir le mot PURGER pour confirmer.";
+                } else {
+                    try {
+                        // 1. Suppression des fichiers uploadés
+                        $deletedFiles = $this->purgeUploadDirectories([
+                            'images_events',
+                            'affiches_event',
+                            'rapports',
+                            'docs_organisation',
+                            'fiches_sanitaires',
+                            'logos',
+                        ]);
+
+                        // 2. Suppression des données (ordre respectant les dépendances)
+                        $this->db->beginTransaction();
+                        $this->db->exec("DELETE FROM abonnements");
+                        $this->db->exec("DELETE FROM membres_club");
+                        $this->db->exec("DELETE FROM fiche_event");
+                        $this->db->exec("DELETE FROM fiche_club");
+                        $this->db->commit();
+
+                        ErrorHandler::logSecurity(
+                            'Purge annuelle effectuée par un administrateur',
+                            'WARN',
+                            ['user_id' => $_SESSION['id'] ?? null, 'fichiers_supprimes' => $deletedFiles]
+                        );
+
+                        $success_msg = "Purge annuelle effectuée : clubs, événements, rapports, photos et inscriptions supprimés ($deletedFiles fichier(s) effacé(s)). Les comptes utilisateurs ont été conservés.";
+                    } catch (Exception $e) {
+                        if ($this->db->inTransaction()) {
+                            $this->db->rollBack();
+                        }
+                        $error_msg = "Erreur lors de la purge annuelle : " . $e->getMessage();
+                    }
+                }
+            }
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && $success_msg !== '') {
@@ -1050,6 +1093,41 @@ class AdminController {
             'success_msg' => $success_msg,
             'error_msg' => $error_msg
         ];
+    }
+
+    /**
+     * Supprime tous les fichiers contenus dans les sous-dossiers d'upload donnés
+     * (les dossiers eux-mêmes et les fichiers de protection .htaccess/index sont
+     * conservés). Utilisé par la purge annuelle. (Retour client juin 2026)
+     *
+     * @param string[] $subDirs Sous-dossiers de /uploads à vider
+     * @return int Nombre de fichiers supprimés
+     */
+    private function purgeUploadDirectories(array $subDirs): int
+    {
+        $deleted = 0;
+        $protected = ['.htaccess', 'index.php', 'index.html', '.gitkeep', '.gitignore'];
+
+        foreach ($subDirs as $subDir) {
+            // On neutralise toute tentative de traversée de répertoire.
+            $safe = basename((string)$subDir);
+            $dir = ROOT_PATH . '/uploads/' . $safe;
+            if (!is_dir($dir)) {
+                continue;
+            }
+
+            foreach (scandir($dir) ?: [] as $entry) {
+                if ($entry === '.' || $entry === '..' || in_array($entry, $protected, true)) {
+                    continue;
+                }
+                $path = $dir . '/' . $entry;
+                if (is_file($path) && @unlink($path)) {
+                    $deleted++;
+                }
+            }
+        }
+
+        return $deleted;
     }
 
     // ==========================================

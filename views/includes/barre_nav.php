@@ -61,6 +61,14 @@ $campuses = [
                 </a>
             </li>
 
+            <!-- Événements – visible par tous, même non connectés (retour client juin 2026) -->
+            <li class="nav-item">
+                <a href="?page=event-list" class="nav-link<?= (($_GET['page'] ?? '') === 'event-list') ? ' active' : '' ?>">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Événements</span>
+                </a>
+            </li>
+
             <!-- Campus Dropdowns -->
             <?php foreach ($campuses as $campus_name => $campus_data): ?>
             <li class="nav-item nav-dropdown">
@@ -94,15 +102,13 @@ $campuses = [
             </li>
             <?php endforeach; ?>
 
-            <!-- Découvrir les clubs – utilisateurs connectés uniquement -->
-            <?php if ($isAuth_NAVBAR && $auth_permission_NAVBAR >= 1): ?>
+            <!-- Découvrir les clubs – visible par tous, même non connectés (retour client juin 2026) -->
             <li class="nav-item">
                 <a href="?page=clubs-browse" class="nav-link<?= (($_GET['page'] ?? '') === 'clubs-browse') ? ' active' : '' ?>">
                     <i class="fas fa-users"></i>
                     <span>Clubs</span>
                 </a>
             </li>
-            <?php endif; ?>
 
             <!-- Export CSV – Tuteurs (2) et supérieur -->
             <?php if ($isAuth_NAVBAR && $auth_permission_NAVBAR >= 2): ?>

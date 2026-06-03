@@ -648,6 +648,8 @@ class ValidationController {
                         } else {
                             $this->db->prepare("UPDATE fiche_club SET validation_bde = 1, validation_admin = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL, motif_forcage = ? WHERE club_id = ?")->execute([$motifForcage, $club_id]);
                             $success_msg = "Club validé IMMÉDIATEMENT (Validation forcée : BDE + Tuteur + Admin).";
+                            // Notifier le bureau de la validation forcée (cohérence avec pending-clubs)
+                            $this->notifyLeadershipRequestStatus((int)$club_id, $this->getClubName((int)$club_id), 'club', $this->getClubName((int)$club_id), 'validée');
                         }
                     } elseif ($action === 'approve') {
                         $this->db->prepare("UPDATE fiche_club SET validation_admin = 1 WHERE club_id = ?")->execute([$club_id]);
@@ -662,6 +664,8 @@ class ValidationController {
                         if ($status && $status['validation_bde'] == 1 && $status['validation_tuteur'] == 1) {
                             $this->db->prepare("UPDATE fiche_club SET validation_finale = 1, motif_refus = NULL WHERE club_id = ?")->execute([$club_id]);
                             $success_msg = "Club approuvé définitivement (BDE + Tuteur + Admin validés).";
+                            // Notifier le bureau de la validation finale (cohérence avec pending-clubs)
+                            $this->notifyLeadershipRequestStatus((int)$club_id, $this->getClubName((int)$club_id), 'club', $this->getClubName((int)$club_id), 'validée');
                         } else {
                             $success_msg = "Approbation admin enregistrée. En attente des autres signatures requises.";
                         }
@@ -685,6 +689,8 @@ class ValidationController {
                         if ($status && $status['validation_bde'] == 1 && $status['validation_admin'] == 1) {
                             $this->db->prepare("UPDATE fiche_club SET validation_finale = 1, motif_refus = NULL WHERE club_id = ?")->execute([$club_id]);
                             $success_msg = "Club approuvé définitivement (BDE + Tuteur + Admin validés).";
+                            // Notifier le bureau de la validation finale (cohérence avec pending-clubs)
+                            $this->notifyLeadershipRequestStatus((int)$club_id, $this->getClubName((int)$club_id), 'club', $this->getClubName((int)$club_id), 'validée');
                         } else {
                             $success_msg = "Approbation tuteur enregistrée. En attente des autres signatures requises.";
                         }
@@ -713,6 +719,11 @@ class ValidationController {
                     } else {
                         $this->db->prepare("UPDATE fiche_event SET validation_admin = 1, validation_bde = 1, validation_tuteur = 1, validation_finale = 1, motif_refus = NULL, motif_forcage = ? WHERE event_id = ?")->execute([$motifForcage, $event_id]);
                         $success_msg = "Événement validé IMMÉDIATEMENT (Validation forcée).";
+                        // Notifier le bureau de la validation forcée (cohérence avec pending-events)
+                        [$evTitleF, $evClubIdF] = $this->getEventInfo((int)$event_id);
+                        if ($evClubIdF > 0) {
+                            $this->notifyLeadershipRequestStatus($evClubIdF, $this->getClubName($evClubIdF), 'evenement', $evTitleF, 'validée');
+                        }
                     }
                 } elseif ($action === 'reject') {
                     $motifRefus = $motif !== '' ? $motif : 'Refusé par l\'administration.';
@@ -756,11 +767,19 @@ class ValidationController {
             }
 
             // Vérification automatique pour validation_finale après chaque action
-            $check = $this->db->prepare("SELECT validation_admin, validation_tuteur, validation_bde FROM fiche_event WHERE event_id = ?");
+            $check = $this->db->prepare("SELECT validation_admin, validation_tuteur, validation_bde, validation_finale FROM fiche_event WHERE event_id = ?");
             $check->execute([$event_id]);
             $st = $check->fetch();
             if ($st && $st['validation_admin'] == 1 && $st['validation_tuteur'] == 1 && $st['validation_bde'] == 1) {
+                $wasFinal = ((int)($st['validation_finale'] ?? 0) === 1);
                 $this->db->prepare("UPDATE fiche_event SET validation_finale = 1, motif_refus = NULL WHERE event_id = ?")->execute([$event_id]);
+                // Notifier le bureau uniquement lors du passage à l'état finalisé (cohérence avec pending-events)
+                if (!$wasFinal) {
+                    [$evTitleV, $evClubIdV] = $this->getEventInfo((int)$event_id);
+                    if ($evClubIdV > 0) {
+                        $this->notifyLeadershipRequestStatus($evClubIdV, $this->getClubName($evClubIdV), 'evenement', $evTitleV, 'validée');
+                    }
+                }
             } elseif ($st && ((string)$st['validation_admin'] === '0' || (string)$st['validation_tuteur'] === '0' || (string)$st['validation_bde'] === '0')) {
                 $this->db->prepare("UPDATE fiche_event SET validation_finale = 0 WHERE event_id = ?")->execute([$event_id]);
             }

@@ -9,7 +9,7 @@
 .env.*.local
 *.pem
 *.key
-
+scripts/*
 # ----- Uploads (user content) -----
 uploads/*
 !uploads/.gitkeep

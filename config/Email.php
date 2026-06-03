@@ -569,22 +569,28 @@ function buildLeadershipRequestStatusEmail(
         $accent = '#0f766e';
     }
 
-    $metaLines = [
-        'Club: ' . $clubName,
-        ($normalizedType === 'club' ? 'Club' : 'Événement') . ': ' . $itemName,
-        'Statut: ' . $statusLabel,
-    ];
+    $isClubRequest = ($normalizedType === 'club');
+    // Élision correcte : "de club" mais "d'événement".
+    $demandeLabel = $isClubRequest ? 'de club' : "d'événement";
+
+    // Pour une demande de club, le nom du club et l'item sont identiques : on
+    // évite la ligne "Club:" en double. Pour un événement, on affiche les deux.
+    $metaLines = ['Club: ' . $clubName];
+    if (!$isClubRequest) {
+        $metaLines[] = 'Événement: ' . $itemName;
+    }
+    $metaLines[] = 'Statut: ' . $statusLabel;
 
     if (!empty($reason)) {
         $metaLines[] = 'Motif: ' . trim($reason);
     }
 
     $data = [
-        'title' => 'Mise à jour de votre demande ' . $normalizedType,
+        'title' => 'Mise à jour de votre demande ' . $demandeLabel,
         'preheader' => 'Le statut de votre demande a été mis à jour.',
         'intro' => 'Bonjour ' . trim($fullName) . ',',
         'body_lines' => [
-            'La demande de ' . $normalizedType . ' de votre club a été mise à jour.',
+            'La demande ' . $demandeLabel . ' de votre club a été mise à jour.',
             'Veuillez consulter le statut ci-dessous.',
         ],
         'meta_lines' => $metaLines,

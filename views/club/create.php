@@ -82,13 +82,13 @@ $pageCss = ['shared', 'buttons', 'forms', 'clubs'];
                                 <label for="type_club">Type de club <span style="color: red;">*</span></label>
                                 <select id="type_club" name="type_club" required>
                                     <option value="">-- Sélectionnez un type --</option>
-                                    <option value="Culturel" <?= ($club['type_club'] === 'Culturel') ? 'selected' : '' ?>>Culturel</option>
-                                    <option value="Sportif" <?= ($club['type_club'] === 'Sportif') ? 'selected' : '' ?>>Sportif</option>
-                                    <option value="Artistique" <?= ($club['type_club'] === 'Artistique') ? 'selected' : '' ?>>Artistique</option>
-                                    <option value="Gastronomique" <?= ($club['type_club'] === 'Gastronomique') ? 'selected' : '' ?>>Gastronomique</option>
-                                    <option value="Humanitaire" <?= ($club['type_club'] === 'Humanitaire') ? 'selected' : '' ?>>Humanitaire</option>
-                                    <option value="Professionnel" <?= ($club['type_club'] === 'Professionnel') ? 'selected' : '' ?>>Professionnel</option>
-                                    <option value="Autre" <?= ($club['type_club'] === 'Autre') ? 'selected' : '' ?>>Autre</option>
+                                    <option value="Culturel" <?= (($club['type_club'] ?? '') ==='Culturel') ? 'selected' : '' ?>>Culturel</option>
+                                    <option value="Sportif" <?= (($club['type_club'] ?? '') ==='Sportif') ? 'selected' : '' ?>>Sportif</option>
+                                    <option value="Artistique" <?= (($club['type_club'] ?? '') ==='Artistique') ? 'selected' : '' ?>>Artistique</option>
+                                    <option value="Gastronomique" <?= (($club['type_club'] ?? '') ==='Gastronomique') ? 'selected' : '' ?>>Gastronomique</option>
+                                    <option value="Humanitaire" <?= (($club['type_club'] ?? '') ==='Humanitaire') ? 'selected' : '' ?>>Humanitaire</option>
+                                    <option value="Professionnel" <?= (($club['type_club'] ?? '') ==='Professionnel') ? 'selected' : '' ?>>Professionnel</option>
+                                    <option value="Autre" <?= (($club['type_club'] ?? '') ==='Autre') ? 'selected' : '' ?>>Autre</option>
                                 </select>
                             </div>
                         </div>

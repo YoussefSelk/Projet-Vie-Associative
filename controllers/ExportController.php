@@ -35,6 +35,8 @@ class ExportController
     private const ECHAPPEMENT   = "\0";
     /** Marque d'ordre d'octet UTF-16 LE, reconnue universellement par Excel */
     private const BOM           = "\xFF\xFE";
+    /** Texte affiché pour une donnée absente : tiret cadratin, rendu sobre et professionnel */
+    private const VALEUR_VIDE   = '—';
 
     // -------------------------------------------------------------------------
     // Paramètres de protection contre les abus
@@ -118,7 +120,8 @@ class ExportController
 
         // Retour client (juin 2026) : une LIGNE PAR MEMBRE (colonnes Membres / Rôles /
         // Soutenance séparées), au lieu d'un bloc « Membres et rôles » par club.
-        // Les informations du club ne sont affichées que sur la première ligne du club.
+        // Les informations du club sont RÉPÉTÉES sur chaque ligne de membre afin
+        // d'obtenir un tableau « plat » directement filtrable et triable dans Excel.
         $rows = [];
         foreach ($clubs as $club) {
             $clubId = (int)$club['club_id'];
@@ -141,26 +144,21 @@ class ExportController
                 'Nombre total de participants aux événements' => (string)($participantsByClub[$clubId] ?? 0),
                 'Documents des événements' => $this->buildEventDocumentsSummary($events),
             ];
-            // Cellules vides pour les lignes suivantes du même club (effet « fusionné »).
-            $emptyClubLevel = array_map(static fn() => '', $clubLevel);
-
             if (empty($members)) {
                 $rows[] = $clubLevel + [
                     'Membres' => 'Aucun membre',
-                    'Rôles' => '',
-                    'Soutenance' => '',
+                    'Rôles' => self::VALEUR_VIDE,
+                    'Soutenance' => self::VALEUR_VIDE,
                 ];
                 continue;
             }
 
-            $first = true;
             foreach ($members as $member) {
-                $rows[] = ($first ? $clubLevel : $emptyClubLevel) + [
+                $rows[] = $clubLevel + [
                     'Membres' => $this->formatPerson($member['prenom'] ?? null, $member['nom'] ?? null),
                     'Rôles' => $this->formatText($member['fonction'] ?? null, 'Membre'),
                     'Soutenance' => ((int)($member['soutenance'] ?? 0) === 1) ? 'Oui' : 'Non',
                 ];
-                $first = false;
             }
         }
 
@@ -219,7 +217,7 @@ class ExportController
                 '<strong>' . htmlspecialchars($this->formatText($row['nom_club'] ?? null), ENT_QUOTES, 'UTF-8') . '</strong>'
                 . ' - Type : ' . htmlspecialchars($this->formatText($row['type_club'] ?? null), ENT_QUOTES, 'UTF-8')
                 . ' - Campus : ' . htmlspecialchars($this->formatText($row['campus'] ?? null), ENT_QUOTES, 'UTF-8')
-                . ' - Rôle : ' . htmlspecialchars($this->formatText($row['fonction'] ?? null, 'Rôle non renseigné'), ENT_QUOTES, 'UTF-8');
+                . ' - Rôle : ' . htmlspecialchars($this->formatText($row['fonction'] ?? null), ENT_QUOTES, 'UTF-8');
         }
 
         $headers = [
@@ -382,7 +380,7 @@ class ExportController
                 END                                                  AS 'Soutenance',
                 COALESCE(
                     CONCAT(t.prenom, ' ', t.nom),
-                    'Non renseigné'
+                    '—'
                 )                                                    AS 'Tuteur du club'
             FROM membres_club mc
             JOIN users u       ON u.id       = mc.membre_id
@@ -466,7 +464,7 @@ class ExportController
                 COALESCE(NULLIF(TRIM(mc.fonction), ''), 'Membre')    AS 'Rôle',
                 COALESCE(
                     CONCAT(t.prenom, ' ', t.nom),
-                    'Non renseigné'
+                    '—'
                 )                                                    AS 'Tuteur du club'
             FROM membres_club mc
             JOIN users u       ON u.id       = mc.membre_id
@@ -561,7 +559,7 @@ class ExportController
                 fe.lieu                                              AS 'Lieu',
                 COALESCE(
                     CONCAT(u.prenom, ' ', u.nom),
-                    'Non renseigné'
+                    '—'
                 )                                                    AS 'Responsable',
                 CASE fe.financement_bde
                     WHEN 1 THEN 'Oui'
@@ -637,7 +635,7 @@ class ExportController
                 fe.lieu                                              AS 'Lieu',
                 COALESCE(
                     CONCAT(u.prenom, ' ', u.nom),
-                    'Non renseigné'
+                    '—'
                 )                                                    AS 'Responsable',
                 CASE fe.financement_bde
                     WHEN 1 THEN 'Oui'
@@ -685,7 +683,7 @@ class ExportController
                 fe.lieu                                              AS 'Lieu',
                 COALESCE(
                     CONCAT(u.prenom, ' ', u.nom),
-                    'Non renseigné'
+                    '—'
                 )                                                    AS 'Responsable',
                 CASE WHEN fe.rapport_event IS NOT NULL
                     THEN 'Oui'
@@ -723,7 +721,7 @@ class ExportController
                 fe.lieu                                              AS 'Lieu',
                 COALESCE(
                     CONCAT(u.prenom, ' ', u.nom),
-                    'Non renseigné'
+                    '—'
                 )                                                    AS 'Responsable',
                 CASE fe.financement_bde
                     WHEN 1 THEN 'Oui'
@@ -887,7 +885,7 @@ class ExportController
             foreach ($lignes as $ligne) {
                 $row = [];
                 foreach ($headers as $header) {
-                    $row[] = $ligne[$header] ?? 'Non renseigné';
+                    $row[] = $ligne[$header] ?? self::VALEUR_VIDE;
                 }
                 $rowsXml[] = $this->buildXlsxRow($row, $rowIndex, false, $hyperlinks);
                 $rowIndex++;
@@ -983,7 +981,7 @@ class ExportController
     private function xlsxCellText($value): string
     {
         if (is_array($value)) {
-            $value = $value['text'] ?? $value['label'] ?? $value['hyperlink'] ?? 'Non renseigné';
+            $value = $value['text'] ?? $value['label'] ?? $value['hyperlink'] ?? self::VALEUR_VIDE;
         }
 
         $text = (string)$value;
@@ -1005,7 +1003,7 @@ class ExportController
         $text = preg_replace("/\n{3,}/", "\n\n", $text) ?? $text;
         $text = trim($text);
 
-        return $text === '' ? 'Non renseigné' : $text;
+        return $text === '' ? self::VALEUR_VIDE : $text;
     }
 
     private function excelColumnName(int $index): string
@@ -1160,7 +1158,7 @@ class ExportController
     private function formatValidation($value): string
     {
         if ($value === null || trim((string)$value) === '') {
-            return 'Non renseigné';
+            return self::VALEUR_VIDE;
         }
 
         return match (trim((string)$value)) {
@@ -1171,7 +1169,7 @@ class ExportController
         };
     }
 
-    private function formatText($value, string $fallback = 'Non renseigné'): string
+    private function formatText($value, string $fallback = self::VALEUR_VIDE): string
     {
         if ($value === null) {
             return $fallback;
@@ -1185,13 +1183,13 @@ class ExportController
     {
         $text = trim((string)($value ?? ''));
         if ($text === '' || $text === '0000-00-00') {
-            return 'Date non renseignée';
+            return self::VALEUR_VIDE;
         }
 
         $date = DateTime::createFromFormat('!Y-m-d', substr($text, 0, 10));
         $errors = DateTime::getLastErrors();
         if (!$date || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))) {
-            return 'Date non renseignée';
+            return self::VALEUR_VIDE;
         }
 
         return $date->format('d/m/Y');
@@ -1201,11 +1199,11 @@ class ExportController
     {
         $text = trim((string)($value ?? ''));
         if ($text === '') {
-            return 'Horaire non renseigné';
+            return self::VALEUR_VIDE;
         }
 
         if (!preg_match('/^([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/', $text, $matches)) {
-            return 'Horaire non renseigné';
+            return self::VALEUR_VIDE;
         }
 
         return $matches[1] . ':' . $matches[2];
@@ -1221,17 +1219,17 @@ class ExportController
             }
         }
 
-        return empty($parts) ? 'Personne non renseignée' : $this->sanitizeCsvCell(implode(' ', $parts));
+        return empty($parts) ? self::VALEUR_VIDE : $this->sanitizeCsvCell(implode(' ', $parts));
     }
 
     private function formatEmail($value): string
     {
-        return $this->formatText($value, 'Email non renseigné');
+        return $this->formatText($value, self::VALEUR_VIDE);
     }
 
     private function formatPromo($value): string
     {
-        return $this->formatText($value, 'Promo non renseignée');
+        return $this->formatText($value, self::VALEUR_VIDE);
     }
 
     private function formatDocument($value, string $fallback = 'Aucun document'): string
@@ -1253,7 +1251,7 @@ class ExportController
         $cell = preg_replace('/\s{2,}/', ' ', $cell) ?? '';
 
         if ($cell === '') {
-            return 'Non renseigné';
+            return self::VALEUR_VIDE;
         }
 
         if (preg_match('/^[=+\-@]/', $cell)) {
@@ -1273,7 +1271,7 @@ class ExportController
         foreach ($members as $member) {
             $items[] = $this->formatPerson($member['prenom'] ?? null, $member['nom'] ?? null)
                 . ' - '
-                . $this->formatText($member['fonction'] ?? null, 'Rôle non renseigné');
+                . $this->formatText($member['fonction'] ?? null);
         }
 
         return $this->sanitizeCsvCell(implode(' | ', $items));
@@ -1420,7 +1418,7 @@ class ExportController
     {
         $date = $this->parseDate($dateValue);
         if (!$date) {
-            return 'Date non renseignée';
+            return self::VALEUR_VIDE;
         }
 
         return $date < new DateTime('today') ? 'Passé' : 'À venir';

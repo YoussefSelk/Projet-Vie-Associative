@@ -125,15 +125,17 @@ $pageCss = ['shared', 'buttons', 'forms', 'events'];
                                 <input type="date" name="date_ev" class="form-control" min="<?= $minDate ?>" required>
                                 <small class="form-help">La date doit être au minimum dans 15 jours (à partir du <?= date('d/m/Y', strtotime('+15 days')) ?>)</small>
                             </div>
+                            <?php include_once VIEWS_PATH . '/includes/time_select.php'; ?>
                             <div class="form-group">
                                 <label><i class="fas fa-clock"></i> Heure début <span class="required">*</span></label>
-                                <input type="time" name="horaire_debut" class="form-control" value="13:30" required>
+                                <?php renderTimeSelect('horaire_debut', 'horaire_debut', '13:30'); ?>
                             </div>
                             <div class="form-group">
                                 <label><i class="fas fa-clock"></i> Heure fin <span class="required">*</span></label>
-                                <input type="time" name="horaire_fin" class="form-control" value="17:30" required>
+                                <?php renderTimeSelect('horaire_fin', 'horaire_fin', '17:30'); ?>
                             </div>
                         </div>
+                        <?php include VIEWS_PATH . '/includes/time_select_script.php'; ?>
                         
                         <div class="form-row">
                             <div class="form-group">

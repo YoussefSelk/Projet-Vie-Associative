@@ -78,15 +78,17 @@ $isEvent = ($event['type_event'] === 'event');
                                 <label><i class="fas fa-calendar"></i> Date <span class="required">*</span></label>
                                 <input type="date" name="date_ev" class="form-control" value="<?= $event['date_ev'] ?>" required>
                             </div>
+                            <?php include_once VIEWS_PATH . '/includes/time_select.php'; ?>
                             <div class="form-group">
                                 <label><i class="fas fa-clock"></i> Heure début <span class="required">*</span></label>
-                                <input type="time" name="horaire_debut" class="form-control" value="<?= substr($event['horaire_debut'], 0, 5) ?>" required>
+                                <?php renderTimeSelect('horaire_debut', 'horaire_debut', (string)($event['horaire_debut'] ?? '')); ?>
                             </div>
                             <div class="form-group">
                                 <label><i class="fas fa-clock"></i> Heure fin <span class="required">*</span></label>
-                                <input type="time" name="horaire_fin" class="form-control" value="<?= substr($event['horaire_fin'], 0, 5) ?>" required>
+                                <?php renderTimeSelect('horaire_fin', 'horaire_fin', (string)($event['horaire_fin'] ?? '')); ?>
                             </div>
                         </div>
+                        <?php include VIEWS_PATH . '/includes/time_select_script.php'; ?>
                         
                         <div class="form-row">
                             <div class="form-group">

@@ -321,6 +321,12 @@ class ClubController {
                 $ineligible = $this->getIneligibleSoutenanceNames($soutenanceUserIds);
                 if (!empty($ineligible)) {
                     $error_msg = "Seuls les étudiants ING2 FISE peuvent passer la soutenance. Membre(s) non éligible(s) : " . implode(', ', $ineligible) . ".";
+                } else {
+                    // Un étudiant ne peut être « avec soutenance » que dans un seul club (retour client juin 2026)
+                    $alreadySoutenance = $this->getAlreadySoutenanceElsewhereNames($soutenanceUserIds);
+                    if (!empty($alreadySoutenance)) {
+                        $error_msg = "Un étudiant ne peut passer la soutenance que dans un seul club. Membre(s) déjà en soutenance dans un autre club : " . implode(', ', $alreadySoutenance) . ".";
+                    }
                 }
             }
 
@@ -623,6 +629,12 @@ class ClubController {
                         $ineligible = $this->getIneligibleSoutenanceNames($soutenanceUserIds);
                         if (!empty($ineligible)) {
                             $error_msg = "Seuls les étudiants ING2 FISE peuvent passer la soutenance. Membre(s) non éligible(s) : " . implode(', ', $ineligible) . ".";
+                        } else {
+                            // Un étudiant ne peut être « avec soutenance » que dans un seul club (retour client juin 2026)
+                            $alreadySoutenance = $this->getAlreadySoutenanceElsewhereNames($soutenanceUserIds, (int)$club_id);
+                            if (!empty($alreadySoutenance)) {
+                                $error_msg = "Un étudiant ne peut passer la soutenance que dans un seul club. Membre(s) déjà en soutenance dans un autre club : " . implode(', ', $alreadySoutenance) . ".";
+                            }
                         }
                     }
 
@@ -778,6 +790,43 @@ class ClubController {
             }
         }
         return $ineligible;
+    }
+
+    /**
+     * Retourne les noms des utilisateurs déjà inscrits « avec soutenance » dans un
+     * AUTRE club. Règle métier (retour client juin 2026) : un étudiant ne peut être
+     * enregistré « avec soutenance » que dans un seul club.
+     *
+     * @param array    $userIds       Identifiants des utilisateurs marqués "soutenance" pour ce club
+     * @param int|null $excludeClubId Club en cours d'édition à exclure (NULL en création)
+     * @return string[] Noms complets des utilisateurs déjà en soutenance ailleurs
+     */
+    private function getAlreadySoutenanceElsewhereNames(array $userIds, ?int $excludeClubId = null): array {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
+        if (empty($userIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($userIds), '?'));
+        $sql = "SELECT DISTINCT u.id, u.nom, u.prenom
+                FROM membres_club mc
+                INNER JOIN users u ON u.id = mc.membre_id
+                WHERE mc.soutenance = 1 AND mc.membre_id IN ($placeholders)";
+        $params = $userIds;
+        if ($excludeClubId !== null) {
+            $sql .= " AND mc.club_id != ?";
+            $params[] = $excludeClubId;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $names = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $fullName = trim(((string)($row['prenom'] ?? '')) . ' ' . ((string)($row['nom'] ?? '')));
+            $names[] = $fullName !== '' ? $fullName : ('Utilisateur #' . (int)$row['id']);
+        }
+        return $names;
     }
 
     /**

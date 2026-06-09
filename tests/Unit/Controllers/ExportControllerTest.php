@@ -479,4 +479,49 @@ class ExportControllerTest extends BaseTestCase
         $ref->invoke($ctrl, 5);
         $this->addToAssertionCount(1);
     }
+
+    // =========================================================================
+    // formatPerson() — ordre NOM PRENOM dans les extractions (retour client juin 2026)
+    // =========================================================================
+
+    public function testFormatPersonUsesNomThenPrenomOrder(): void
+    {
+        // Entrée (prenom, nom) → sortie attendue "NOM PRENOM"
+        $this->assertSame('Dupont Jean', $this->call('formatPerson', 'Jean', 'Dupont'));
+    }
+
+    public function testFormatPersonStartsWithNom(): void
+    {
+        $result = $this->call('formatPerson', 'Alice', 'Martin');
+        $this->assertStringStartsWith('Martin', $result);
+        $this->assertStringEndsWith('Alice', $result);
+    }
+
+    public function testFormatPersonHandlesAccentsAndComposedNames(): void
+    {
+        $this->assertSame("Le Garrec Éléonore", $this->call('formatPerson', 'Éléonore', 'Le Garrec'));
+    }
+
+    public function testFormatPersonReturnsOnlyNomWhenPrenomMissing(): void
+    {
+        $this->assertSame('Dupont', $this->call('formatPerson', '', 'Dupont'));
+        $this->assertSame('Dupont', $this->call('formatPerson', null, 'Dupont'));
+    }
+
+    public function testFormatPersonReturnsOnlyPrenomWhenNomMissing(): void
+    {
+        $this->assertSame('Jean', $this->call('formatPerson', 'Jean', ''));
+    }
+
+    public function testFormatPersonReturnsPlaceholderWhenBothMissing(): void
+    {
+        // self::VALEUR_VIDE = '—'
+        $this->assertSame('—', $this->call('formatPerson', '', ''));
+        $this->assertSame('—', $this->call('formatPerson', null, null));
+    }
+
+    public function testFormatPersonTrimsSurroundingWhitespace(): void
+    {
+        $this->assertSame('Dupont Jean', $this->call('formatPerson', '  Jean ', ' Dupont  '));
+    }
 }

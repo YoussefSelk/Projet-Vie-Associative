@@ -310,6 +310,11 @@ class EventController {
                 $error_msg = "Veuillez sélectionner un club organisateur.";
             } elseif (strtotime($date_ev) < strtotime('+15 days midnight')) {
                 $error_msg = "La date de l'événement doit être au minimum dans 15 jours.";
+            } elseif ($horaire_debut === '' || $horaire_fin === '') {
+                $error_msg = "Les heures de début et de fin sont obligatoires.";
+            } elseif (strtotime($horaire_fin) <= strtotime($horaire_debut)) {
+                // L'événement se déroule sur une seule journée : la fin doit être après le début (retour client juin 2026)
+                $error_msg = "L'heure de fin doit être postérieure à l'heure de début.";
             } elseif ($type_event === 'event' && (!isset($_FILES['doc_organisation']) || $_FILES['doc_organisation']['error'] !== UPLOAD_ERR_OK)) {
                 // Le document est obligatoire seulement pour un EVENT
                 $error_msg = "Le dossier d'organisation (Gantt, Budget, Com) est obligatoire pour un événement.";
@@ -467,7 +472,7 @@ class EventController {
 
         // 1. Vérification de sécurité : l'utilisateur doit être membre VALIDE du club organisateur
         $stmt = $this->db->prepare("
-            SELECT fe.*, fe.titre AS nom_event, fe.club_orga AS club_id, fc.nom_club
+            SELECT fe.*, fe.titre AS nom_event, fe.club_orga AS club_id, fc.nom_club, fc.tuteur AS club_tuteur
             FROM fiche_event fe
             INNER JOIN membres_club mc ON fe.club_orga = mc.club_id
             INNER JOIN fiche_club fc ON fe.club_orga = fc.club_id
@@ -511,7 +516,14 @@ class EventController {
             // 3. Validations spécifiques
             if (empty($data['nom_event']) || empty($data['date_ev'])) {
                 $error_msg = "Le nom et la date sont obligatoires.";
-            } 
+            }
+            elseif ($data['horaire_debut'] === '' || $data['horaire_fin'] === '') {
+                $error_msg = "Les heures de début et de fin sont obligatoires.";
+            }
+            // L'événement se déroule sur une seule journée : la fin doit être après le début (retour client juin 2026)
+            elseif (strtotime($data['horaire_fin']) <= strtotime($data['horaire_debut'])) {
+                $error_msg = "L'heure de fin doit être postérieure à l'heure de début.";
+            }
             // Sécurité : Si type = event et PAS de doc en base et PAS d'upload en cours
             elseif ($data['type_event'] === 'event' && empty($event['doc_organisation']) && (!isset($_FILES['doc_organisation']) || $_FILES['doc_organisation']['error'] !== UPLOAD_ERR_OK)) {
                 $error_msg = "Le dossier d'organisation est obligatoire pour un événement.";
@@ -599,6 +611,14 @@ class EventController {
                 // 5. Appel au Modèle pour enregistrer
                 if ($this->eventModel->updateEvent((int)$event_id, $data)) {
                     $success_msg = "Événement mis à jour. Le processus de validation a été réinitialisé.";
+
+                    // Notifier les valideurs (BDE + Tuteur + Admin) que l'événement modifié
+                    // doit de nouveau être validé (retour client juin 2026)
+                    $editorName = trim((string)($_SESSION['prenom'] ?? '') . ' ' . (string)($_SESSION['nom'] ?? ''));
+                    if ($editorName === '') { $editorName = 'Un étudiant'; }
+                    $eventTutorId = !empty($event['club_tuteur']) ? (int)$event['club_tuteur'] : null;
+                    notifyValidatorsResubmission($this->db, $data['nom_event'], $editorName, $eventTutorId);
+
                     // Rafraîchir les données pour la vue
                     $stmt->execute([$event_id, $user_id]);
                     $event = $stmt->fetch(PDO::FETCH_ASSOC);

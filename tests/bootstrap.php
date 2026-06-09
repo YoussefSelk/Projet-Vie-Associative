@@ -140,6 +140,28 @@ if (!function_exists('buildLeadershipRequestStatusEmail')) {
     }
 }
 
+// ─── Espions des notifications valideurs ─────────────────────────────────────
+// config/Email.php ne peut pas être chargé en test (il redéclare sendEmail).
+// Ces espions enregistrent les appels dans $GLOBALS['__notifications'] afin que
+// les tests de contrôleur puissent vérifier qu'une notification a bien été
+// déclenchée (retour client juin 2026).
+if (!function_exists('notifyValidatorsNewSubmission')) {
+    function notifyValidatorsNewSubmission(\PDO $db, string $type, string $itemName, string $creatorName, ?int $tutorId = null): void {
+        $GLOBALS['__notifications'][] = [
+            'fn' => 'newSubmission', 'type' => $type, 'item' => $itemName,
+            'creator' => $creatorName, 'tutorId' => $tutorId,
+        ];
+    }
+}
+if (!function_exists('notifyValidatorsResubmission')) {
+    function notifyValidatorsResubmission(\PDO $db, string $eventTitle, string $editorName, ?int $tutorId = null): void {
+        $GLOBALS['__notifications'][] = [
+            'fn' => 'resubmission', 'item' => $eventTitle,
+            'editor' => $editorName, 'tutorId' => $tutorId,
+        ];
+    }
+}
+
 // Autoloader for test helpers
 spl_autoload_register(function (string $class): void {
     $prefix = 'Tests\\';

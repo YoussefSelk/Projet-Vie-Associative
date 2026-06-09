@@ -379,7 +379,7 @@ class ExportController
                     ELSE 'Non'
                 END                                                  AS 'Soutenance',
                 COALESCE(
-                    CONCAT(t.prenom, ' ', t.nom),
+                    CONCAT(t.nom, ' ', t.prenom),
                     '—'
                 )                                                    AS 'Tuteur du club'
             FROM membres_club mc
@@ -463,7 +463,7 @@ class ExportController
                 u.promo                                              AS 'Promotion',
                 COALESCE(NULLIF(TRIM(mc.fonction), ''), 'Membre')    AS 'Rôle',
                 COALESCE(
-                    CONCAT(t.prenom, ' ', t.nom),
+                    CONCAT(t.nom, ' ', t.prenom),
                     '—'
                 )                                                    AS 'Tuteur du club'
             FROM membres_club mc
@@ -558,7 +558,7 @@ class ExportController
                 fe.campus                                            AS 'Campus',
                 fe.lieu                                              AS 'Lieu',
                 COALESCE(
-                    CONCAT(u.prenom, ' ', u.nom),
+                    CONCAT(u.nom, ' ', u.prenom),
                     '—'
                 )                                                    AS 'Responsable',
                 CASE fe.financement_bde
@@ -634,7 +634,7 @@ class ExportController
                 fe.campus                                            AS 'Campus',
                 fe.lieu                                              AS 'Lieu',
                 COALESCE(
-                    CONCAT(u.prenom, ' ', u.nom),
+                    CONCAT(u.nom, ' ', u.prenom),
                     '—'
                 )                                                    AS 'Responsable',
                 CASE fe.financement_bde
@@ -682,7 +682,7 @@ class ExportController
                 fe.campus                                            AS 'Campus',
                 fe.lieu                                              AS 'Lieu',
                 COALESCE(
-                    CONCAT(u.prenom, ' ', u.nom),
+                    CONCAT(u.nom, ' ', u.prenom),
                     '—'
                 )                                                    AS 'Responsable',
                 CASE WHEN fe.rapport_event IS NOT NULL
@@ -720,7 +720,7 @@ class ExportController
                 fe.campus                                            AS 'Campus',
                 fe.lieu                                              AS 'Lieu',
                 COALESCE(
-                    CONCAT(u.prenom, ' ', u.nom),
+                    CONCAT(u.nom, ' ', u.prenom),
                     '—'
                 )                                                    AS 'Responsable',
                 CASE fe.financement_bde
@@ -1212,7 +1212,9 @@ class ExportController
     private function formatPerson($prenom, $nom): string
     {
         $parts = [];
-        foreach ([$prenom, $nom] as $part) {
+        // Ordre NOM PRENOM : sens utilisé pour classer et identifier les personnes
+        // dans les extractions (retour client juin 2026).
+        foreach ([$nom, $prenom] as $part) {
             $part = trim((string)($part ?? ''));
             if ($part !== '') {
                 $parts[] = $part;

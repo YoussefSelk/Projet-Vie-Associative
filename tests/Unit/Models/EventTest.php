@@ -221,11 +221,37 @@ class EventTest extends BaseTestCase
         $this->assertTrue($result);
     }
 
-    public function testUpdateEventWithEmptyDataReturnsFalse(): void
+    public function testUpdateEventWithEmptyDataStillResetsValidations(): void
     {
+        // Contrat actuel (commit 1abc4ef, 2026-05-13) : même sans champ éditable
+        // modifié, une mise à jour réinitialise systématiquement le circuit de
+        // validation pour forcer une nouvelle validation. La requête doit donc
+        // être exécutée et renvoyer true.
+        $capturedSql = '';
+        $capturedValues = null;
+
+        $stmt = $this->createMock(PDOStatement::class);
+        $stmt->method('execute')->willReturnCallback(function (array $values = []) use (&$capturedValues): bool {
+            $capturedValues = $values;
+            return true;
+        });
+
+        $this->pdo->method('prepare')->willReturnCallback(function (string $sql) use (&$capturedSql, $stmt): PDOStatement {
+            $capturedSql = $sql;
+            return $stmt;
+        });
+
         $result = $this->event->updateEvent(1, []);
 
-        $this->assertFalse($result);
+        $this->assertTrue($result);
+        // Les validations sont remises à NULL et le motif de refus effacé.
+        $this->assertStringContainsString('validation_bde = NULL', $capturedSql);
+        $this->assertStringContainsString('validation_tuteur = NULL', $capturedSql);
+        $this->assertStringContainsString('validation_admin = NULL', $capturedSql);
+        $this->assertStringContainsString('validation_finale = NULL', $capturedSql);
+        $this->assertStringContainsString('motif_refus = NULL', $capturedSql);
+        // Aucun champ éditable → seul l'identifiant est lié à la requête.
+        $this->assertSame([1], $capturedValues);
     }
 
     public function testUpdateEventMapsFieldNames(): void

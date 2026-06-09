@@ -774,6 +774,50 @@ function notifyValidatorsNewSubmission(PDO $db, string $type, string $itemName, 
 }
 
 /**
+ * Notifie les valideurs (BDE + Tuteur + Admin) qu'un événement refusé puis modifié
+ * par l'étudiant doit de nouveau être validé. La modification réinitialise le circuit
+ * de validation, les valideurs doivent donc être prévenus. (Retour client juin 2026)
+ */
+function notifyValidatorsResubmission(PDO $db, string $eventTitle, string $editorName, ?int $tutorId = null): void {
+    // La notification ne doit JAMAIS faire échouer la modification de l'événement.
+    try {
+        $actionPage = 'pending-events';
+
+        foreach (getValidatorRecipients($db, $tutorId) as $recipient) {
+            $email = trim((string)($recipient['mail'] ?? ''));
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+
+            $fullName = trim((string)($recipient['prenom'] ?? '') . ' ' . (string)($recipient['nom'] ?? ''));
+            if ($fullName === '') {
+                $fullName = 'Valideur';
+            }
+            $perm = (int)($recipient['permission'] ?? 0);
+            $actionUrl = ($perm >= 3) ? buildPlatformUrl($actionPage) : buildPlatformUrl('tutoring');
+
+            $message = renderProfessionalEmailTemplate([
+                'title' => 'Un événement doit être de nouveau validé',
+                'preheader' => 'Un événement modifié attend une nouvelle validation.',
+                'intro' => 'Bonjour ' . $fullName . ',',
+                'body_lines' => [
+                    $editorName . ' a modifié l\'événement « ' . $eventTitle . ' » à la suite d\'un refus.',
+                    'Le circuit de validation a été réinitialisé : cet événement doit de nouveau être validé (BDE, Tuteur & Administration).',
+                ],
+                'meta_lines' => [
+                    'Événement: ' . $eventTitle,
+                ],
+                'accent' => '#0f766e',
+            ] + ($actionUrl ? ['button_label' => 'Voir les validations', 'button_url' => $actionUrl] : []));
+
+            sendEmail($email, 'Événement à revalider : ' . $eventTitle, $message);
+        }
+    } catch (\Throwable $e) {
+        if (class_exists('ErrorHandler')) { ErrorHandler::logError('notifyValidatorsResubmission: ' . $e->getMessage(), 'WARNING'); }
+    }
+}
+
+/**
  * Notifie les valideurs qu'un rapport d'événement vient d'être déposé.
  * (Retour client juin 2026)
  */
